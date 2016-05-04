@@ -1,0 +1,110 @@
+# ====================================================================
+#
+#      fatfs.cdl
+#
+#      FFFS Filesystem configuration data
+#
+# ====================================================================
+## ####ECOSGPLCOPYRIGHTBEGIN####
+## -------------------------------------------
+## This file is part of eCos, the Embedded Configurable Operating System.
+## Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2009 Free Software Foundation, Inc.
+##
+## eCos is free software; you can redistribute it and/or modify it under
+## the terms of the GNU General Public License as published by the Free
+## Software Foundation; either version 2 or (at your option) any later
+## version.
+##
+## eCos is distributed in the hope that it will be useful, but WITHOUT
+## ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+## FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+## for more details.
+##
+## You should have received a copy of the GNU General Public License
+## along with eCos; if not, write to the Free Software Foundation, Inc.,
+## 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+##
+## As a special exception, if other files instantiate templates or use
+## macros or inline functions from this file, or you compile this file
+## and link it with other works to produce a work based on this file,
+## this file does not by itself cause the resulting work to be covered by
+## the GNU General Public License. However the source code for this file
+## must still be made available in accordance with section (3) of the GNU
+## General Public License v2.
+##
+## This exception does not invalidate any other reasons why a work based
+## on this file might be covered by the GNU General Public License.
+## -------------------------------------------
+## ####ECOSGPLCOPYRIGHTEND####
+# ====================================================================
+######DESCRIPTIONBEGIN####
+#
+# Author(s):      Filip Adamec
+# Contributors:
+# Date:           2012-11-25
+#
+#####DESCRIPTIONEND####
+#
+# ====================================================================
+
+cdl_package CYGPKG_FS_FFFS {
+    display         "FFFS filesystem"
+    include_dir     cyg/fs
+
+    parent          CYGPKG_IO_FILEIO
+    requires        CYGPKG_IO_FILEIO
+
+    requires        CYGPKG_ISOINFRA
+    requires        CYGINT_ISO_ERRNO
+    requires        CYGINT_ISO_ERRNO_CODES
+    requires        CYGPKG_MEMALLOC
+    requires        CYGPKG_CRC
+
+    implements      CYGINT_IO_FILEIO_FS
+
+    compile         -library=libextras.a fffs.c    \
+                                         nodes.c   \
+                                         flash_if.c
+
+   cdl_option      CYGNUM_FS_FF_NODE_MAX_FILE_NAME_SIZE {
+        display         "Named node max name length"
+        flavor          data
+        default_value   8
+        legal_values    8 to 64
+        description     "This option controls the maximum size of the
+                         named node name."
+    }
+
+    cdl_option      CYGNUM_FS_FF_NODE_MAX_NAMED_FILES {
+        display         "Maximum number of named nodes"
+        flavor          data
+        default_value   8
+        legal_values    8 to 64
+        description     "This option controls the maximum number of named
+                         nodes in filesystem."
+    }
+
+    cdl_option      CYGNUM_FS_FF_TEST_BUFFER_SIZE {
+        display         "Size of the test buffer"
+        flavor          data
+        default_value   1024
+        legal_values    256 to 8192
+        description     "This option controls the size of the test buffer
+                         used for test flash locations. This buffer is 
+                         alloced on the heap."
+    }
+
+    cdl_option      CYGNUM_FS_FF_CPY_BUFFER_SIZE {
+        display         "Size of the copy buffer"
+        flavor          data
+        default_value   1024
+        legal_values    256 to 8192
+        description     "This option controls the size of the copy buffer
+                         used to copy system files whose are not affected
+                         by errase command. This buffer is 
+                         alloced on the heap."
+    }
+}
+
+# ====================================================================
+# End of fatfs.cdl

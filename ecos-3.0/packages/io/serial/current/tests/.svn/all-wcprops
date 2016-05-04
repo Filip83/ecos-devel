@@ -1,0 +1,83 @@
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/ocsvn/openrisc/!svn/ver/786/openrisc/trunk/rtos/ecos-3.0/packages/io/serial/current/tests
+END
+serial1.c
+K 25
+svn:wc:ra_dav:version-url
+V 100
+/ocsvn/openrisc/!svn/ver/786/openrisc/trunk/rtos/ecos-3.0/packages/io/serial/current/tests/serial1.c
+END
+serial2.c
+K 25
+svn:wc:ra_dav:version-url
+V 100
+/ocsvn/openrisc/!svn/ver/786/openrisc/trunk/rtos/ecos-3.0/packages/io/serial/current/tests/serial2.c
+END
+tty1.c
+K 25
+svn:wc:ra_dav:version-url
+V 97
+/ocsvn/openrisc/!svn/ver/786/openrisc/trunk/rtos/ecos-3.0/packages/io/serial/current/tests/tty1.c
+END
+serial3.c
+K 25
+svn:wc:ra_dav:version-url
+V 100
+/ocsvn/openrisc/!svn/ver/786/openrisc/trunk/rtos/ecos-3.0/packages/io/serial/current/tests/serial3.c
+END
+tty2.c
+K 25
+svn:wc:ra_dav:version-url
+V 97
+/ocsvn/openrisc/!svn/ver/786/openrisc/trunk/rtos/ecos-3.0/packages/io/serial/current/tests/tty2.c
+END
+serial4.c
+K 25
+svn:wc:ra_dav:version-url
+V 100
+/ocsvn/openrisc/!svn/ver/786/openrisc/trunk/rtos/ecos-3.0/packages/io/serial/current/tests/serial4.c
+END
+serial5.c
+K 25
+svn:wc:ra_dav:version-url
+V 100
+/ocsvn/openrisc/!svn/ver/786/openrisc/trunk/rtos/ecos-3.0/packages/io/serial/current/tests/serial5.c
+END
+timeout.inl
+K 25
+svn:wc:ra_dav:version-url
+V 102
+/ocsvn/openrisc/!svn/ver/786/openrisc/trunk/rtos/ecos-3.0/packages/io/serial/current/tests/timeout.inl
+END
+flow1.c
+K 25
+svn:wc:ra_dav:version-url
+V 98
+/ocsvn/openrisc/!svn/ver/786/openrisc/trunk/rtos/ecos-3.0/packages/io/serial/current/tests/flow1.c
+END
+flow2.c
+K 25
+svn:wc:ra_dav:version-url
+V 98
+/ocsvn/openrisc/!svn/ver/786/openrisc/trunk/rtos/ecos-3.0/packages/io/serial/current/tests/flow2.c
+END
+ser_test_protocol.inl
+K 25
+svn:wc:ra_dav:version-url
+V 112
+/ocsvn/openrisc/!svn/ver/786/openrisc/trunk/rtos/ecos-3.0/packages/io/serial/current/tests/ser_test_protocol.inl
+END
+README
+K 25
+svn:wc:ra_dav:version-url
+V 97
+/ocsvn/openrisc/!svn/ver/786/openrisc/trunk/rtos/ecos-3.0/packages/io/serial/current/tests/README
+END
+serial_echo.c
+K 25
+svn:wc:ra_dav:version-url
+V 104
+/ocsvn/openrisc/!svn/ver/786/openrisc/trunk/rtos/ecos-3.0/packages/io/serial/current/tests/serial_echo.c
+END

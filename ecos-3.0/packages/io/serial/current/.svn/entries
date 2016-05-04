@@ -1,0 +1,77 @@
+10
+
+dir
+809
+http://opencores.org/ocsvn/openrisc/openrisc/trunk/rtos/ecos-3.0/packages/io/serial/current
+http://opencores.org/ocsvn/openrisc
+
+
+
+2012-03-23T10:11:50.159925Z
+786
+skrzyp
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+04c7f051-eaf3-4997-922d-f29d9d8c0f3f
+
+cdl
+dir
+
+tests
+dir
+
+include
+dir
+
+src
+dir
+
+ChangeLog
+file
+
+
+
+
+2012-06-05T08:05:33.016272Z
+2f095b6fe3ca7a1d735b7b1ca250fce0
+2012-03-23T10:11:50.159925Z
+786
+skrzyp
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+50627
+
+misc
+dir
+

@@ -1,0 +1,35 @@
+K 25
+svn:wc:ra_dav:version-url
+V 95
+/ocsvn/openrisc/!svn/ver/786/openrisc/trunk/rtos/ecos-3.0/packages/io/serial/current/src/common
+END
+serial.c
+K 25
+svn:wc:ra_dav:version-url
+V 104
+/ocsvn/openrisc/!svn/ver/786/openrisc/trunk/rtos/ecos-3.0/packages/io/serial/current/src/common/serial.c
+END
+tty.c
+K 25
+svn:wc:ra_dav:version-url
+V 101
+/ocsvn/openrisc/!svn/ver/786/openrisc/trunk/rtos/ecos-3.0/packages/io/serial/current/src/common/tty.c
+END
+termios.c
+K 25
+svn:wc:ra_dav:version-url
+V 105
+/ocsvn/openrisc/!svn/ver/786/openrisc/trunk/rtos/ecos-3.0/packages/io/serial/current/src/common/termios.c
+END
+termiostty.c
+K 25
+svn:wc:ra_dav:version-url
+V 108
+/ocsvn/openrisc/!svn/ver/786/openrisc/trunk/rtos/ecos-3.0/packages/io/serial/current/src/common/termiostty.c
+END
+haldiag.c
+K 25
+svn:wc:ra_dav:version-url
+V 105
+/ocsvn/openrisc/!svn/ver/786/openrisc/trunk/rtos/ecos-3.0/packages/io/serial/current/src/common/haldiag.c
+END

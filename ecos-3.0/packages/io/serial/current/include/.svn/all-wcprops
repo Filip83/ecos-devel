@@ -1,0 +1,23 @@
+K 25
+svn:wc:ra_dav:version-url
+V 92
+/ocsvn/openrisc/!svn/ver/786/openrisc/trunk/rtos/ecos-3.0/packages/io/serial/current/include
+END
+serial.h
+K 25
+svn:wc:ra_dav:version-url
+V 101
+/ocsvn/openrisc/!svn/ver/786/openrisc/trunk/rtos/ecos-3.0/packages/io/serial/current/include/serial.h
+END
+serialio.h
+K 25
+svn:wc:ra_dav:version-url
+V 103
+/ocsvn/openrisc/!svn/ver/786/openrisc/trunk/rtos/ecos-3.0/packages/io/serial/current/include/serialio.h
+END
+ttyio.h
+K 25
+svn:wc:ra_dav:version-url
+V 100
+/ocsvn/openrisc/!svn/ver/786/openrisc/trunk/rtos/ecos-3.0/packages/io/serial/current/include/ttyio.h
+END

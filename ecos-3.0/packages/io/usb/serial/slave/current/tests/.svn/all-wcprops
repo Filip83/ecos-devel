@@ -1,0 +1,17 @@
+K 25
+svn:wc:ra_dav:version-url
+V 100
+/ocsvn/openrisc/!svn/ver/786/openrisc/trunk/rtos/ecos-3.0/packages/io/usb/serial/slave/current/tests
+END
+usbserial_echo.c
+K 25
+svn:wc:ra_dav:version-url
+V 117
+/ocsvn/openrisc/!svn/ver/786/openrisc/trunk/rtos/ecos-3.0/packages/io/usb/serial/slave/current/tests/usbserial_echo.c
+END
+usb2serial.c
+K 25
+svn:wc:ra_dav:version-url
+V 113
+/ocsvn/openrisc/!svn/ver/786/openrisc/trunk/rtos/ecos-3.0/packages/io/usb/serial/slave/current/tests/usb2serial.c
+END
