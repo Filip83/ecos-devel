@@ -69,6 +69,15 @@
 
 #include <cyg/kernel/kapi.h>
 
+#if CYGFUN_DEVS_USB_UC3C_STLIB_SUPPORT != 0
+    #define WM_ON_USB_PLUG					0x02000000
+    #define WM_ON_USB_UNPLUG				0x04000000
+
+    #ifndef BOOT_LOADER
+    extern int queue_put(unsigned int msg, unsigned int lparam, unsigned int rparam);
+    #endif
+#endif
+
 #define USB_DEVICE_MAX_EP 6
 #define UDD_NO_SLEEP_MGR
 #define USB_DEVICE_EP_CTRL_SIZE 8
@@ -1684,6 +1693,18 @@ usbs_uc3c_dsr (cyg_vector_t vector, cyg_ucount32 count, cyg_addrword_t data)
 		
         if (which_dsr&DSR_USB_VBUS)
         {
+            #if CYGFUN_DEVS_USB_UC3C_STLIB_SUPPORT != 0
+            #ifndef BOOT_LOADER
+            if(!Is_otg_vbus_high())
+	    {
+                queue_put(WM_ON_USB_UNPLUG,0,0);
+	    }
+            else
+	    {
+                queue_put(WM_ON_USB_PLUG,0,0);
+	    }
+            #endif
+            #endif
 	    usbs_uc3c_ep0.state = USBS_STATE_POWERED;
             usbs_state_notify (&usbs_uc3c_ep0);
             which_dsr &= ~DSR_USB_VBUS;

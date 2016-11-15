@@ -82,8 +82,8 @@
 static Cyg_WallClock wallclock_instance CYGBLD_ATTRIB_INIT_PRI( CYG_INIT_DEV_WALLCLOCK );
 
 #ifndef CYGSEM_WALLCLOCK_SET_GET_MODE
-static cyg_uint32 epoch_ticks;
-static cyg_uint32 epoch_time_stamp;
+static cyg_uint64 epoch_ticks;
+static cyg_uint64 epoch_time_stamp;
 #endif
 
 static cyg_drv_mutex_t wallclock_lock;
@@ -111,9 +111,9 @@ Cyg_WallClock::Cyg_WallClock()
 // This may involve reading the hardware, so it may take anything up to
 // a second to complete.
 
-cyg_uint32 Cyg_WallClock::get_current_time()
+cyg_uint64 Cyg_WallClock::get_current_time()
 {
-    cyg_uint32 res;
+    cyg_uint64 res;
 
     while (!cyg_drv_mutex_lock(&wallclock_lock));
 
@@ -132,7 +132,7 @@ cyg_uint32 Cyg_WallClock::get_current_time()
 // Sets the clock. Argument is seconds elapsed since 1970-01-01 00:00:00.
 // This may involve reading or writing to the hardware, so it may take
 // anything up to a second to complete.
-void Cyg_WallClock::set_current_time( cyg_uint32 time_stamp )
+void Cyg_WallClock::set_current_time( cyg_uint64 time_stamp )
 {
     while (!cyg_drv_mutex_lock(&wallclock_lock));
 

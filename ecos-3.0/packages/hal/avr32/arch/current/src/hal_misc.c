@@ -67,7 +67,6 @@
 
 #include CYGHWR_MEMORY_LAYOUT_H
 
-#define SLEEP(sleep_mode)  {__asm__ __volatile__ ("sleep "STRINGZ(sleep_mode));}
 
 
 /*------------------------------------------------------------------------*/

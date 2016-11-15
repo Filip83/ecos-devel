@@ -153,7 +153,7 @@ static /*const*/ cyg_flash_block_info_t cyg_flash_avr32_block_info[1] =
 {
     {
          AVR32_FLASHC_PAGE_SIZE,
-        (AVR32_FLASHC_FLASH_SIZE - 0x73800)/AVR32_FLASHC_PAGE_SIZE
+        (AVR32_FLASHC_FLASH_SIZE /*- 0x73800*/)/AVR32_FLASHC_PAGE_SIZE
     }
 };
 
@@ -168,8 +168,8 @@ static /*const*/ cyg_flash_block_info_t cyg_flash_user_avr32_block_info[1] =
 CYG_FLASH_DRIVER(cyg_flash_avr32_flashdev,
                  &cyg_avr32_flash_funs,
                  0,                     // Flags
-                 /*0x80000000,*/   0x80073800,         // Start
-                 0x80000000 + (AVR32_FLASHC_FLASH_SIZE) - 1,    // End
+                 CYGPKG_DEVS_FLASH_AVR32_UC3C_START,         // Start
+                 CYGPKG_DEVS_FLASH_AVR32_UC3C_END - 1,    // End
                  1,                     // Number of block infos
                  cyg_flash_avr32_block_info,
                  NULL                   // priv

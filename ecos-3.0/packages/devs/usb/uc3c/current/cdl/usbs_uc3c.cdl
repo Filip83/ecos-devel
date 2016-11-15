@@ -63,14 +63,22 @@ cdl_package CYGPKG_DEVS_USB_UC3C {
         call from the host...
         The endpoints 1..3 can be configured as bulk or interrupt
         IN or OUT endpoint. Isochronous transfer is not supported."
+        
+    cdl_component CYGFUN_DEVS_USB_UC3C_STLIB_SUPPORT {
+        display       "Enable StLib USB messages"
+        flavor        bool
+        default_value 0
 
+        description   "
+            Enable support for StLib to send messages
+            about USB state change."
+    }
+    
     cdl_component CYGFUN_DEVS_USB_UC3C_EP0 {
         display       "Support the control endpoint 0"
         flavor        bool
         default_value CYGINT_IO_USB_SLAVE_CLIENTS
         requires      CYGPKG_IO_USB CYGPKG_IO_USB_SLAVE
-
-
 
         implements CYGHWR_IO_USB_SLAVE_OUT_ENDPOINTS
         implements CYGHWR_IO_USB_SLAVE_IN_ENDPOINTS

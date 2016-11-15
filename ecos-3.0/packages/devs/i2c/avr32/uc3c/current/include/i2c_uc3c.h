@@ -41,7 +41,7 @@
 //==========================================================================
 //#####DESCRIPTIONBEGIN####
 //
-// Author(s):     Filip
+// Author(s):     Filip Adamec
 // Contributors:
 // Date:          2012-11-15
 // Description:   I2C driver for AVR32UC3C
@@ -58,6 +58,8 @@
 #include <cyg/hal/drv_api.h>
 
 
+
+
 //==========================================================================
 // Single I2C bus sepecififc data
 //==========================================================================
@@ -68,12 +70,26 @@ typedef struct cyg_avr32_i2c_extra {
     cyg_uint32       i2c_isrpri;
     cyg_uint32       i2c_pclk;    // peripheral clock of
     cyg_uint32       i2c_bus_freq;// I2C bus frequency (e.g. 100 kHz, 400 kHz)
+
     cyg_uint32       i2c_addr;
     cyg_uint32       i2c_count;
     const cyg_uint8* i2c_txbuf;
     cyg_uint8*       i2c_rxbuf;
     cyg_bool         i2c_rxnak;
+    
+    cyg_uint32       i2c_naddr;
+    cyg_uint32       i2c_ncount;
+    const cyg_uint8* i2c_ntxbuf;
+    cyg_uint8*       i2c_nrxbuf;
+    cyg_bool         i2c_nrxnak;
+    
+    cyg_uint32       i2c_ier;
+    
     cyg_uint32       i2c_flag;
+    cyg_bool         i2c_chained;
+    cyg_bool         i2c_first;
+
+
     cyg_drv_mutex_t  i2c_lock; // For synchronizing between DSR and foreground
     cyg_drv_cond_t   i2c_wait;
     cyg_handle_t     i2c_interrupt_handle;// For initializing the interrupt
@@ -108,7 +124,12 @@ externC void        cyg_avr32_i2c_stop(const cyg_i2c_device*);
   i2c_count    :  0,                                                    \
   i2c_txbuf    :  NULL,                                                 \
   i2c_rxbuf    :  NULL,                                                 \
-  i2c_flag     :  0                                                     \
+  i2c_ncount   :  0,                                                    \
+  i2c_ntxbuf   :  NULL,                                                 \
+  i2c_nrxbuf   :  NULL,                                                 \
+  i2c_flag     :  0,                                                    \
+  i2c_chained  :  0,                                                    \
+  i2c_first    :  0                                                     \
   } ;                                                                   \
   CYG_I2C_BUS(_name_,                                                   \
               _init_fn_,                                                \

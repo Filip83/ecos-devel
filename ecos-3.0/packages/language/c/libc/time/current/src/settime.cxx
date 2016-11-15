@@ -82,7 +82,7 @@ cyg_libc_time_settime( time_t utctime )
 
 #ifdef CYGSEM_LIBC_TIME_SETTIME_WORKING
 
-    Cyg_WallClock::wallclock->set_current_time((cyg_uint32) utctime);
+    Cyg_WallClock::wallclock->set_current_time((cyg_uint64) utctime);
     
     CYG_REPORT_RETVAL(false);
     return false;

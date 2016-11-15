@@ -113,168 +113,30 @@
                  ( CYGNUM_HAL_EXCEPTION_MAX - CYGNUM_HAL_EXCEPTION_MIN + 1 )
 
 #ifndef CYGHWR_HAL_INTERRUPT_VECTORS_DEFINED
-#define CYGHWR_HAL_INTERRUPT_VECTORS_DEFINED
-#define CYGNUM_HAL_VECTOR_SYSTEM_TIMER          0x00
-#define CYGNUM_HAL_VECTOR_OCD_DIRTY             0x20
-#define CYGNUM_HAL_VECTOR_OCD_READ              0x21
-#define CYGNUM_HAL_VECTOR_SAU                   0x40
-
-#define CYGNUM_HAL_VECTOR_PDMA_CH0              0x60
-#define CYGNUM_HAL_VECTOR_PDMA_CH1          	0x61
-#define CYGNUM_HAL_VECTOR_PDMA_CH2          	0x62
-#define CYGNUM_HAL_VECTOR_PDMA_CH3          	0x63
-
-#define CYGNUM_HAL_VECTOR_PDMA_CH4          	0x80
-#define CYGNUM_HAL_VECTOR_PDMA_CH5          	0x81
-#define CYGNUM_HAL_VECTOR_PDMA_CH6          	0x82
-#define CYGNUM_HAL_VECTOR_PDMA_CH7          	0x83
-
-#define CYGNUM_HAL_VECTOR_PDMA_CH8          	0xa0
-#define CYGNUM_HAL_VECTOR_PDMA_CH9          	0xa1
-#define CYGNUM_HAL_VECTOR_PDMA_CH10         	0xa2
-#define CYGNUM_HAL_VECTOR_PDMA_CH11         	0xa3
-
-#define CYGNUM_HAL_VECTOR_PDMA_CH12         	0xc0
-#define CYGNUM_HAL_VECTOR_PDMA_CH13         	0xc1
-#define CYGNUM_HAL_VECTOR_PDMA_CH14         	0xc2
-#define CYGNUM_HAL_VECTOR_PDMA_CH15         	0xc3
-
-#define CYGNUM_HAL_VECTOR_MDMA              	0xe0
-
-#define CYGNUM_HAL_VECTOR_USB                	0x100
-
-#define CYGNUM_HAL_VECTOR_CAN_BOFF_0		0x120
-#define CYGNUM_HAL_VECTOR_CAN_ERROR_0		0x121
-#define CYGNUM_HAL_VECTOR_CAN_RXOK_0		0x122
-#define CYGNUM_HAL_VECTOR_CAN_TXOK_0		0x123
-#define CYGNUM_HAL_VECTOR_CAN_WAKEUP_0		0x124
-#define CYGNUM_HAL_VECTOR_CAN_BOFF_1		0x125
-#define CYGNUM_HAL_VECTOR_CAN_ERROR_1		0x126
-#define CYGNUM_HAL_VECTOR_CAN_RXOK_1		0x127
-#define CYGNUM_HAL_VECTOR_CAN_TXOK_1		0x128
-#define CYGNUM_HAL_VECTOR_CAN_WAKEUPU_1		0x129
-
-#define CYGNUM_HAL_VECTOR_FLASH         	0x140
-
-#define CYGNUM_HAL_VECTOR_SDRAM         	0x160
-
-#define CYGNUM_HAL_VECTOR_PMC           	0x180
-
-#define CYGNUM_HAL_VECTOR_SCIF           	0x1a0
-
-#define CYGNUM_HAL_VECTOR_AST_ALARM        	0x1c0
-#define CYGNUM_HAL_VECTOR_AST_CLKREDY      	0x1c1
-#define CYGNUM_HAL_VECTOR_AST_OVF       	0x1c2
-#define CYGNUM_HAL_VECTOR_AST_PER        	0x1c3
-#define CYGNUM_HAL_VECTOR_AST_READY        	0x1c4
-
-
-#define CYGNUM_HAL_VECTOR_EIC_1         	0x1e0
-#define CYGNUM_HAL_VECTOR_EIC_2         	0x1e1
-#define CYGNUM_HAL_VECTOR_EIC_3         	0x1e2
-#define CYGNUM_HAL_VECTOR_EIC_4         	0x1e3
-
-#define CYGNUM_HAL_VECTOR_EIC_5         	0x200
-#define CYGNUM_HAL_VECTOR_EIC_6         	0x201
-#define CYGNUM_HAL_VECTOR_EIC_7         	0x202
-#define CYGNUM_HAL_VECTOR_EIC_8         	0x203
-
-#define CYGNUM_HAL_VECTOR_FREQM         	0x220
-
-#define CYGNUM_HAL_VECTOR_GPIO_0        	0x240
-#define CYGNUM_HAL_VECTOR_GPIO_1        	0x241
-#define CYGNUM_HAL_VECTOR_GPIO_2        	0x242
-#define CYGNUM_HAL_VECTOR_GPIO_3        	0x243
-#define CYGNUM_HAL_VECTOR_GPIO_4        	0x244
-#define CYGNUM_HAL_VECTOR_GPIO_5        	0x245
-#define CYGNUM_HAL_VECTOR_GPIO_6        	0x246
-#define CYGNUM_HAL_VECTOR_GPIO_7        	0x247
-#define CYGNUM_HAL_VECTOR_GPIO_8        	0x248
-#define CYGNUM_HAL_VECTOR_GPIO_9        	0x249
-#define CYGNUM_HAL_VECTOR_GPIO_10        	0x24a
-#define CYGNUM_HAL_VECTOR_GPIO_11       	0x24b
-#define CYGNUM_HAL_VECTOR_GPIO_12        	0x24c
-#define CYGNUM_HAL_VECTOR_GPIO_13        	0x24d
-#define CYGNUM_HAL_VECTOR_GPIO_14        	0x24e
-#define CYGNUM_HAL_VECTOR_GPIO_15        	0x24f
-
-
-#define CYGNUM_HAL_VECTOR_USART0        	0x260
-#define CYGNUM_HAL_VECTOR_USART1        	0x280
-#define CYGNUM_HAL_VECTOR_USART2        	0x2a0
-#define CYGNUM_HAL_VECTOR_USART3        	0x2c0
-
-#define CYGNUM_HAL_VECTOR_SPI0          	0x2e0
-#define CYGNUM_HAL_VECTOR_SPI1          	0x300
-
-#define CYGNUM_HAL_VECTOR_TWIM0          	0x320
-#define CYGNUM_HAL_VECTOR_TWIM1          	0x340
-
-#define CYGNUM_HAL_VECTOR_TWIS0          	0x360
-#define CYGNUM_HAL_VECTOR_TWIS1          	0x380
-
-#define CYGNUM_HAL_VECTOR_IISC          	0x3a0
-
-#define CYGNUM_HAL_VECTOR_PWM           	0x3c0
-
-#define CYGNUM_HAL_VECTOR_QDEC0          	0x3e0
-#define CYGNUM_HAL_VECTOR_QDEC1          	0x400
-
-#define CYGNUM_HAL_VECTOR_TC00          	0x420
-#define CYGNUM_HAL_VECTOR_TC01          	0x421
-#define CYGNUM_HAL_VECTOR_TC02          	0x422
-
-#define CYGNUM_HAL_VECTOR_TC10          	0x440
-#define CYGNUM_HAL_VECTOR_TC11          	0x441
-#define CYGNUM_HAL_VECTOR_TC12          	0x442
-
-#define CYGNUM_HAL_VECTOR_PEVC_TR          	0x460
-#define CYGNUM_HAL_VECTOR_PEVC_OV          	0x461
-
-
-#define CYGNUM_HAL_VECTOR_ADCIF_SEQ0       	0x480
-#define CYGNUM_HAL_VECTOR_ADCIF_SEQ1       	0x481
-#define CYGNUM_HAL_VECTOR_ADCIF_SUTD      	0x482
-#define CYGNUM_HAL_VECTOR_ADCIF_WINDOW     	0x483
-#define CYGNUM_HAL_VECTOR_ADCIF_AWAKEUP    	0x484
-#define CYGNUM_HAL_VECTOR_ADCIF_PENDET     	0x485
-
-
-#define CYGNUM_HAL_VECTOR_ACIFA0        	0x4a0
-#define CYGNUM_HAL_VECTOR_ACIFA1        	0x4c0
-
-#define CYGNUM_HAL_VECTOR_DACIFB0_CHB_UNDERRUN  0x4e0
-#define CYGNUM_HAL_VECTOR_DACIFB0_CHB_OVERRUN   0x4e1
-#define CYGNUM_HAL_VECTOR_DACIFB0_CHB_EMPTY     0x4e2
-#define CYGNUM_HAL_VECTOR_DACIFB0_CHA_UNDERRUN  0x4e3
-#define CYGNUM_HAL_VECTOR_DACIFB0_CHA_OVERRUN   0x4e4
-#define CYGNUM_HAL_VECTOR_DACIFB0_CHA_EMPTY     0x4e5
-
-
-#define CYGNUM_HAL_VECTOR_DACIFB1_CHA_EMPTY     0x500
-#define CYGNUM_HAL_VECTOR_DACIFB1_CHA_OVERRUN   0x501
-#define CYGNUM_HAL_VECTOR_DACIFB1_CHA_UNDERRUN  0x502
-#define CYGNUM_HAL_VECTOR_DACIFB1_CHB_EMPTY     0x503
-#define CYGNUM_HAL_VECTOR_DACIFB1_CHB_OVERRUN   0x504
-#define CYGNUM_HAL_VECTOR_DACIFB1_CHB_UNDERRUN  0x505
-
-#define CYGNUM_HAL_VECTOR_AW                    0x520
-
-#define CYGNUM_HAL_VECTOR_MACB                  0x540
-
-#define CYGNUM_HAL_VECTOR_USART4                0x560
-
-#define CYGNUM_HAL_VECTOR_TWIM2                 0x580
-#define CYGNUM_HAL_VECTOR_TWIS2                 0x5a0
-
-// The interrupt vector used by the RTC, aka tick timer
-#define CYGNUM_HAL_INTERRUPT_RTC                CYGNUM_HAL_VECTOR_SYSTEM_TIMER
-
-// Min/Max ISR numbers and how many there are
-#define CYGNUM_HAL_ISR_MIN                      0
-#define CYGNUM_HAL_ISR_MAX                      CYGNUM_HAL_VECTOR_TWIS2
-#define CYGNUM_HAL_ISR_COUNT                    33
-
+    #if  (defined(__AVR32_UC256L3U__) || \
+          defined(__AVR32_UC128L3U__) || \
+          defined(__AVR32_UC64L3U__) || \
+          defined(__AVR32_UC256L4U__) || \
+          defined(__AVR32_UC128L4U__) || \
+          defined(__AVR32_UC64L4U__))    
+    #include <cyg/hal/avr32_L3U_L4U_ISR_Vectors.h>
+    #elif (defined(__AVR32_UC3C0512C__)  || \
+           defined(__AVR32_UC3C0256C__)  || \
+           defined(__AVR32_UC3C0128C__)  || \
+           defined(__AVR32_UC3C064C__ )  || \
+           defined(__AVR32_UC3C1512C__)  || \
+           defined(__AVR32_UC3C1256C__)  || \
+           defined(__AVR32_UC3C1128C__)  || \
+           defined(__AVR32_UC3C164C__)   || \
+           defined(__AVR32_UC3C2512C__)  || \
+           defined(__AVR32_UC3C2256C__)  || \
+           defined(__AVR32_UC3C2128C__)  || \
+           defined(__AVR32_UC3C264C__ ))    
+    #include <cyg/hal/avr32_uc3c_ISR_Vectors.h>
+    #else
+    #error "Unsupported arhitecture. Missing ISR vectors."
+    #endif
+              
 #endif
 
 #ifndef __ASSEMBLER__
@@ -292,8 +154,8 @@
 #define AVR32_INTC_MAX_NUM_IRQS_PER_GRP      32
 
 //! Number of interrupt priority levels.
-#define AVR32_INTC_NUM_INT_LEVELS   \                       
-                            (1 << AVR32_INTC_IPR_INTLEVEL_SIZE)2
+#define AVR32_INTC_NUM_INT_LEVELS   \
+        (1 << AVR32_INTC_IPR_INTLEVEL_SIZE)
 
 /**
  * \internal

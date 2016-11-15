@@ -1,0 +1,145 @@
+# ====================================================================
+#
+#      f2bfs.cdl
+#
+#      F2BFS Filesystem configuration data
+#
+# ====================================================================
+## ####ECOSGPLCOPYRIGHTBEGIN####
+## -------------------------------------------
+## This file is part of eCos, the Embedded Configurable Operating System.
+## Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2009 Free Software Foundation, Inc.
+##
+## eCos is free software; you can redistribute it and/or modify it under
+## the terms of the GNU General Public License as published by the Free
+## Software Foundation; either version 2 or (at your option) any later
+## version.
+##
+## eCos is distributed in the hope that it will be useful, but WITHOUT
+## ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+## FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+## for more details.
+##
+## You should have received a copy of the GNU General Public License
+## along with eCos; if not, write to the Free Software Foundation, Inc.,
+## 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+##
+## As a special exception, if other files instantiate templates or use
+## macros or inline functions from this file, or you compile this file
+## and link it with other works to produce a work based on this file,
+## this file does not by itself cause the resulting work to be covered by
+## the GNU General Public License. However the source code for this file
+## must still be made available in accordance with section (3) of the GNU
+## General Public License v2.
+##
+## This exception does not invalidate any other reasons why a work based
+## on this file might be covered by the GNU General Public License.
+## -------------------------------------------
+## ####ECOSGPLCOPYRIGHTEND####
+# ====================================================================
+######DESCRIPTIONBEGIN####
+#
+# Author(s):      Filip
+# Contributors:
+# Date:           2013-11-14
+#
+#####DESCRIPTIONEND####
+#
+# ====================================================================
+
+cdl_package CYGPKG_FS_F2BFS {
+    display         "Simple flash block filesystem"
+    include_dir     cyg/fs
+
+    parent          CYGPKG_IO_FILEIO
+    requires        CYGPKG_IO_FILEIO
+
+    requires        CYGPKG_ISOINFRA
+    requires        CYGINT_ISO_ERRNO
+    requires        CYGINT_ISO_ERRNO_CODES
+    requires        CYGPKG_MEMALLOC
+    requires        CYGPKG_CRC
+    requires        CYGSEM_FILEIO_INFO_DISK_USAGE
+
+    implements      CYGINT_IO_FILEIO_FS
+
+    compile         -library=libextras.a block.c    \
+                                         node.c     \
+                                         f2bfs.c    \
+                                         f2bfsck.c
+
+
+    cdl_option      CYGNUM_F2BFS_BLOCKS_DIRECT {
+        display         "Maximum number of direct blocks"
+        flavor          data
+        default_value   4
+        legal_values    1 to 8
+        description     "This option controls the maximum number of direct
+                         blocks of file."
+    }
+
+    cdl_option      CYGNUM_F2BFS_BLOCKS_INDIRECT1 {
+        display         "Maximum number of first indirect blocks"
+        flavor          data
+        default_value   4
+        legal_values    0 to 8
+        description     "This option controls the nuber of first
+                         indirect blocks."
+    }
+    
+    cdl_option      CYGNUM_F2BFS_BLOCK_SIZE {
+        display         "Seize of the flash and fram block"
+        flavor          data
+        default_value   4096
+        legal_values    512 to 16192
+        description     "This option specifie the size of the 
+                         filesystem block size. This size must be
+                         set to flash errase block size."
+    }
+    
+    cdl_option      CYGNUM_F2BFS_LOG_BLOCK_SIZE {
+        display         "Logartmic seize of the flash and fram block"
+        flavor          data
+        default_value   12
+        legal_values    1 to 32
+        description     "This option specifie the logratmic size of the 
+                         filesystem block size. This size must be
+                         set to flash errase block size."
+    }
+    
+    cdl_option      CYGNUM_F2BFS_DIRENT_NAME_SIZE {
+        display         "File name maxumum length"
+        flavor          data
+        default_value   20
+        legal_values    8 to 64
+        description     "This option controls the maximum size of the
+                         file name item."
+    }
+    
+    cdl_option      CYGNUM_F2BFS_FRAM_SIZE {
+        display         "Seize of the fram in bits"
+        flavor          data
+        default_value   262144
+        description     "This option specifie the size of the 
+                         used FRAM memory."
+    }
+    
+    cdl_option      CYGNUM_F2BFS_FLASH_SIZE {
+        display         "Seize of the flash in bits"
+        flavor          data
+        default_value   134217728
+        description     "This option specifie the size of the 
+                         used FLASH memory."
+    }
+    
+    cdl_option      CYGNUM_F2BFS_FIRST_BLOCK_ADDRESS {
+        display         "Adress of th first block of fram flash"
+        flavor          data
+        default_value   0x20000000
+        description     "The address int flash adress space
+                         of the first block in fram and flash."
+    }
+}
+
+# ====================================================================
+# End of fbfs.cdl

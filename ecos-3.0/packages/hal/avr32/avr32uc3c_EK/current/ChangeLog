@@ -1,3 +1,7 @@
+2016-05-12  Filip  <filip.gnu@gmail.com>
+  
+        gpio.h added extern C
+ 
 2014-04-29  Filip  <filip.gnu@gmail.com>
 
         Initial port of eCos to AVR32 architecture

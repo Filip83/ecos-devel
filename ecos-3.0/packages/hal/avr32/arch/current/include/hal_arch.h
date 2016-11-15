@@ -63,6 +63,12 @@
 #include <pkgconf/hal.h>
 #include <cyg/infra/cyg_type.h>
 
+//-------------------------------------------------------------------------
+// Processor selap macro
+#include <cyg/hal/utils/compiler.h>
+
+#define SLEEP(sleep_mode)  {__asm__ __volatile__ ("sleep "STRINGZ(sleep_mode));}
+
 //--------------------------------------------------------------------------
 // Processor saved states:
 // The layout of this structure is also defined in "arch.inc", for assembly

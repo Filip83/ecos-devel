@@ -66,7 +66,7 @@ static cyg_int32 days_per_month[2][12] = {
 };
 
 #ifndef time_t
-#define time_t cyg_uint32
+#define time_t cyg_uint64
 #endif
 
 static time_t

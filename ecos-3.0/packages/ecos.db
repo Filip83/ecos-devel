@@ -333,6 +333,15 @@ package CYGPKG_DEVS_FLASH_AVR32_UC3C {
 	   on the AVR32UC3C platform."
 }
 
+package CYGPKG_DEVS_FLASH_AVR32_CDW {
+	alias 		{ "Support for flash memory on AVR32 FLSHCDW" flash_avr32_uc3c }
+	directory	devs/flash/avr32/cdw
+	script		flash_avr32_cdw.cdl
+	hardware
+        description "
+           This package contains hardware support for flashcdw memory
+	   on the AVR32 platform."
+}
 
 package CYGPKG_DEVS_FLASH_ARM_E7T {
     alias       { "FLASH memory support for the ARM Evaluator-7T" flash_e7t }
@@ -1206,6 +1215,15 @@ package CYGPKG_IO_SERIAL_AVR32_UC3C {
     hardware
     directory	      devs/serial/avr32/uc3c
     script	      ser_avr32.cdl	
+    description       "Atmel AVR32UC3C on-chip serial device driver."
+}
+
+package CYGPKG_IO_EHCI_SERIAL_AVR32_UC3C {
+    alias 	      { "Atmel AVR32UC3C ehci serial device driver"
+                        devs_serial_avr32_uc3c avr32_serial_driver }
+    hardware
+    directory	      devs/ehci/avr32/uc3c
+    script	      avr32_ehci_serial.cdl	
     description       "Atmel AVR32UC3C on-chip serial device driver."
 }
 
@@ -2553,6 +2571,22 @@ package CYGPKG_DEVS_SPI_ISR_AVR32_UC3C {
     description   "Atmel AVR32 on-chip spi device driver ISR."
 }
 
+package CYGPKG_DEVS_USART_SPI_AVR32_UC3C {
+    alias         { "Atmel AVR32 USART SPI device driver" }
+    hardware
+    directory     devs/spi/avr32/uc3c_usart
+    script        usart_spi_avr32.cdl
+    description   "Atmel AVR32 on-chip USART SPI device driver."
+}
+
+package CYGPKG_DEVS_DMA_USART_SPI_AVR32_UC3C {
+    alias         { "Atmel AVR32 USART SPI DMA device driver" }
+    hardware
+    directory     devs/spi/avr32/uc3c_dma_usart
+    script        dma_usart_spi_avr32.cdl
+    description   "Atmel AVR32 on-chip USART SPI DMA device driver."
+}
+
 package CYGPKG_DEVS_SPI_ARM_EB55 {
     alias         { "Atmel AT91EB55 SPI devices" devs_spi_arm_eb55 spi_eb55_devices }
     hardware
@@ -2760,6 +2794,14 @@ package CYGPKG_COMPRESS_ZLIB {
         script          compress_zlib.cdl
         description "
 This package provides zlib compression and decompression support."
+}
+
+package CYGPKG_NMEA_LIB {
+        alias           { "NMEA" nemalib libnmea nmea }
+        directory       services/nmea
+        script          nmea_lib.cdl
+        description "
+	This package provides NMEA parser support."
 }
 
 package CYGPKG_POWER {
@@ -6714,6 +6756,91 @@ target AVR32UC3CEK {
 }
 
 # --------------------------------------------------------------------------
+
+package CYGPKG_HAL_AVR32_CPUCM  {
+	alias		{ "AVR32_UC3C0512 Platform " hal_cpucm cpucm_hal }
+	directory	hal/avr32/cpucm
+	script		hal_avr32_cpucm.cdl
+	hardware
+	description "
+	   The CPUCM board package should be 
+	   used with compilant simulators or hardware. "
+}
+
+target CPUCM {
+	alias 		{ "CPUCM board" uc3c }
+	packages { 
+            CYGPKG_HAL_AVR32
+            CYGPKG_HAL_AVR32_CPUCM 
+            CYGPKG_IO_SERIAL_AVR32_UC3C
+            CYGPKG_IO_FLASH
+            CYGPKG_DEVICES_WALLCLOCK_AVR32_AST_PCF2129A
+            CYGPKG_IO_I2C
+            CYGPKG_CRC
+            CYGPKG_DEVS_I2C_AVR32_UC3C
+            CYGPKG_DEVS_FLASH_SPI_N25QXX
+            CYGPKG_DEVS_FLASH_SPI_FM25VXX
+            CYGPKG_DEVS_FLASH_AVR32_UC3C
+            CYGPKG_IO_SPI
+            CYGPKG_DEVS_SPI_ISR_AVR32_UC3C
+            CYGPKG_DEVS_USART_SPI_AVR32_UC3C
+            CYGPKG_DEVS_DMA_USART_SPI_AVR32_UC3C
+            CYGPKG_IO
+            CYGPKG_IO_FILEIO
+            CYGPKG_FS_F2BFS
+            CYGPKG_IO_ADC
+            CYGPKG_DEVS_ADC_AVR32_UC3C
+            CYGPKG_IO_USB_SLAVE_SERIAL
+            CYGPKG_IO_USB
+            CYGPKG_IO_USB_SLAVE
+            CYGPKG_DEVS_USB_UC3C
+                          
+	}
+	description "
+	   None."
+}
+
+# --------------------------------------------------------------------------
+
+package CYGPKG_HAL_AVR32_KM_8  {
+	alias		{ "AVR32_UC3C0512 Platform " hal_cpucm cpucm_hal }
+	directory	hal/avr32/km-8
+	script		hal_avr32_km_8.cdl
+	hardware
+	description "
+	   The KM-8 board package should be 
+	   used with compilant simulators or hardware. "
+}
+
+target KM_8 {
+	alias 		{ "KM-8 board" uc3c }
+	packages { 
+            CYGPKG_HAL_AVR32
+            CYGPKG_HAL_AVR32_KM_8 
+            CYGPKG_IO_EHCI_SERIAL_AVR32_UC3C
+            CYGPKG_IO_FLASH
+            CYGPKG_DEVICES_WALLCLOCK_AVR32_AST
+            CYGPKG_CRC
+            CYGPKG_DEVS_FLASH_SPI_FM25VXX
+            CYGPKG_DEVS_FLASH_AVR32_CDW
+            CYGPKG_IO_SPI
+            CYGPKG_DEVS_SPI_ISR_AVR32_UC3C
+            CYGPKG_DEVS_USART_SPI_AVR32_UC3C
+            CYGPKG_IO
+            CYGPKG_IO_FILEIO
+            CYGPKG_IO_ADC
+            CYGPKG_DEVS_ADC_AVR32_ADCIFB
+            CYGPKG_IO_USB_SLAVE_SERIAL
+            CYGPKG_IO_USB
+            CYGPKG_IO_USB_SLAVE
+            CYGPKG_DEVS_USB_UC3C
+                          
+	}
+	description "
+	   None."
+}
+
+# --------------------------------------------------------------------------
 package CYGPKG_DEVS_FLASH_UE250 {
 	alias 		{ "FLASH memory support for uE250" flash_uE250 }
 	directory	devs/flash/arm/uE250
@@ -7174,12 +7301,12 @@ package CYGPKG_FS_FFFS {
         This package contains a FFFS filesystem implementation."
 }
 
-package CYGPKG_FS_FBFS {
-    alias       { "FBFS Filesystem" fbfs fb_fs fs_fb }
-    directory   fs/fbfs
-    script      fbfs.cdl
+package CYGPKG_FS_F2BFS {
+    alias       { "FBFS Filesystem" f2bfs f2b_fs }
+    directory   fs/f2bfs
+    script      f2bfs.cdl
     description "
-        This package contains a FBFS filesystem implementation."
+        This package contains a F2BFS filesystem implementation."
 }
 
 
@@ -7366,6 +7493,16 @@ package CYGPKG_DEVS_ADC_AVR32_UC3C {
     script        adc_uc3c.cdl
     description "
     This package provides a driver for the ADC interfaces found on the
+    ATM AVR32 microcontroller family."
+}
+
+package CYGPKG_DEVS_ADC_AVR32_ADCIFB {
+    alias         { "AVR32 ADCIFB driver" adc_avr32 }
+    hardware
+    directory     devs/adc/avr32/adcifb
+    script        adc_adcifb.cdl
+    description "
+    This package provides a driver for the ADCIFB interfaces found on the
     ATM AVR32 microcontroller family."
 }
 

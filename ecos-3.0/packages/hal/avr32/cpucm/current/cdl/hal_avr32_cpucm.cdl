@@ -1,0 +1,773 @@
+# ====================================================================
+#
+#      hal_avr32_km_8.cdl
+#
+#      AVR32 Platform HAL package configuration data
+#
+# ====================================================================
+## ####ECOSGPLCOPYRIGHTBEGIN####                                            
+## -------------------------------------------                              
+## This file is part of eCos, the Embedded Configurable Operating System.   
+## Copyright (C) 1998, 1999, 2000, 2001, 2002 Free Software Foundation, Inc.
+##
+## eCos is free software; you can redistribute it and/or modify it under    
+## the terms of the GNU General Public License as published by the Free     
+## Software Foundation; either version 2 or (at your option) any later      
+## version.                                                                 
+##
+## eCos is distributed in the hope that it will be useful, but WITHOUT      
+## ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or    
+## FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License    
+## for more details.                                                        
+##
+## You should have received a copy of the GNU General Public License        
+## along with eCos; if not, write to the Free Software Foundation, Inc.,    
+## 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.            
+##
+## As a special exception, if other files instantiate templates or use      
+## macros or inline functions from this file, or you compile this file      
+## and link it with other works to produce a work based on this file,       
+## this file does not by itself cause the resulting work to be covered by   
+## the GNU General Public License. However the source code for this file    
+## must still be made available in accordance with section (3) of the GNU   
+## General Public License v2.                                               
+##
+## This exception does not invalidate any other reasons why a work based    
+## on this file might be covered by the GNU General Public License.         
+## -------------------------------------------                              
+## ####ECOSGPLCOPYRIGHTEND####                                              
+# ====================================================================
+######DESCRIPTIONBEGIN####
+#
+# Author(s):      Filip
+# Original data:  sfurman
+# Contributors:
+# Date:           2016-05-09
+#
+#####DESCRIPTIONEND####
+#
+# ====================================================================
+
+cdl_package CYGPKG_HAL_AVR32_CPUCM {
+    display  "CPUCM board"
+    parent        CYGPKG_HAL_AVR32
+    include_dir   cyg/hal
+    hardware
+    description   "
+           The AVR32 HAL package should be used when targetting the
+           AVR32 Platform."
+
+    compile       hal_diag.c hal_aux.c gpio.c sdramc.c smc.c board_config.c
+
+    implements    CYGINT_HAL_VIRTUAL_VECTOR_SUPPORT
+    implements    CYGINT_HAL_VIRTUAL_VECTOR_COMM_BAUD_SUPPORT
+
+    define_proc {
+        puts $::cdl_system_header "#define CYGBLD_HAL_TARGET_H   <pkgconf/hal_avr32.h>"
+        puts $::cdl_system_header "#define CYGBLD_HAL_PLATFORM_H <pkgconf/hal_avr32_cpucm.h>"
+        puts $::cdl_system_header "#define CYGBLD_HAL_BOARD_H    <cyg/hal/board_config.h>"
+        puts $::cdl_system_header "#define CYGHWR_MEMORY_LAYOUT_H <pkgconf/mlt_avr32_uc3c.h>"
+        puts $::cdl_system_header "#define CYGHWR_MEMORY_LAYOUT_LDI <pkgconf/mlt_avr32_uc3c.ldi>"
+    }
+
+     cdl_component CYGHWR_MEMORY_LAYOUT {
+        display "Memory layout"
+        flavor none
+    }
+
+    # Real-time clock/counter specifics
+    cdl_component CYGNUM_HAL_RTC_CONSTANTS {
+        display       "Real-time clock constants."
+        flavor        none
+
+        cdl_option CYGNUM_HAL_RTC_NUMERATOR {
+            display       "Real-time clock numerator(Not realy used)"
+            flavor        data
+            default_value 1000000000
+        }
+        cdl_option CYGNUM_HAL_RTC_DENOMINATOR {
+            display       "Real-time clock denominator"
+            flavor        data
+            default_value 100
+        }
+        cdl_option CYGNUM_HAL_RTC_PERIOD {
+            display       "Real-time clock period"
+            flavor        data
+            default_value {CYGHWR_HAL_AVR32_CPU_FREQ * 1000000 / CYGNUM_HAL_RTC_DENOMINATOR}
+            description   "
+                The tick timer facility is used
+                to drive the eCos kernel RTC. The count register
+                increments at the CPU clock speed.  By default, 100 Hz"
+        }
+    }
+
+   # CPU clk specifics
+    cdl_component CYGNUM_HAL_CLOCK_CONSTANTS {
+        display       "CPU clock constants."
+        flavor        none
+
+        cdl_option CYGNUM_HAL_MAIN_CLOCK_SOURCE {
+            display       "Select main clock source"
+            flavor        data
+            legal_values  { "OSC0" "OSC1" "PLL0" "PLL1" "RC120M" "RC8M"}
+            default_value { "RC120M"}
+        }
+        cdl_option CYGNUM_HAL_CPU_CLOCK_DIVIDER {
+            display       "CPU clock divider 2^(value + 1)"
+            flavor        booldata
+            legal_values  0 to 8
+            default_value 0
+        }
+
+	cdl_option CYGNUM_HAL_PBA_CLOCK_DIVIDER {
+            display       "PBA domain clock divider 2^(value + 1)"
+            flavor        booldata
+            legal_values  0 to 8
+            default_value 0
+        }
+
+	cdl_option CYGNUM_HAL_PBB_CLOCK_DIVIDER {
+            display       "PBB domain clock divider 2^(value + 1)"
+            flavor        booldata
+            legal_values  0 to 8
+            default_value 0
+        }
+
+	cdl_option CYGNUM_HAL_PBC_CLOCK_DIVIDER {
+            display       "PBC domain clock divider 2^(value + 1)"
+            flavor        booldata
+            legal_values  0 to 8
+            default_value 0
+        }
+
+    }
+
+    # SDRAM
+    cdl_component CYGNUM_HAL_SDRAM_CONSTANTS {
+        display       "SDRAM constants."
+        flavor        none
+
+        cdl_option CYGNUM_HAL_SDRAM_ENABLED {
+            display       "Enable SDRAM"
+            flavor        bool
+            default_value 0
+            active_if     !CYGNUM_HAL_SMC_NCS1_ENABLED
+        }
+		
+        cdl_option CYGNUM_HAL_SDRAM_BANK_BITS {
+            display       "The number of bank bits for this SDRAM"
+            flavor        data
+            default_value 2
+            legal_values 1 to 2
+        }
+
+        cdl_option CYGNUM_HAL_SDRAM_ROW_BITS {
+            display       "The number of row bits for this SDRAM"
+            flavor        data
+            default_value 13
+            legal_values 11 to 13
+        }
+
+        cdl_option CYGNUM_HAL_SDRAM_COL_BITS {
+            display       "The number of column bits for this SDRAM"
+            flavor        data
+            default_value 9
+            legal_values 8 to 11
+        }
+
+        cdl_option CYGNUM_HAL_SDRAM_CAS {
+            display       "The minimal column address select (READ) latency for this SDRAM (tCK)"
+            flavor        data
+            default_value 2
+            legal_values 1 to 3
+        }
+
+        cdl_option CYGNUM_HAL_SDRAM_TWR {
+            display       "The minimal write recovery time for this SDRAM (ns)"
+            flavor        data
+            legal_values 0 to 1000
+            default_value 14
+        }
+
+        cdl_option CYGNUM_HAL_SDRAM_TRC {
+            display       "The minimal row cycle time for this SDRAM (ns)"
+            flavor        data
+            legal_values 0 to 1000
+            default_value 60
+        }
+
+        cdl_option CYGNUM_HAL_SDRAM_TRP {
+            display       "The minimal row precharge time for this SDRAM (ns)"
+            flavor        data
+            legal_values 0 to 1000
+            default_value 15
+        }
+
+        cdl_option CYGNUM_HAL_SDRAM_TRCD {
+            display       "The minimal row to column delay time for this SDRAM (ns)"
+            flavor        data
+            legal_values 0 to 1000
+            default_value 15
+        }
+        
+        cdl_option CYGNUM_HAL_SDRAM_TRAS {
+            display       "The minimal row address select time for this SDRAM  (ns)"
+            flavor        data
+            legal_values 0 to 1000
+            default_value 37
+        }
+
+        cdl_option CYGNUM_HAL_SDRAM_TXSR {
+            display       "The minimal exit self refresh time for this SDRAM (ns)"
+            flavor        data
+            legal_values 0 to 1000
+            default_value 67
+        }
+
+        cdl_option CYGNUM_HAL_SDRAM_TR {
+            display       "The maximal refresh time for this SDRAM (ns)"
+            flavor        data
+            legal_values 0 to 100000
+            default_value 7812
+        }
+
+        cdl_option CYGNUM_HAL_SDRAM_TRFC {
+            display       "The minimal refresh cycle time for this SDRAM (ns)"
+            flavor        data
+            legal_values 0 to 1000
+            default_value 66
+        }
+
+        cdl_option CYGNUM_HAL_SDRAM_TMRD {
+            display       "The minimal mode register delay time for this SDRAM (tCK)"
+            flavor        data
+            legal_values 0 to 1000
+            default_value 2
+        }
+
+        cdl_option CYGNUM_HAL_SDRAM_STABLE_CLOCK_INIT_DELAY {
+            display       "The minimal stable-clock initialization delay for this SDRAM (us)"
+            flavor        data
+            legal_values 0 to 100000
+            default_value 100
+        }
+
+        cdl_option CYGNUM_HAL_SDRAM_INIT_AUTO_REFRESH_COUNT {
+            display       "The minimal number of AUTO REFRESH commands required during initialization for this SDRAM"
+            flavor        data
+            legal_values 0 to 10
+            default_value 2
+        }
+    }
+    
+    # SMC
+    cdl_component CYGNUM_HAL_SMC_CONSTANTS {
+        display       "SMC constants."
+        flavor        none
+        
+        cdl_component CYGNUM_HAL_SMC_NCS0_CONSTANTS {
+        display       "NCS0 constants."
+        flavor        none
+
+            cdl_option CYGNUM_HAL_SMC_NCS0_ENABLED {
+                display       "Enable SMC NCS0"
+                flavor        bool
+                default_value 0
+            }
+
+            cdl_option CYGNUM_HAL_SMC_NCS0_CFG_H {
+                display       "SMC NC0 configuration header"
+                flavor        data
+                default_value { "<cyg/hal/smc_ncs0_cfg.h>" }
+            }                      
+        }
+
+        cdl_component CYGNUM_HAL_SMC_NCS1_CONSTANTS {
+        display       "NCS1 constants."
+        flavor        none
+
+            cdl_option CYGNUM_HAL_SMC_NCS1_ENABLED {
+                display       "Enable SMC NCS1"
+                flavor        bool
+                default_value 0
+                active_if     !CYGNUM_HAL_SDRAM_ENABLED
+            }
+
+            cdl_option CYGNUM_HAL_SMC_NCS1_CFG_H {
+                display       "SMC NC1 configuration header"
+                flavor        data
+                default_value { "<cyg/hal/smc_ncs1_cfg.h>" }
+            }   
+        }
+
+        cdl_component CYGNUM_HAL_SMC_NCS2_CONSTANTS {
+        display       "NCS2 constants."
+        flavor        none
+
+            cdl_option CYGNUM_HAL_SMC_NCS2_ENABLED {
+                display       "Enable SMC NCS2"
+                flavor        bool
+                default_value 0
+            }
+
+            cdl_option CYGNUM_HAL_SMC_NCS2_CFG_H {
+                display       "SMC NC2 configuration header"
+                flavor        data
+                default_value { "<cyg/hal/smc_ncs2_cfg.h>" }
+            }   
+        }
+
+        cdl_component CYGNUM_HAL_SMC_NCS3_CONSTANTS {
+        display       "NCS3 constants."
+        flavor        none
+
+            cdl_option CYGNUM_HAL_SMC_NCS3_ENABLED {
+                display       "Enable SMC NCS3"
+                flavor        bool
+                default_value 0
+            }
+
+            cdl_option CYGNUM_HAL_SMC_NCS3_CFG_H {
+                display       "SMC NC3 configuration header"
+                flavor        data
+                default_value { "<cyg/hal/smc_ncs3_cfg.h>" }
+            }   
+        }
+
+        cdl_component CYGNUM_HAL_SMC_NCS4_CONSTANTS {
+        display       "NCS4 constants."
+        flavor        none
+
+            cdl_option CYGNUM_HAL_SMC_NCS4_ENABLED {
+                display       "Enable SMC NCS4"
+                flavor        bool
+                default_value 0
+            }
+
+            cdl_option CYGNUM_HAL_SMC_NCS4_CFG_H {
+                display       "SMC NCS4 configuration header"
+                flavor        data
+                default_value { "<cyg/hal/smc_ncs4_cfg.h>" }
+            }   
+        }
+
+        cdl_component CYGNUM_HAL_SMC_NCS5_CONSTANTS {
+        display       "NCS5 constants."
+        flavor        none
+
+            cdl_option CYGNUM_HAL_SMC_NCS5_ENABLED {
+                display       "Enable SMC NCS5"
+                flavor        bool
+                default_value 0
+            }
+
+            cdl_option CYGNUM_HAL_SMC_NCS5_CFG_H {
+                display       "SMC NCS5 configuration header"
+                flavor        data
+                default_value { "<cyg/hal/smc_ncs5_cfg.h>" }
+            }   
+        }
+            
+
+    }
+    # CPU oscilators specifics
+    cdl_component CYGNUM_HAL_OSCILATORS_CONSTANTS {
+        display       "Oscilators constants."
+        flavor        none
+
+	cdl_component CYGNUM_HAL_OSCILATORS_OSC0_CONSTRAINS {
+            display       "Oscilator 0 settings"
+            flavor        none
+            
+		cdl_option CYGNUM_HAL_OSCILATORS_OSC0_ENABLED {
+		    display       "Enable osciloator 0"
+		    flavor        bool
+		    default_value 1
+		}
+		
+		cdl_option CYGNUM_HAL_OSCILATORS_OSC0_FREQV {
+		    display       "Osciloator 0 frequency MHz"
+		    flavor        data
+		    default_value 16
+		    active_if  CYGNUM_HAL_OSCILATORS_OSC0_ENABLED
+		}
+
+
+		cdl_option CYGNUM_HAL_OSCILATORS_OSC0_AGC_ENABLE {
+		    display       "Osciloator 0 AGC enable"
+		    flavor        bool
+		    default_value 1
+		    active_if  CYGNUM_HAL_OSCILATORS_OSC0_ENABLED
+		}
+
+		cdl_option CYGNUM_HAL_OSCILATORS_OSC0_CRYSTAL {
+		    display       "Osciloator 0 crystal."
+		    flavor        bool
+		    default_value 1
+		    active_if  CYGNUM_HAL_OSCILATORS_OSC0_ENABLED
+		}
+
+		cdl_option CYGNUM_HAL_OSCILATORS_OSC0_EXTERNAL_STARTUP_TIME {
+		    display       "Osciloator 0 external source startup time"
+		    flavor        data
+		    legal_values  0 to 14
+		    default_value 14
+		    active_if CYGNUM_HAL_OSCILATORS_OSC0_EXTERNAL
+		}
+		
+	}
+
+	#-------------
+	cdl_component CYGNUM_HAL_OSCILATORS_OSC1_CONSTRAINS {
+            display       "Oscilator 1 settings"
+            flavor        none
+            
+		cdl_option CYGNUM_HAL_OSCILATORS_OSC1_ENABLED {
+		    display       "Enable osciloator 1"
+		    flavor        bool
+		    default_value 0
+		}
+		
+		cdl_option CYGNUM_HAL_OSCILATORS_OSC1_AGC_ENABLE {
+		    display       "Osciloator 1 AGC enable"
+		    flavor        bool
+		    default_value 1
+		    active_if  CYGNUM_HAL_OSCILATORS_OSC1_ENABLED
+		}
+
+		cdl_option CYGNUM_HAL_OSCILATORS_OSC1_FREQV {
+		    display       "Osciloator 0 frequency MHz"
+		    flavor        data
+		    default_value 8
+		    active_if  CYGNUM_HAL_OSCILATORS_OSC1_ENABLED
+		}
+
+		cdl_option CYGNUM_HAL_OSCILATORS_OSC1_CRYSTAL {
+		    display       "Osciloator 1 external source"
+		    flavor        bool
+		    default_value 0
+		    active_if  CYGNUM_HAL_OSCILATORS_OSC1_ENABLED
+		}
+
+		cdl_option CYGNUM_HAL_OSCILATORS_OSC1_EXTERNAL_STARTUP_TIME {
+		    display       "Osciloator 1 external source startup time"
+		    flavor        data
+		    legal_values  0 to 14
+		    default_value 14
+		    active_if CYGNUM_HAL_OSCILATORS_OSC1_EXTERNAL
+		}
+		
+	}
+	#-------------
+	cdl_component CYGNUM_HAL_OSCILATORS_OSC32K_CONSTRAINS {
+            display       "32kHz oscilator settings"
+            flavor        none
+            
+		cdl_option CYGNUM_HAL_OSCILATORS_OSC32K_ENABLED {
+		    display       "Enable 32kHz osciloator"
+		    flavor        bool
+		    default_value 1
+		}
+		
+
+		cdl_option CYGNUM_HAL_OSCILATORS_OSC32K_EXTERNAL {
+		    display       "32kHz oscilator use external source"
+		    flavor        bool
+		    default_value 0
+		    active_if  CYGNUM_HAL_OSCILATORS_OSC32K_ENABLED
+		}
+
+		cdl_option CYGNUM_HAL_OSCILATORS_OSC32K_MODE {
+		    display       "32kHz oscilator normal I-current mode"
+		    flavor        bool
+		    default_value 1
+		    active_if  !CYGNUM_HAL_OSCILATORS_OSC32K_EXTERNAL
+		}
+
+		cdl_option CYGNUM_HAL_OSCILATORS_OSC32K_EXTERNAL_STARTUP_TIME {
+		    display       "Osciloator 1 external source startup time"
+		    flavor        data
+		    legal_values  0 to 7
+		    default_value 4
+		    active_if CYGNUM_HAL_OSCILATORS_OSC32K_EXTERNAL
+		}
+	}		
+
+	#-------------
+	cdl_component CYGNUM_HAL_OSCILATORS_RC120M_CONSTRAINS {
+            display       "120MHz oscilator settings"
+            flavor        none
+            
+		cdl_option CYGNUM_HAL_OSCILATORS_RC120M_ENABLED {
+		    display       "Enable 120MHz internal rc osciloator"
+		    flavor        bool
+		    default_value 1
+		}
+	}	
+
+	#-------------
+	cdl_component CYGNUM_HAL_OSCILATORS_RC8M_CONSTRAINS {
+            display       "8MHz oscilator settings"
+            flavor        none
+            
+		cdl_option CYGNUM_HAL_OSCILATORS_RC8M_ENABLED {
+		    display       "Enable 8MHz internal rc osciloator"
+		    flavor        bool
+		    default_value 0
+		}
+		
+	}	
+
+	#-------------
+	cdl_component CYGNUM_HAL_OSCILATORS_PLL0_CONSTRAINS {
+            display       "PLL0 settings"
+            flavor        none
+            
+		cdl_option CYGNUM_HAL_OSCILATORS_PLL0_ENABLED {
+		    display       "Enable PLL0"
+		    flavor        bool
+		    default_value 1
+		}
+
+		cdl_option CYGNUM_HAL_OSCILATORS_PLL0_SOURCE {
+		    display       "Select PLL0 clock source"
+		    flavor        data
+		    legal_values  { "OSC0" "OSC1" "RC8M"}
+		    default_value { "OSC0"}
+		}
+		
+		cdl_option CYGNUM_HAL_OSCILATORS_PLL0_DIVIDER {
+		    display       "PLL0 divider"
+		    flavor        data
+		    legal_values 0 to 15
+		    default_value 2
+		}
+		
+		cdl_option CYGNUM_HAL_OSCILATORS_PLL0_MULTIPLIER {
+		    display       "PLL0 multiplier"
+		    flavor        data
+		    legal_values 0 to 15
+		    default_value 5
+		}
+
+
+		cdl_option CYGNUM_HAL_OSCILATORS_PLL0_START_COUNT {
+		    display       "PLL0 count ???"
+		    flavor        data
+		    legal_values 0 to 63
+		    default_value 10
+		}
+
+		cdl_option CYGNUM_HAL_OSCILATORS_PLL0_VCO_FREQ {
+		    display       "PLL0 VCO frequency range"
+		    flavor        bool
+		    default_value 0
+		}
+		
+		cdl_option CYGNUM_HAL_OSCILATORS_PLL0_OUTPUT_DIVIDER {
+		    display       "Enable additional output divder (2)"
+		    flavor        bool
+		    default_value 0
+		}
+
+		cdl_option CYGNUM_HAL_OSCILATORS_PLL0_BANDWIDTH_MODE {
+		    display       "Dsable wide bandwidth mode"
+		    flavor        bool
+		    default_value 0
+		}
+	}
+
+
+	#-------------
+	cdl_component CYGNUM_HAL_OSCILATORS_PLL1_CONSTRAINS {
+            display       "PLL1 settings"
+            flavor        none
+            
+		cdl_option CYGNUM_HAL_OSCILATORS_PLL1_ENABLED {
+		    display       "Enable PLL1"
+		    flavor        bool
+		    default_value 0
+		}
+
+		cdl_option CYGNUM_HAL_OSCILATORS_PLL1_SOURCE {
+		    display       "Select PLL1 clock source"
+		    flavor        data
+		    legal_values  { "OSC0" "OSC1" "RC8M"}
+		    default_value { "OSC0"}
+		}
+		
+		cdl_option CYGNUM_HAL_OSCILATORS_PLL1_DIVIDER {
+		    display       "PLL0 divider"
+		    flavor        data
+		    legal_values 0 to 15
+		    default_value 0
+		}
+		
+		cdl_option CYGNUM_HAL_OSCILATORS_PLL1_MULTIPLIER {
+		    display       "PLL0 multiplier"
+		    flavor        data
+		    legal_values 0 to 15
+		    default_value 0
+		}
+
+
+		cdl_option CYGNUM_HAL_OSCILATORS_PLL1_START_COUNT {
+		    display       "PLL1 count ???"
+		    flavor        data
+		    legal_values 0 to 63
+		    default_value 0
+		}
+
+		cdl_option CYGNUM_HAL_OSCILATORS_PLL1_VCO_FREQ {
+		    display       "PLL1 VCO frequency range"
+		    flavor        bool
+		    default_value 0
+		}
+		
+		cdl_option CYGNUM_HAL_OSCILATORS_PLL1_OUTPUT_DIVIDER {
+		    display       "Enable additional output divder (2)"
+		    flavor        bool
+		    default_value 0
+		}
+
+		cdl_option CYGNUM_HAL_OSCILATORS_PLL1_BANDWIDTH_MODE {
+		    display       "Dsable wide bandwidth mode"
+		    flavor        bool
+		    default_value 0
+		}
+	}
+    }
+
+    cdl_component CYGBLD_GLOBAL_OPTIONS {
+        display "Global build options"
+        flavor  none
+        description   "
+            Global build options including control over
+            compiler flags, linker flags and choice of toolchain."
+
+
+        parent  CYGPKG_NONE
+
+        cdl_option CYGBLD_GLOBAL_COMMAND_PREFIX {
+            display "Global command prefix"
+            flavor  data
+            no_define
+            default_value { "avr32" }
+            description "
+                This option specifies the command prefix used when
+                invoking the build tools."
+        }
+
+        cdl_option CYGBLD_GLOBAL_CFLAGS {
+            display "Global compiler flags"
+            flavor  data
+            no_define
+            default_value { CYGBLD_GLOBAL_WARNFLAGS .
+                            "-mpart=uc3c0512c -g -O2 -ffunction-sections -fdata-sections -fno-rtti -fno-exceptions "
+            }
+            description   "
+                This option controls the global compiler flags which
+                are used to compile all packages by
+                default. Individual packages may define
+                options which override these global flags."
+        }
+
+        cdl_option CYGBLD_GLOBAL_LDFLAGS {
+            display "Global linker flags"
+            flavor  data
+            no_define
+            default_value { "-mpart=uc3c0512c -Wl,--gc-sections -Wl,-static -g -nostdlib"  }
+            description   "
+                This option controls the global linker flags. Individual
+                packages may define options which override these global flags."
+        }
+    }
+
+    cdl_option CYGHWR_HAL_AVR32_CPU_FREQ {
+        display "CPU frequency"
+        flavor  data
+        legal_values 0.0001 to 66.0000
+        default_value 23.9616
+        description "
+           This option contains the frequency of the CPU in MegaHertz.
+           Choose the frequency to match the processor you have. This
+           may affect thing like serial device, interval clock and
+           memory access speed settings."
+    }
+
+    cdl_option CYGHWR_RAM_SIZE {
+        display       "Size of RAM memory"
+        flavor        data
+        default_value 0x10000
+        description   "
+            Size of RAM memory. This value is used to generate linker script.
+            Not used yet."
+    }
+
+    cdl_option CYGHWR_ROM_SIZE {
+        display       "Size of ROM memory"
+        flavor        data
+        default_value 0x80000
+        description   "
+            Size of ROM memory. This value is used to generate linker script.
+            Not used yet."
+    }
+
+    cdl_option CYGNUM_HAL_VIRTUAL_VECTOR_CONSOLE_CHANNEL_BAUD {
+        display       "Diagnostic serial port baud rate"
+        flavor        data
+        legal_values  9600 19200 38400 57600 115200 230400
+        default_value 57600
+        description   "
+            This option selects the baud rate used for the diagnostic console.
+            Note: this should match the value chosen for the GDB port if the
+            diagnostic and GDB port are the same.
+            Note: very high baud rates are useful during simulation."
+    }
+
+    cdl_option CYGNUM_HAL_VIRTUAL_VECTOR_DEBUG_CHANNEL_BAUD {
+        display       "GDB serial port baud rate"
+        flavor        data
+        legal_values  9600 19200 38400 57600 115200 230400
+        default_value 57600
+        description   "
+            This option controls the baud rate used for the GDB connection.
+            Note: very high baud rates are useful during simulation."
+    }
+
+    cdl_option CYGNUM_HAL_VIRTUAL_VECTOR_COMM_CHANNELS {
+        display      "Number of communication channels on the board"
+        flavor       data
+        default_value  5
+    }
+
+    cdl_option CYGNUM_HAL_VIRTUAL_VECTOR_DEBUG_CHANNEL {
+        display          "Debug serial port"
+        active_if        CYGPRI_HAL_VIRTUAL_VECTOR_DEBUG_CHANNEL_CONFIGURABLE
+        flavor data
+        legal_values     0 to CYGNUM_HAL_VIRTUAL_VECTOR_COMM_CHANNELS-1
+        default_value    0
+        description      "
+           The ORP platform has at least one serial port, but it can potentially have several.
+           This option chooses which port will be used to connect to a host
+           running GDB."
+    }
+ 
+     cdl_option CYGNUM_HAL_VIRTUAL_VECTOR_CONSOLE_CHANNEL {
+        display          "Diagnostic serial port"
+        active_if        CYGPRI_HAL_VIRTUAL_VECTOR_CONSOLE_CHANNEL_CONFIGURABLE
+        flavor data
+        legal_values     0 to CYGNUM_HAL_VIRTUAL_VECTOR_COMM_CHANNELS-1
+        default_value    2
+        description      "
+           The ORP platform has at least one serial port, but it can potentially have several.
+           This option chooses which port will be used for diagnostic output."
+     }
+
+    define_proc {
+        puts $cdl_header "#define CYGHWR_HAL_VSR_TABLE    0"
+        puts $cdl_header "#define CYGHWR_HAL_VIRTUAL_VECTOR_TABLE 0xF00"
+    }
+}
+
+# EOF hal_avr32_uc3c.cdl

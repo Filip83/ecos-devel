@@ -77,7 +77,7 @@
  * Epoch (00:00:00 GMT, 1970-01-01), but don't rely on this - always use
  * the type opaquely
  */
-typedef long time_t;
+typedef long long time_t;
 
 /* Additional POSIX-derived types. Not the ideal place as these should
  * also be defined in <sys/types.h>, along with time_t but that will
@@ -103,7 +103,7 @@ typedef long useconds_t;
 
 /* Define clock_t as per ISO C para 7.12.1 */
 
-typedef long clock_t;
+typedef long long clock_t;
 #  define __clock_t_defined
 #endif
 

@@ -54,7 +54,6 @@
 # include <pkgconf/system.h>
 # include <cyg/infra/cyg_type.h>
 # include <cyg/io/usb/usb.h>
-#include <cyg/io/usb/cdc.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -125,7 +124,6 @@ extern "C" {
 // may be supported via configury with the default case remaining
 // a single language, thus avoiding incompatibility problems.
     
-#if 0  
 typedef struct usbs_enumeration_data {
     usb_device_descriptor               device;
     int                                 total_number_interfaces;
@@ -136,22 +134,6 @@ typedef struct usbs_enumeration_data {
     const usb_endpoint_descriptor*      endpoints;
     const unsigned char**               strings;
 } usbs_enumeration_data;
-#else
-typedef struct usbs_enumeration_data {
-    usb_device_descriptor                              device;
-    int                                                total_number_interfaces;
-    int                                                total_number_endpoints;
-    int                                                total_number_strings;
-    const usb_configuration_descriptor*                configurations;
-    const usb_interface_descriptor*                    interfaces;
-    const usb_cdc_header_func_descriptor*              header;
-    const usb_cdc_abstract_ctrl_mgmnt_func_descriptor* abstract_ctrl;
-    const usb_cdc_union_func_descriptor*               union_descr;
-    const usb_cdc_call_mgmnt_func_descriptor*          call_mgmt;
-    const usb_endpoint_descriptor*                     endpoints;
-    const unsigned char**                              strings;
-}usbs_enumeration_data;
-#endif
     
 // The current state of a USB device. This involves a bit to mark
 // whether or not the device has been suspended, plus a state machine.

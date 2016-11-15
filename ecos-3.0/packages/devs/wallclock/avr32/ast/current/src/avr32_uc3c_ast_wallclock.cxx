@@ -65,11 +65,7 @@
 #define HW_ERROR_OSC32_NOT_RUNNING			0x0000000000000004
 
 externC cyg_uint64 _hw_error;
-
-externC void
-set_pcf_hwclock(cyg_uint32 year, cyg_uint32 month, cyg_uint32 mday,
-               cyg_uint32 hour, cyg_uint32 minute, cyg_uint32 second);
-               
+           
                
 int ast_is_busy(volatile avr32_ast_t *ast)
 {
@@ -103,10 +99,15 @@ Cyg_WallClock::init_hw_seconds(void)
             return;
         }
       }
-      
+      //TODOO: Make it smarter
+#ifdef AVR32_AST_CLOCK_CSSEL_32_KHZ_CLOCK
       AVR32_AST.clock = 
            (AVR32_AST_CLOCK_CSSEL_32_KHZ_CLOCK << AVR32_AST_CLOCK_CSSEL_OFFSET);
-
+#endif
+#ifdef AVR32_AST_CLOCK_CSSEL_32KHZCLK
+      AVR32_AST.clock = 
+           (AVR32_AST_CLOCK_CSSEL_32KHZCLK << AVR32_AST_CLOCK_CSSEL_OFFSET);
+#endif
       wait_loop = 50000;
       while((AVR32_AST.sr & AVR32_AST_SR_CLKBUSY_MASK))
       {
@@ -141,22 +142,21 @@ Cyg_WallClock::init_hw_seconds(void)
   
 }
 
-cyg_uint32
+cyg_uint64
 Cyg_WallClock::get_hw_seconds(void)
 {
-  cyg_uint32 naw;
+  cyg_uint64 naw;
   //and get new time
   naw = AVR32_AST.calv;
+  // The AST time counter counts time from 1.1.2010 00:00
+  naw += _simple_mktime(2010,1,1,0,0,0);
   return naw;
 }
 
 #ifdef CYGSEM_WALLCLOCK_SET_GET_MODE
 void
-Cyg_WallClock::set_hw_seconds(cyg_uint32 secs)
+Cyg_WallClock::set_hw_seconds(cyg_uint64 secs)
 {
-
-  cyg_uint32 year, month, mday, hour, minute, second;
-
   /* halt clock, reset counter */
   while((AVR32_AST.sr & AVR32_AST_SR_BUSY_MASK))
   {
@@ -165,18 +165,16 @@ Cyg_WallClock::set_hw_seconds(cyg_uint32 secs)
   //reset rtc prescaler
   AVR32_AST.cr |= AVR32_AST_CR_PCLR_MASK;
 
-   //and set new time
-  _simple_mkdate(secs, &year, &month, &mday, &hour, &minute, &second);
-  set_pcf_hwclock(year, month, mday, hour, minute, second);
+
   
   while((AVR32_AST.sr & AVR32_AST_SR_BUSY_MASK))
   {
   }
  
-  AVR32_AST.cv = secs;
+  AVR32_AST.cv = (cyg_uint32)(secs - _simple_mktime(2010,1,1,0,0,0));
 
 }
 #endif // CYGSEM_WALLCLOCK_SET_GET_MODE
 
 //==========================================================================
-// EOF lpc2xxx_wallclock.cxx
+// EOF avr32_uc3c_ast_wallclock.cxx

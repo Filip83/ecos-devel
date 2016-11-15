@@ -70,12 +70,12 @@ public:
     // Returns the number of seconds elapsed since 1970-01-01 00:00:00.
     // This may involve reading the hardware, so it may take anything
     // up to a second to complete.
-    cyg_uint32 get_current_time();
+    cyg_uint64 get_current_time();
 
     // Sets the clock. Argument is seconds elapsed since 1970-01-01 00:00:00.
     // This may involve writing to the hardware, so it may take
     // anything up to a second to complete.
-    void set_current_time( cyg_uint32 time_stamp );
+    void set_current_time( cyg_uint64 time_stamp );
 
     // A static pointer to the single system defined wall clock device.
     static Cyg_WallClock *wallclock;
@@ -99,11 +99,11 @@ private:
 
     // Returns the number of seconds elapsed since 1970-01-01 00:00:00.
     // (or any desired epoch when in init-get mode)
-    cyg_uint32 get_hw_seconds( void );
+    cyg_uint64 get_hw_seconds( void );
 
 #ifdef CYGSEM_WALLCLOCK_SET_GET_MODE
     // Sets the clock. Argument is seconds elapsed since 1970-01-01 00:00:00.
-    void set_hw_seconds( cyg_uint32 secs );
+    void set_hw_seconds( cyg_uint64 secs );
 #endif
 };
 

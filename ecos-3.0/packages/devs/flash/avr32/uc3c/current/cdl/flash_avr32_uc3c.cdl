@@ -59,4 +59,22 @@ cdl_package CYGPKG_DEVS_FLASH_AVR32_UC3C {
     compile     flash_avr32_uc3c.c
     include_dir .
 
+    cdl_option CYGPKG_DEVS_FLASH_AVR32_UC3C_START {
+         display "FLASH region start address"
+         flavor  data
+         default_value 0x80000000
+         description   "
+             This option specifies the start address of internal FLASH
+             memory to access with this driver."
+    }
+
+    cdl_option CYGPKG_DEVS_FLASH_AVR32_UC3C_END {
+         display "FLASH region end address"
+         flavor  data
+         default_value 0x80008000
+         description   "
+             This option specifies the end address of internal FLASH
+             memory to access with this driver."
+    }
+
 }

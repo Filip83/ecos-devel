@@ -69,6 +69,7 @@
 #include <cyg/infra/cyg_type.h>
 #include <cyg/infra/cyg_ass.h>
 #include <cyg/hal/pdca.h>
+#include <cyg/hal/board_config.h>
 
 externC void * memcpy( void *, const void *, size_t );
 
@@ -412,7 +413,7 @@ DEVTAB_ENTRY(avr32_serial_io3,
     );
 #endif //  CYGPKG_IO_SERIAL_AVR32_SERIAL3
 
-#ifdef CYGPKG_IO_SERIAL_AVR32_SERIAL4
+#if defined(CYGPKG_IO_SERIAL_AVR32_SERIAL4) && defined(CYGNUM_HAL_VECTOR_USART4)
 #ifdef CYGINT_IO_SERIAL_BLOCK_TRANSFER
 static cyg_uint8 avr32_serial_rcv_buffer_4
     [2][RCYGNUM_IO_SERIAL_AVR32_SERIAL4_PING_PONG_BUFSIZE];
@@ -495,69 +496,110 @@ avr32_serial_config_port(serial_channel *chan, cyg_serial_info_t *new_config, bo
     if(usart_addr == AVR32_USART0_ADDRESS)
     {
 #ifdef CYGPKG_IO_SERIAL_AVR32_SERIAL0
-        gpio_enable_module_pin(CYG_DEVS_USART0_RXD_PIN, CYG_DEVS_USART0_RXD_FUNCTION);
-        gpio_enable_module_pin(CYG_DEVS_USART0_TXD_PIN, CYG_DEVS_USART0_TXD_FUNCTION);
-        gpio_enable_pin_pull_up(CYG_DEVS_USART0_TXD_PIN);
+#if CYG_HAL_USART0_TXD_ENABLED == PIN_ENABLE
+        gpio_enable_module_pin(CYG_HAL_USART0_TXD_PIN,
+                CYG_HAL_USART0_TXD_FUNCTION);
+#endif
+#if CYG_HAL_USART0_RXD_ENABLED == PIN_ENABLE
+        gpio_enable_module_pin(CYG_HAL_USART0_RXD_PIN, 
+                CYG_HAL_USART0_RXD_FUNCTION);
+#endif
     #ifdef CYGNUM_IO_SERIAL_AVR32_SERIAL0_FLOW_CONTROL
-        gpio_enable_module_pin(CYG_DEVS_USART0_RTS_PIN, CYG_DEVS_USART0_RTS_FUNCTION);
-        gpio_enable_module_pin(CYG_DEVS_USART0_CTS_PIN, CYG_DEVS_USART0_CTS_FUNCTION);
+        gpio_enable_module_pin(CYG_DEVS_USART0_RTS_PIN, 
+                CYG_DEVS_USART0_RTS_FUNCTION);
+        gpio_enable_module_pin(CYG_DEVS_USART0_CTS_PIN, 
+                CYG_DEVS_USART0_CTS_FUNCTION);
     #endif
 #endif
     }else if(usart_addr == AVR32_USART1_ADDRESS)		
     {
 #ifdef CYGPKG_IO_SERIAL_AVR32_SERIAL1
-        gpio_enable_module_pin(AVR32_USART1_TXD_PIN, AVR32_USART1_TXD_FUNCTION);
-        gpio_enable_module_pin(AVR32_USART1_RXD_PIN, AVR32_USART1_RXD_FUNCTION);
-        //gpio_enable_pin_pull_up(AVR32_USART1_TXD_PIN);
+#if CYG_HAL_USART1_TXD_ENABLED == PIN_ENABLE
+        gpio_enable_module_pin(CYG_HAL_USART1_TXD_PIN,
+                CYG_HAL_USART1_TXD_FUNCTION);
+#endif
+#if CYG_HAL_USART1_RXD_ENABLED == PIN_ENABLE
+        gpio_enable_module_pin(CYG_HAL_USART1_RXD_PIN, 
+                CYG_HAL_USART1_RXD_FUNCTION);
+#endif
     #ifdef  CYGNUM_IO_SERIAL_AVR32_SERIAL1_MODEM_MODE
-        gpio_enable_module_pin(AVR32_USART1_DTR_PIN, AVR32_USART1_DTR_FUNCTION);
-        gpio_enable_module_pin(AVR32_USART1_DSR_PIN, AVR32_USART1_DSR_FUNCTION);
-        gpio_enable_module_pin(AVR32_USART1_DCD_PIN, AVR32_USART1_DCD_FUNCTION);
-        gpio_enable_module_pin(AVR32_USART1_RI_PIN,  AVR32_USART1_RI_FUNCTION);
+        gpio_enable_module_pin(CYG_HAL_AVR32_USART1_DTR_PIN,
+                CYG_HAL_AVR32_USART1_DTR_FUNCTION);
+        gpio_enable_module_pin(CYG_HAL_AVR32_USART1_DSR_PIN, 
+                CYG_HAL_AVR32_USART1_DSR_FUNCTION);
+        gpio_enable_module_pin(CYG_HAL_AVR32_USART1_DCD_PIN,
+                CYG_HAL_AVR32_USART1_DCD_FUNCTION);
+        gpio_enable_module_pin(CYG_HAL_AVR32_USART1_RI_PIN,  
+                CYG_HAL_AVR32_USART1_RI_FUNCTION);
      #endif
      #if defined(CYGNUM_IO_SERIAL_AVR32_SERIAL1_FLOW_CONTROL) || \
          defined(CYGNUM_IO_SERIAL_AVR32_SERIAL1_MODEM_MODE)
-        gpio_enable_module_pin(AVR32_USART1_RTS_PIN, AVR32_USART1_RTS_FUNCTION);
-        gpio_enable_module_pin(AVR32_USART1_CTS_PIN, AVR32_USART1_CTS_FUNCTION);
+        gpio_enable_module_pin(CYG_HAL_AVR32_USART1_RTS_PIN, 
+                CYG_HAL_AVR32_USART1_RTS_FUNCTION);
+        gpio_enable_module_pin(CYG_HAL_AVR32_USART1_CTS_PIN, 
+                CYG_HAL_AVR32_USART1_CTS_FUNCTION);
      #endif
 #endif
     }		
     else if(usart_addr == AVR32_USART2_ADDRESS)
     {
 #ifdef CYGPKG_IO_SERIAL_AVR32_SERIAL2
-        gpio_enable_module_pin(AVR32_USART2_RXD_1_PIN, AVR32_USART2_RXD_1_FUNCTION);
-	gpio_enable_module_pin(AVR32_USART2_TXD_1_PIN, AVR32_USART2_TXD_1_FUNCTION);
-        //gpio_enable_pin_pull_up(CYG_DEVS_USART2_TXD_PIN);
+#if CYG_HAL_USART2_TXD_ENABLED == PIN_ENABLE
+        gpio_enable_module_pin(CYG_HAL_USART2_TXD_PIN,
+                CYG_HAL_USART2_TXD_FUNCTION);
+#endif
+#if CYG_HAL_USART2_RXD_ENABLED == PIN_ENABLE
+        gpio_enable_module_pin(CYG_HAL_USART2_RXD_PIN, 
+                CYG_HAL_USART2_RXD_FUNCTION);
+#endif
     #ifdef CYGNUM_IO_SERIAL_AVR32_SERIAL2_FLOW_CONTROL
-        gpio_enable_module_pin(CYG_DEVS_USART2_RTS_PIN, CYG_DEVS_USART2_RTS_FUNCTION);
-        gpio_enable_module_pin(CYG_DEVS_USART2_CTS_PIN, CYG_DEVS_USART2_CTS_FUNCTION);
+        gpio_enable_module_pin(CYG_DEVS_USART2_RTS_PIN, 
+                CYG_DEVS_USART2_RTS_FUNCTION);
+        gpio_enable_module_pin(CYG_DEVS_USART2_CTS_PIN, 
+                CYG_DEVS_USART2_CTS_FUNCTION);
     #endif
 #endif
     }	
     else if(usart_addr == AVR32_USART3_ADDRESS)
     {
 #ifdef CYGPKG_IO_SERIAL_AVR32_SERIAL3
-        gpio_enable_module_pin(CYG_DEVS_USART2_RXD_PIN, CYG_DEVS_USART2_RXD_FUNCTION);
-        gpio_enable_module_pin(CYG_DEVS_USART2_TXD_PIN, CYG_DEVS_USART2_TXD_FUNCTION);
-        gpio_enable_pin_pull_up(CYG_DEVS_USART2_TXD_PIN);
+#if CYG_HAL_USART3_TXD_ENABLED == PIN_ENABLE
+        gpio_enable_module_pin(CYG_HAL_USART3_TXD_PIN,
+                CYG_HAL_USART3_TXD_FUNCTION);
+#endif
+#if CYG_HAL_USART3_RXD_ENABLED == PIN_ENABLE
+        gpio_enable_module_pin(CYG_HAL_USART3_RXD_PIN, 
+                CYG_HAL_USART3_RXD_FUNCTION);
+#endif
     #ifdef CYGNUM_IO_SERIAL_AVR32_SERIAL3_FLOW_CONTROL
-        gpio_enable_module_pin(CYG_DEVS_USART2_RTS_PIN, CYG_DEVS_USART2_RTS_FUNCTION);
-        gpio_enable_module_pin(CYG_DEVS_USART2_CTS_PIN, CYG_DEVS_USART2_CTS_FUNCTION);
+        gpio_enable_module_pin(CYG_DEVS_USART3_RTS_PIN, 
+                CYG_DEVS_USART3_RTS_FUNCTION);
+        gpio_enable_module_pin(CYG_DEVS_USART3_CTS_PIN, 
+                CYG_DEVS_USART3_CTS_FUNCTION);
     #endif
 #endif
     }	
+#ifdef AVR32_USART4_ADDRESS
     else if(usart_addr == AVR32_USART4_ADDRESS)
     {
 #ifdef CYGPKG_IO_SERIAL_AVR32_SERIAL4
-        gpio_enable_module_pin(CYG_DEVS_USART2_RXD_PIN, CYG_DEVS_USART2_RXD_FUNCTION);
-        gpio_enable_module_pin(CYG_DEVS_USART2_TXD_PIN, CYG_DEVS_USART2_TXD_FUNCTION);
-        gpio_enable_pin_pull_up(CYG_DEVS_USART2_TXD_PIN);
+#if CYG_HAL_USART4_TXD_ENABLED == PIN_ENABLE
+        gpio_enable_module_pin(CYG_HAL_USART4_TXD_PIN,
+                CYG_HAL_USART4_TXD_FUNCTION);
+#endif
+#if CYG_HAL_USART4_RXD_ENABLED == PIN_ENABLE
+        gpio_enable_module_pin(CYG_HAL_USART4_RXD_PIN, 
+                CYG_HAL_USART4_RXD_FUNCTION);
+#endif
     #ifdef CYGNUM_IO_SERIAL_AVR32_SERIAL4_FLOW_CONTROL
-        gpio_enable_module_pin(CYG_DEVS_USART2_RTS_PIN, CYG_DEVS_USART2_RTS_FUNCTION);
-        gpio_enable_module_pin(CYG_DEVS_USART2_CTS_PIN, CYG_DEVS_USART2_CTS_FUNCTION);
+        gpio_enable_module_pin(CYG_DEVS_USART4_RTS_PIN, 
+                CYG_DEVS_USART4_RTS_FUNCTION);
+        gpio_enable_module_pin(CYG_DEVS_USART4_CTS_PIN, 
+                CYG_DEVS_USART4_CTS_FUNCTION);
     #endif
 #endif
     }
+#endif
     else
     {
         CYG_ASSERT(false,"Unknownd USART address\n");
@@ -587,7 +629,8 @@ avr32_serial_config_port(serial_channel *chan, cyg_serial_info_t *new_config, bo
     dev->brgr = select_baud[new_config->baud];
     // Disable all interrupts
     dev->idr = 0xFFFFFFFF;
-	
+
+    
 #ifdef CYGINT_IO_SERIAL_BLOCK_TRANSFER
     // Start receiver
     avr32_chan->curbuf = 0;
@@ -858,7 +901,12 @@ avr32_serial_start_xmit(serial_channel *chan)
 #ifdef CYGINT_IO_SERIAL_BLOCK_TRANSFER
     unsigned char * chars;
     xmt_req_reply_t res;
-    cyg_drv_dsr_lock();
+    //cyg_drv_dsr_lock();
+    // wait until CTS is inactive 
+    while(dev->csr & AVR32_USART_CSR_CTS_MASK)
+    {
+      hal_delay_us(10);
+    }
     if ((avr32_chan->flags & SIFLG_XMIT_CONTINUE) == 0) {
         res = (chan->callbacks->data_xmt_req)(chan, 0xffff, &avr32_chan->transmit_size, &chars);
         switch (res)
@@ -883,12 +931,12 @@ avr32_serial_start_xmit(serial_channel *chan)
                 break;
         }
     }
-    cyg_drv_dsr_unlock();
+    //cyg_drv_dsr_unlock();
 #else
-	cyg_drv_dsr_lock();
+	//cyg_drv_dsr_lock();
 	avr32_chan->flags |= SIFLG_XMIT_CONTINUE;
 	dev->ier           = AVR32_USART_CSR_TXRDY_MASK;
-	cyg_drv_dsr_unlock();
+	//cyg_drv_dsr_unlock();
 #endif
 }
 
@@ -922,13 +970,9 @@ avr32_serial_DSR(cyg_vector_t vector, cyg_ucount32 count, cyg_addrword_t data)
     {
         const cyg_uint8 cb = avr32_chan->curbuf, nb = cb ^ 0x01;
         cyg_uint8 * p = avr32_chan->rcv_buffer[cb], * end = avr32_chan->end;
-
-        if((end - p) > avr32_chan->ping_pong_size)	
-        {
-            diag_printf("%p, %p, %d",p, end,(end - p));
-            CYG_ASSERT((end - p) <= avr32_chan->ping_pong_size ,"Transfer is longer than buffer dma end\n");
-        }
-
+        
+        CYG_ASSERT((end - p) <= avr32_chan->ping_pong_size ,
+                "Transfer is longer than buffer dma end\n");
 
         while (p < end) 
         {
@@ -1090,50 +1134,53 @@ avr32_serial_ISR(cyg_vector_t vector, cyg_addrword_t data)
     serial_channel * const chan = (serial_channel *) data;
     avr32_serial_info * const avr32_chan = (avr32_serial_info *) chan->dev_priv;
     volatile avr32_usart_t  *dev = avr32_chan->usart_dev;
+    cyg_uint32 ret = CYG_ISR_HANDLED;
     // Check if we have an interrupt pending - note that the interrupt
     // is pending of the low bit of the isr is *0*, not 1.
     
     dev->idr = dev->csr & dev->imr;
+    
     if(dev->csr & AVR32_USART_CSR_TIMEOUT_MASK)
     {
+       // set data buffer length
        const cyg_uint8 cb = avr32_chan->curbuf;
        if(avr32_chan->rcv_buffer[cb] != avr32_chan->pdca_rx_channel->mar)
        {
-	  avr32_chan->end = avr32_chan->pdca_rx_channel->mar;
-	  CYG_PDMA_FORCE_RELOAD(avr32_chan->pdca_rx_channel);
-	  CYG_PDMA_RELOAD(avr32_chan->pdca_rx_channel,avr32_chan->rcv_buffer[cb],
+            avr32_chan->end = avr32_chan->pdca_rx_channel->mar;
+            CYG_PDMA_FORCE_RELOAD(avr32_chan->pdca_rx_channel);
+            CYG_PDMA_RELOAD(avr32_chan->pdca_rx_channel,avr32_chan->rcv_buffer[cb],
 				avr32_chan->ping_pong_size - 1);
-	  avr32_chan->trans_rdy = true;
-	  dev->cr = AVR32_USART_STTTO_MASK | AVR32_USART_RETTO_MASK;
-	  dev->ier = AVR32_USART_IER_TIMEOUT_MASK;
+            avr32_chan->trans_rdy = true;
+            ret |= CYG_ISR_CALL_DSR;
        }
-       else
-       {
-	  dev->cr = AVR32_USART_STTTO_MASK | AVR32_USART_RETTO_MASK;
-	  dev->ier = AVR32_USART_IER_TIMEOUT_MASK;
-	  return CYG_ISR_HANDLED;
-       }
-       
     }
-
+    
+    
     if(CYG_PDMA_INTERRUPT_STATUS(avr32_chan->pdca_rx_channel))
     {
+        // CYG_PDMA_DISABLE_INTERRUPT(avr32_chan->pdca_rx_channel);
         const cyg_uint8 cb = avr32_chan->curbuf;
         avr32_chan->end = avr32_chan->rcv_buffer[cb] + avr32_chan->ping_pong_size;
         CYG_PDMA_RELOAD(avr32_chan->pdca_rx_channel,avr32_chan->rcv_buffer[cb],
-                            avr32_chan->ping_pong_size - 1);
-        avr32_chan->trans_rdy = true;
-	dev->cr = AVR32_USART_STTTO_MASK | AVR32_USART_RETTO_MASK;
-	dev->ier = AVR32_USART_IER_TIMEOUT_MASK;
-  
+                             avr32_chan->ping_pong_size - 1);
+         avr32_chan->trans_rdy = true;
+         dev->cr = AVR32_USART_STTTO_MASK | AVR32_USART_RETTO_MASK;
+         dev->ier = AVR32_USART_IER_TIMEOUT_MASK;
+         ret |= CYG_ISR_CALL_DSR;
     }
 
-    if(CYG_PDMA_INTERRUPT_STATUS(avr32_chan->pdca_tx_channel))
+    if(CYG_PDMA_IS_ENABLED(avr32_chan->pdca_tx_channel))
     {
-        CYG_PDMA_DISABLE_INTERRUPT(avr32_chan->pdca_tx_channel);
+      if(CYG_PDMA_INTERRUPT_STATUS(avr32_chan->pdca_tx_channel))
+      {
+            CYG_PDMA_DISABLE_INTERRUPT(avr32_chan->pdca_tx_channel);
+            ret |= CYG_ISR_CALL_DSR;
+      }
     }
-    
-    return CYG_ISR_CALL_DSR;
+
+    dev->cr = AVR32_USART_STTTO_MASK | AVR32_USART_RETTO_MASK;
+    dev->ier = AVR32_USART_IER_TIMEOUT_MASK;  
+    return ret;
 }
 #endif
 

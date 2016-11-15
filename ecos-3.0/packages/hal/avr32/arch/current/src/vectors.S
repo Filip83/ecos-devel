@@ -68,9 +68,26 @@
     .global _start
     .type _start, @function
 _start:
-  // Jump to the C runtime startup routine.
+#ifdef BOOT_LOADER
+    // If boot loader startup is enabled
+    // this code load first 4B from user FLASH
+    // page and if its value is 0xa5a55a5a its
+    // start execution at 0x80010000 address
+    // otherwise it continue to execute code
+    // fromn _stext
+    movh    r0,0x8080
+    orl     r0,0x0004
+    ld.w    r1,r0
+    movh    r0,0xa5a5
+    orl     r0,0x5a5a
+    cp      r0,r1
+    brne    _stext
+    movh    r0,0x8001
+    icall   r0
+#else
+    // Jump to the C runtime startup routine.
     rjmp _stext
-
+#endif
     // _stext is placed outside the .reset section so that the program 
     // entry point can be changed without affecting the C runtime startup.
     .section  .text._stext, "ax", @progbits

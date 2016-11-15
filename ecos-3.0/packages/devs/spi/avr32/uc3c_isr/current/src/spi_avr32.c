@@ -61,6 +61,8 @@
 #include <cyg/io/spi.h>
 #include <cyg/io/spi_avr32.h>
 #include <cyg/error/codes.h>
+#include <cyg/hal/gpio.h>
+#include <cyg/hal/board_config.h>
 
 // -------------------------------------------------------------------------
 static void spi_avr32_init_bus(cyg_spi_avr32_bus_t * bus);
@@ -109,7 +111,11 @@ cyg_spi_avr32_bus_t cyg_spi_avr32_bus0 = {
     .spi_bus.spi_get_config           = spi_avr32_get_config,
     .spi_bus.spi_set_config           = spi_avr32_set_config,
     .interrupt_number                 = CYGNUM_HAL_VECTOR_SPI0,
+ #ifdef AVR32_SPI0_ADDRESS
     .spi_dev                          = AVR32_SPI0_ADDRESS,
+#else
+    .spi_dev                          = AVR32_SPI_ADDRESS,
+#endif
     .count                            = 0,
     .tx                               = NULL,
     .rx                               = NULL
@@ -117,7 +123,7 @@ cyg_spi_avr32_bus_t cyg_spi_avr32_bus0 = {
 
 CYG_SPI_DEFINE_BUS_TABLE(cyg_spi_avr32_device_t, 0);
 #endif
-#if defined(CYGHWR_DEVS_SPI_AVR32_UC3C_BUS1)
+#if defined(CYGHWR_DEVS_SPI_AVR32_UC3C_BUS1) && defined(AVR32_SPI1_ADDRESS)
 cyg_spi_avr32_bus_t cyg_spi_avr32_bus1 = {
     .spi_bus.spi_transaction_begin    = spi_avr32_transaction_begin,
     .spi_bus.spi_transaction_transfer = spi_avr32_transaction_transfer,
@@ -155,19 +161,32 @@ cyg_spi_avr32_bus_init(void)
    //       in between transactions.
 
    // Put SPI MISO, MOSI and SPCK pins into peripheral mode
-   /*gpio_enable_module_pin(AVR32_SPI0_NPCS_0_PIN,AVR32_SPI0_NPCS_0_FUNCTION);
-   gpio_enable_module_pin(AVR32_SPI0_NPCS_1_PIN,AVR32_SPI0_NPCS_1_FUNCTION);
-   gpio_enable_module_pin(AVR32_SPI0_NPCS_2_PIN,AVR32_SPI0_NPCS_2_FUNCTION);*/
-   gpio_enable_module_pin(AVR32_SPI0_NPCS_3_PIN,AVR32_SPI0_NPCS_3_FUNCTION);
+#if CYG_HAL_AVR32_SPI0_NPCS_0_ENABLED == PIN_ENABLE
+   gpio_enable_module_pin(CYG_HAL_AVR32_SPI0_NPCS_0_PIN,
+           CYG_HAL_AVR32_SPI0_NPCS_0_FUNCTION);
+#endif
+ 
+#if CYG_HAL_AVR32_SPI0_NPCS_1_ENABLED == PIN_ENABLE
+   gpio_enable_module_pin(CYG_HAL_AVR32_SPI0_NPCS_1_PIN,
+           CYG_HAL_AVR32_SPI0_NPCS_1_FUNCTION);
+#endif
+
+#if CYG_HAL_AVR32_SPI0_NPCS_2_ENABLED == PIN_ENABLE
+   gpio_enable_module_pin(CYG_HAL_AVR32_SPI0_NPCS_2_PIN,
+           CYG_HAL_AVR32_SPI0_NPCS_2_FUNCTION);
+#endif
    
-   /*gpio_enable_pin_pull_up(AVR32_SPI0_NPCS_0_PIN);
-   gpio_enable_pin_pull_up(AVR32_SPI0_NPCS_1_PIN);
-   gpio_enable_pin_pull_up(AVR32_SPI0_NPCS_2_PIN);
-   gpio_enable_pin_pull_up(AVR32_SPI0_NPCS_3_PIN);*/
+#if CYG_HAL_AVR32_SPI0_NPCS_3_ENABLED == PIN_ENABLE
+   gpio_enable_module_pin(CYG_HAL_AVR32_SPI0_NPCS_3_PIN,
+           CYG_HAL_AVR32_SPI0_NPCS_3_FUNCTION);
+#endif
    
-   gpio_enable_module_pin(AVR32_SPI0_MISO_PIN,AVR32_SPI0_MISO_FUNCTION);
-   gpio_enable_module_pin(AVR32_SPI0_MOSI_PIN ,AVR32_SPI0_NPCS_1_FUNCTION);
-   gpio_enable_module_pin(AVR32_SPI0_SCK_PIN ,AVR32_SPI0_SCK_FUNCTION);
+   gpio_enable_module_pin(CYG_HAL_AVR32_SPI0_MISO_PIN, 
+           CYG_HAL_AVR32_SPI0_MISO_FUNCTION);
+   gpio_enable_module_pin(CYG_HAL_AVR32_SPI0_MOSI_PIN,
+           CYG_HAL_AVR32_SPI0_MOSI_FUNCTION);
+   gpio_enable_module_pin(CYG_HAL_AVR32_SPI0_SCK_PIN,
+           CYG_HAL_AVR32_SPI0_SCK_FUNCTION);
 
    spi_avr32_init_bus(&cyg_spi_avr32_bus0);
 #endif
@@ -179,17 +198,32 @@ cyg_spi_avr32_bus_init(void)
    //       in between transactions.
 
    // Put SPI MISO, MOSI and SPCK pins into peripheral mode
-   gpio_enable_module_pin(AVR32_SPI1_NPCS_3_2_PIN,AVR32_SPI1_NPCS_3_2_FUNCTION);
-   gpio_enable_module_pin(AVR32_SPI1_NPCS_1_2_PIN,AVR32_SPI1_NPCS_1_2_FUNCTION);
-   //gpio_enable_module_pin(AVR32_SPI1_NPCS_2_PIN,AVR32_SPI1_NPCS_2_FUNCTION);
+#if CYG_HAL_AVR32_SPI1_NPCS_0_ENABLED == PIN_ENABLE
+   gpio_enable_module_pin(CYG_HAL_AVR32_SPI1_NPCS_0_PIN,
+           CYG_HAL_AVR32_SPI1_NPCS_0_FUNCTION);
+#endif
+ 
+#if CYG_HAL_AVR32_SPI1_NPCS_1_ENABLED == PIN_ENABLE
+   gpio_enable_module_pin(CYG_HAL_AVR32_SPI1_NPCS_1_PIN,
+           CYG_HAL_AVR32_SPI1_NPCS_1_FUNCTION);
+#endif
 
-   /*gpio_enable_pin_pull_up(AVR32_SPI1_NPCS_0_PIN);
-   gpio_enable_pin_pull_up(AVR32_SPI1_NPCS_1_PIN);
-   gpio_enable_pin_pull_up(AVR32_SPI1_NPCS_2_PIN);*/
-
-   gpio_enable_module_pin(AVR32_SPI1_MOSI_1_PIN, AVR32_SPI1_MOSI_1_FUNCTION);
-   gpio_enable_module_pin(AVR32_SPI1_MISO_1_PIN, AVR32_SPI1_MISO_1_FUNCTION);
-   gpio_enable_module_pin(AVR32_SPI1_SCK_1_PIN,  AVR32_SPI1_SCK_1_FUNCTION);
+#if CYG_HAL_AVR32_SPI1_NPCS_2_ENABLED == PIN_ENABLE
+   gpio_enable_module_pin(CYG_HAL_AVR32_SPI1_NPCS_2_PIN,
+           CYG_HAL_AVR32_SPI1_NPCS_2_FUNCTION);
+#endif
+   
+#if CYG_HAL_AVR32_SPI1_NPCS_3_ENABLED == PIN_ENABLE
+   gpio_enable_module_pin(CYG_HAL_AVR32_SPI1_NPCS_3_PIN,
+           CYG_HAL_AVR32_SPI1_NPCS_3_FUNCTION);
+#endif
+   
+   gpio_enable_module_pin(CYG_HAL_AVR32_SPI1_MISO_PIN, 
+           CYG_HAL_AVR32_SPI1_MISO_FUNCTION);
+   gpio_enable_module_pin(CYG_HAL_AVR32_SPI1_MOSI_PIN,
+           CYG_HAL_AVR32_SPI1_MOSI_FUNCTION);
+   gpio_enable_module_pin(CYG_HAL_AVR32_SPI1_SCK_PIN,
+           CYG_HAL_AVR32_SPI1_SCK_FUNCTION);
    spi_avr32_init_bus(&cyg_spi_avr32_bus1);
 #endif
 }
@@ -197,7 +231,6 @@ cyg_spi_avr32_bus_init(void)
 // -------------------------------------------------------------------------
 static void spi_avr32_init_bus(cyg_spi_avr32_bus_t * spi_bus)
 {
-    cyg_uint32 ctr;
     // Create and attach SPI interrupt object
     cyg_drv_interrupt_create(spi_bus->interrupt_number,
                              0,                   
@@ -305,7 +338,8 @@ spi_avr32_calc_scbr(cyg_spi_avr32_device_t *dev)
 
 static void spi_avr32_init_device(cyg_spi_avr32_device_t * device)
 {
-    cyg_spi_avr32_bus_t *spi_bus = (cyg_spi_avr32_bus_t *)device->spi_device.spi_bus;
+    cyg_spi_avr32_bus_t *spi_bus = 
+            (cyg_spi_avr32_bus_t *)device->spi_device.spi_bus;
 
     if(device->dev_num == 0)
     {
