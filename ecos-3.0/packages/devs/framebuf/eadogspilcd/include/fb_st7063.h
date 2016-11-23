@@ -1,10 +1,10 @@
-﻿#ifndef CYGONCE_DEVS_KBD_MATRIX_AVR32_H
-#define CYGONCE_DEVS_KBD_MATRIX_AVR32_H
+﻿#ifndef CYGONCE_DEVS_FB_ST7063_H
+#define CYGONCE_DEVS_FB_ST7063_H
 //==========================================================================
 //
-//      kbd_matrix.h
+//      fb_st7063.h
 //
-//      Atmel AVR32 matrix keyboard driver defines
+//      ST7063 LCD driver defines
 //
 //==========================================================================
 // ####ECOSGPLCOPYRIGHTBEGIN####
@@ -42,7 +42,7 @@
 //#####DESCRIPTIONBEGIN####
 //
 // Author(s):     Filip Adamec
-// Date:          2013-04-05
+// Date:          2016-11-23
 //
 //####DESCRIPTIONEND####
 //
@@ -58,29 +58,93 @@ extern "C" {
 #endif
 	
 #include <pkgconf/hal.h>
-#include <pkgconf/devs_kbd_matrix.h>
+#include <pkgconf/devs_fb_st7063.h>
 
 #include <cyg/infra/cyg_type.h>
 #include <cyg/hal/drv_api.h>
-
-/**
- * @defgroup Matrix keyboard driver configuration flags
- *
- * @{
- */
-#if 0
-/** Keyboard debug output enable */
-#define CYGDAT_DEVS_KBD_MATRIX_DEBUG_OUTPUT				0
-/** Intervals in which keyboard rows are scanned. This value
-* for 32765Hz oscillator makes 0.0078125s kbd scan interval. */
-#define CYGNUM_DEVS_KBD_MATRIX_SCAN_INTERVAL			7
-/** Keyboard interrupts priority. */
-#define CYGNUM_DEVS_KBD_MATRIX_INTERRUPT_PRIO			3
-#endif
-/** Number of matrix keyboard rows. */
-#define CYGNUM_DEVS_KBD_MATRIX_ISR_PINS	4
     
+#define LCD_SET_COL_ADDR_LSB		0x00
+#define LCD_SET_COL_ADDR_MSB		0x10
+#define LCD_SET_TEMP_COMPENSATION	0x24
+#define LCD_SET_PANEL_LOADING		0x28
+#define LCD_SET_PUMP_CONTROL		0x2c
+#define LCD_SET_ADV_CONTROL		0x30
+#define LCD_SET_SCROLL_LINE_LSB		0x40
+#define LCD_SET_SCROLL_LINE_MSB		0x50
+#define LCD_SET_PAGE_ADDR		0x60
+#define LCD_SET_PAGE_ADDR_MSB		0x70
 
+#define LCD_SET_BIAS_POT		0x81
+#define LCD_SET_PARTIAL_CONTROL		0x84
+#define LCD_SET_RAM_ADDR_CONTROL	0x88
+#define LCD_SET_FIXED_LINES		0x90
+#define LCD_SET_LINE_RATE		0xa0
+#define LCD_SET_ALL_PX_ON		0xa4
+#define LCD_SET_INVERS_DISPLAY		0xa6
+#define LCD_SET_DISPLAY_ENABLE		0xa8
+#define LCD_SET_MAPPING_CONTROL		0xc0
+#define LCD_GRAY_SCALE			0xd0
+#define LCD_SYSTEM_RESET		0xe2
+#define LCD_NOP				0xe3
+#define LCD_SET_TEST_CONTROL		0xe4
+#define LCD_SET_BIAS_RATIO		0xe8
+#define LCD_RESET_CURSOR_UPDATE_MODE    0xee
+#define LCD_SET_CURSOR_UPDATE_MODE	0xef
+#define LCD_SET_COM_END			0xf1
+#define LCD_SET_PATRIAL_DISP_START	0xf2
+#define LCD_SET_PATRIAL_DISP_END	0xf3
+#define LCD_SET_START_COL_ADDR		0xf4
+#define LCD_SET_START_PAGE_ADDR		0xf5
+#define LCD_SET_ENDING_COL_ADDR		0xf6
+#define LCD_SET_ENDING_PAGE_ADDR	0xf7
+#define LCD_ENABLE_WND_PROGRAM		0xf8
+
+#define LCD_COL_ADDR_MASK		0x0f
+#define LCD_SCROLL_LINE_MASK		0x0f
+#define LCD_PAGE_ADDR_MASK		0x1f
+#define LCD_FIXE_LINE_MASK		0x0f
+
+#define LCD_TEMP_COMP_005		0x00
+#define LCD_TEMP_COMP_01		0x01
+#define LCD_TEMP_COMP_015		0x02
+#define LCD_TEMP_COMP_02		0x03
+
+#define LCD_PANEL_LOADING_16nF		0x00
+#define LCD_PANEL_LOADING_16_21nF	0x01
+#define LCD_PANEL_LOADING_21_28nF	0x02
+#define LCD_PANEL_LOADING_28_39nF	0x03
+
+#define LC_PUMP_CONTROL_EXTERNAL	0x00
+#define LC_PUMP_CONTROL_7X		0x01
+#define LC_PUMP_CONTROL_6X		0x02
+#define LC_PUMP_CONTROL_8X		0x03
+
+#define LCD_PATRIL_CONTROL_DISABLE	0x00
+#define LCD_PATRIL_CONTROL_CEN_1	0x02
+#define LCD_PATRIL_CONTROL_DEN_DST	0x03
+
+#define LCD_ADDR_CONTROL_AC0		0x01
+#define LCD_ADDR_CONTROL_AC1		0x02
+#define LCD_ADDR_CONTROL_AC2		0x04
+
+#define LCD_LINE_RATE_12K		0x00
+#define LCD_LINE_RATE_13K		0x01
+#define LCD_LINE_RATE_14K		0x02
+#define LCD_LINE_RATE_16K		0x03
+
+#define LCD_ALL_PIXELS_ON		0x01
+#define LCD_ENABLE_INVERS_DISP		0x01
+#define LCD_SET_DISPLAY_ON		0x01
+
+#define LCD_SET_GRAY_SCALE_24		0x00
+#define LCD_SET_GRAY_SCALE_29		0x01
+#define LCD_SET_GRAY_SCALE_36		0x02
+#define LCD_SET_GRAY_SCALE_40		0x03
+
+#define LCD_BIAS_RATIO_5		0x00
+#define LCD_BIAS_RATIO_10		0x01
+#define LCD_BIAS_RATIO_11		0x02
+#define LCD_BIAS_RATIO_12		0x03
 
 
 /** @} */
@@ -114,6 +178,7 @@ typedef struct cyg_kbd_avr32_s
     cyg_uint32	      push_cnt;		/**< Interval counter to count start of scan interval. */ 
     cyg_uint16        last_scan_code;	/**< Latest scan code. */ 
     cyg_uint8         scan_line;	/**< Current scanned line/column. */ 
+    cyg_uint8         glitch_cnt;       /**< Glitch filter number of counts. */
     cyg_uint32	      scan_code;	/**< Current scan code. */ 
     cyg_bool          is_open;		/**< True if matrix keyboard is initialized. */
     cyg_bool          enabled;          /**< Enable/Disable key messages. */
@@ -137,8 +202,8 @@ typedef struct cyg_kbd_avr32_s
 } // closing brace for extern "C"
 #endif
 
-#endif // CYGONCE_DEVS_KBD_MATRIX_AVR32_H
+#endif // CYGONCE_DEVS_FB_ST7063_H
 
 /** @} */
 //-----------------------------------------------------------------------------
-// End of kbd_matrix.h
+// End of fb_st7063.h

@@ -1,10 +1,10 @@
-﻿#ifndef CYGONCE_DEVS_KBD_MATRIX_AVR32_H
-#define CYGONCE_DEVS_KBD_MATRIX_AVR32_H
+﻿#ifndef CYGONCE_DEVS_KBD_BUTTON_UC3C_H
+#define CYGONCE_DEVS_KBD_BUTTON_UC3C_H
 //==========================================================================
 //
-//      kbd_matrix.h
+//      kbd_button.h
 //
-//      Atmel AVR32 matrix keyboard driver defines
+//      Atmel AVR32 button keyboard driver defines
 //
 //==========================================================================
 // ####ECOSGPLCOPYRIGHTBEGIN####
@@ -58,29 +58,10 @@ extern "C" {
 #endif
 	
 #include <pkgconf/hal.h>
-#include <pkgconf/devs_kbd_matrix.h>
+#include <pkgconf/devs_kbd_button.h>
 
 #include <cyg/infra/cyg_type.h>
 #include <cyg/hal/drv_api.h>
-
-/**
- * @defgroup Matrix keyboard driver configuration flags
- *
- * @{
- */
-#if 0
-/** Keyboard debug output enable */
-#define CYGDAT_DEVS_KBD_MATRIX_DEBUG_OUTPUT				0
-/** Intervals in which keyboard rows are scanned. This value
-* for 32765Hz oscillator makes 0.0078125s kbd scan interval. */
-#define CYGNUM_DEVS_KBD_MATRIX_SCAN_INTERVAL			7
-/** Keyboard interrupts priority. */
-#define CYGNUM_DEVS_KBD_MATRIX_INTERRUPT_PRIO			3
-#endif
-/** Number of matrix keyboard rows. */
-#define CYGNUM_DEVS_KBD_MATRIX_ISR_PINS	4
-    
-
 
 
 /** @} */
@@ -114,6 +95,7 @@ typedef struct cyg_kbd_avr32_s
     cyg_uint32	      push_cnt;		/**< Interval counter to count start of scan interval. */ 
     cyg_uint16        last_scan_code;	/**< Latest scan code. */ 
     cyg_uint8         scan_line;	/**< Current scanned line/column. */ 
+    cyg_uint8         glitch_cnt;       /**< Glitch filter number of counts. */
     cyg_uint32	      scan_code;	/**< Current scan code. */ 
     cyg_bool          is_open;		/**< True if matrix keyboard is initialized. */
     cyg_bool          enabled;          /**< Enable/Disable key messages. */
@@ -137,8 +119,8 @@ typedef struct cyg_kbd_avr32_s
 } // closing brace for extern "C"
 #endif
 
-#endif // CYGONCE_DEVS_KBD_MATRIX_AVR32_H
+#endif // CYGONCE_DEVS_KBD_BUTTON_UC3C_H
 
 /** @} */
 //-----------------------------------------------------------------------------
-// End of kbd_matrix.h
+// End of matrix_kbd.h

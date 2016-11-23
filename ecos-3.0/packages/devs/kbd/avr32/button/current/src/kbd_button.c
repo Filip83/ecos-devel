@@ -1,8 +1,8 @@
 //==========================================================================
 //
-//      kbd_matrix.c
+//      kbd_button.c
 //
-//      Keyboard driver for the AVR32 matrix keyboard
+//      Keyboard driver for the AVR32 button keyboard
 //
 //==========================================================================
 // ####ECOSGPLCOPYRIGHTBEGIN####
@@ -43,7 +43,7 @@
 // Contributors:
 // Date:         2016-11-23
 // Purpose:
-// Description:  Matrix keyboardd driver for AVR32
+// Description:  Keyboardd driver for AVR32
 //
 //####DESCRIPTIONEND####
 //
@@ -89,20 +89,13 @@ static cyg_kbd_avr32_t cyg_kbd_avr32 =
     .interrupt_prio         = CYGNUM_DEVS_KBD_MATRIX_INTERRUPT_PRIO,
     .kb_pins_isr[0].kbd_pin_interrupt		= NULL,
     .kb_pins_isr[0].kbd_pin_interrupt_handle	= NULL,
-    .kb_pins_isr[0].kbd_pin_interrupt_number	= CYGNUM_HAL_VECTOR_EIC_1,
-
+    .kb_pins_isr[0].kbd_pin_interrupt_number	= CYGNUM_HAL_VECTOR_GPIO_0,
     .kb_pins_isr[1].kbd_pin_interrupt		= NULL,
     .kb_pins_isr[1].kbd_pin_interrupt_handle	= NULL,
-    .kb_pins_isr[1].kbd_pin_interrupt_number	= CYGNUM_HAL_VECTOR_EIC_2,
-
+    .kb_pins_isr[1].kbd_pin_interrupt_number	= CYGNUM_HAL_VECTOR_GPIO_1,
     .kb_pins_isr[2].kbd_pin_interrupt		= NULL,
     .kb_pins_isr[2].kbd_pin_interrupt_handle	= NULL,
-    .kb_pins_isr[2].kbd_pin_interrupt_number	= CYGNUM_HAL_VECTOR_EIC_3,
-
-    .kb_pins_isr[3].kbd_pin_interrupt		= NULL,
-    .kb_pins_isr[3].kbd_pin_interrupt_handle	= NULL,
-    .kb_pins_isr[3].kbd_pin_interrupt_number	= CYGNUM_HAL_VECTOR_EIC_4,
-    .kbd_callback                               = NULL,
+    .kb_pins_isr[2].kbd_pin_interrupt_number	= CYGNUM_HAL_VECTOR_GPIO_2
 #if CYGNUM_DEVS_KBD_MATRIX_CALLBACK_MODE == 0
     .kbd_select_active                          = false,
 #endif
@@ -147,156 +140,38 @@ CHAR_DEVTAB_ENTRY(kbd_device,
 
 
 static cyg_uint32
-avr32_matrix_kbd_timer_ISR(cyg_vector_t vector, cyg_addrword_t data);
+avr32_button_kbd_timer_ISR(cyg_vector_t vector, cyg_addrword_t data);
 
 static void       
-avr32_matrix_kbd_timer_DSR(cyg_vector_t vector, cyg_ucount32 count, cyg_addrword_t data);
+avr32_button_kbd_timer_DSR(cyg_vector_t vector, cyg_ucount32 count, cyg_addrword_t data);
 
 static cyg_uint32
-avr32_matrix_kbd_pin_ISR(cyg_vector_t vector, cyg_addrword_t data);
+avr32_button_kbd_pin_ISR(cyg_vector_t vector, cyg_addrword_t data);
 
 static void
-avr32_matrix_kbd_pin_DSR(cyg_vector_t vector, cyg_ucount32 count, cyg_addrword_t data);
+avr32_button_kbd_pin_DSR(cyg_vector_t vector, cyg_ucount32 count, cyg_addrword_t data);
 
 /** Function to convert scan code to linux keyboard key mapping.
 *
 * \param scan_code is keyboard scan code.
 * \return linux keyboard key code.
 */
-static cyg_uint16 kbd_scan_code_to_key_gs4x5(cyg_uint32 scan_code)
+static cyg_uint16 kbd_scan_code_to_key(cyg_uint32 scan_code)
 {
     //diag_printf("Scan Code: 0x%X\n",scan_code);
     switch(scan_code)
     {
-        case 0x10000:
+        case 0x00001:
         return K_ENTER;
         break;
-        case 0x20000:
+        case 0x00004:
         return K_SAK;
         break;
-        case 0x40000:
-        return K_PGDN;
-        break;
-        case 0x04:
+        case 0x02:
         return K_UP;
         break;
         case 0x008:
         return K_DOWN;
-        break;
-        /*case 0x0400:
-        return K_F3;
-        break;*/
-        case 0x8000:
-        return K_RIGHT;//'6';
-        break;
-        /*case 0x0020:
-        return K_F3;//'5';*/
-        break;
-        case 0x0080:
-        return K_LEFT;//'4';
-        break;
-        case 0x01:
-        return K_F1;//'9';
-        break;
-        case 0x0002:
-        return K_F2;//'7';
-        break;
-        case (0x008 | 0x0004):
-        return K_F10;
-        break;
-
-        case 0x0800:
-        return '0';
-        break;
-        case 0x00040:
-        return '1';
-        break;
-        case 0x00400:
-        return '2';
-        break;
-        case 0x4000:
-        return '3';
-        break;
-        case 0x00020:
-        return '4';
-        break;
-        case 0x00200:
-        return '5';
-        break;
-        case 0x2000:
-        return '6';
-        break;
-        case 0x00010:
-        return '7';
-        break;
-        case 0x00100:
-        return '8';
-        break;
-        case 0x1000:
-        return '9';
-        break;
-    }
-
-    return 0;
-}
-
-/** Function to convert scan code to linux keyboard key mapping.
-*
-* \param scan_code is keyboard scan code.
-* \return linux keyboard key code.
-*/
-static cyg_uint16 kbd_scan_code_to_key_pmg4x4(cyg_uint32 scan_code)
-{
-    //diag_printf("Scan Code: 0x%X\n",scan_code);
-    switch(scan_code)
-    {
-        case 0x1000:
-        return K_ENTER;
-        break;
-        case 0x2000:
-        return K_SAK;
-        break;
-        case 0x4000:
-        return K_PGDN;
-        break;
-        case 0x0800:
-        return K_UP;
-        break;
-        case 0x008:
-        return K_DOWN;
-        break;
-        case (0x008 | 0x0800):
-        return K_F10;
-        break;
-        case 0x080:
-        return '0';
-        break;
-        case 0x0004:
-        return '1';
-        break;
-        case 0x0040:
-        return '2';
-        break;
-        case 0x0400:
-        return '3';
-        break;
-        case 0x00002:
-        return '4';
-        break;
-        case 0x00020:
-        return '5';
-        break;
-        case 0x200:
-        return '6';
-        break;
-        case 0x0001:
-        return '7';
-        break;
-        case 0x0010:
-        return '8';
-        break;
-        case 0x100:
-        return '9';
         break;
     }
 
@@ -453,31 +328,17 @@ kbd_init(struct cyg_devtab_entry *tab)
     AVR32_AST.pir0 = CYGNUM_DEVS_KBD_MATRIX_SCAN_INTERVAL;
 
     // Configure GPIO pins used by keyboard
-    gpio_configure_pin(AVR32_PIN_PA21, GPIO_DIR_OUTPUT | GPIO_INIT_HIGH);
-    gpio_configure_pin(AVR32_PIN_PA22, GPIO_DIR_OUTPUT | GPIO_INIT_HIGH);
-    gpio_configure_pin(AVR32_PIN_PA23, GPIO_DIR_OUTPUT | GPIO_INIT_HIGH);
-    gpio_configure_pin(AVR32_PIN_PA24, GPIO_DIR_OUTPUT | GPIO_INIT_HIGH);
-#if CYGNUM_DEVS_KBD_MATRIX_4x5 == 1
-    gpio_configure_pin(AVR32_PIN_PA25, GPIO_DIR_OUTPUT | GPIO_INIT_HIGH);
-#endif
-
-    gpio_configure_pin(AVR32_PIN_PA26, GPIO_DIR_INPUT );
-    gpio_configure_pin(AVR32_PIN_PA27, GPIO_DIR_INPUT);
-    gpio_configure_pin(AVR32_PIN_PA28, GPIO_DIR_INPUT);
-    gpio_configure_pin(AVR32_PIN_PA29, GPIO_DIR_INPUT);
-
-    // The keyboard rows are driving external interrupt controller
-    gpio_enable_module_pin(AVR32_EIC_EXTINT_1_2_PIN, AVR32_EIC_EXTINT_1_2_FUNCTION);
-    gpio_enable_module_pin(AVR32_EIC_EXTINT_2_PIN ,  AVR32_EIC_EXTINT_2_FUNCTION);
-    gpio_enable_module_pin(AVR32_EIC_EXTINT_3_PIN,   AVR32_EIC_EXTINT_3_FUNCTION);
-    gpio_enable_module_pin(AVR32_EIC_EXTINT_4_PIN,   AVR32_EIC_EXTINT_4_FUNCTION);
+    gpio_configure_pin(CYG_DEV_KB0_PIN, GPIO_DIR_INPUT );
+    gpio_configure_pin(CYG_DEV_KB1_PIN, GPIO_DIR_INPUT);
+    gpio_configure_pin(CYG_DEV_KB2_PIN, GPIO_DIR_INPUT);
+    gpio_configure_pin(CYG_DEV_KB3_PIN, GPIO_DIR_INPUT);
 
     // Init keyboard timer interrupt 
     cyg_drv_interrupt_create(kbd_dev->interrupt_number,
                              kbd_dev->interrupt_prio,   // Priority
                              (cyg_addrword_t)kbd_dev,   // Data item passed to interrupt handler
-                             avr32_matrix_kbd_timer_ISR,
-                             avr32_matrix_kbd_timer_DSR,
+                             avr32_button_kbd_timer_ISR,
+                             avr32_button_kbd_timer_DSR,
                              &kbd_dev->kbd_interrupt_handle,
                              &kbd_dev->kbd_interrupt);
     cyg_drv_interrupt_attach(kbd_dev->kbd_interrupt_handle);
@@ -496,20 +357,17 @@ kbd_init(struct cyg_devtab_entry *tab)
     }
 
     //Configure pin interupt
-    AVR32_EIC.mode &= ~(AVR32_EIC_MODE_INT4_MASK | AVR32_EIC_MODE_INT3_MASK |
-                        AVR32_EIC_MODE_INT2_MASK | AVR32_EIC_MODE_INT1_MASK);
-    //spadovou
-    AVR32_EIC.edge |= (AVR32_EIC_EDGE_INT4_MASK  | AVR32_EIC_EDGE_INT3_MASK	|
-                       AVR32_EIC_EDGE_INT2_MASK  | AVR32_EIC_EDGE_INT1_MASK);
+    gpio_clear_pin_interrupt_flag(CYG_DEV_KB0_PIN);
+    gpio_enable_pin_interrupt(CYG_DEV_KB0_PIN,GPIO_FALLING_EDGE);
 
-    AVR32_EIC.en   = AVR32_EIC_EN_INT4_MASK	 | AVR32_EIC_EN_INT3_MASK	|
-                     AVR32_EIC_EN_INT2_MASK      | AVR32_EIC_EN_INT1_MASK;
+    gpio_clear_pin_interrupt_flag(CYG_DEV_KB1_PIN);
+    gpio_enable_pin_interrupt(CYG_DEV_KB0_PIN,GPIO_FALLING_EDGE);
 
-    AVR32_EIC.icr = AVR32_EIC_ICR_INT4_MASK | AVR32_EIC_ICR_INT3_MASK |
-                    AVR32_EIC_ICR_INT2_MASK | AVR32_EIC_ICR_INT1_MASK;
+    gpio_clear_pin_interrupt_flag(CYG_DEV_KB2_PIN);
+    gpio_enable_pin_interrupt(CYG_DEV_KB0_PIN,GPIO_FALLING_EDGE);
 
-    AVR32_EIC.ier = AVR32_EIC_IER_INT4_MASK | AVR32_EIC_IER_INT3_MASK |
-                    AVR32_EIC_IER_INT2_MASK | AVR32_EIC_IER_INT1_MASK;
+    gpio_clear_pin_interrupt_flag(CYG_DEV_KB3_PIN);
+    gpio_enable_pin_interrupt(CYG_DEV_KB0_PIN,GPIO_FALLING_EDGE);
         
     cyg_selinit(&kbd_dev->kbd_select_info);
     return true;
@@ -533,10 +391,11 @@ kbd_lookup(struct cyg_devtab_entry **tab,
 * The pir0 interrupt is used to driver columns/lines scanning.
 * \param kdb_dev is pointer to keyboard data structure.
 */
-static void avr32_matrix_kbd_start_scan(cyg_kbd_avr32_t *kbd_dev)
+static void avr32_button_kbd_start_scan(cyg_kbd_avr32_t *kbd_dev)
 {
     kbd_dev->push_cnt   = 0;
     kbd_dev->scan_line  = 0;
+    kbd_dev->glitch_cnt = 0;
     AVR32_AST.ier       = AVR32_AST_IER_PER0_MASK;
 }
 
@@ -545,7 +404,7 @@ static void avr32_matrix_kbd_start_scan(cyg_kbd_avr32_t *kbd_dev)
 * The pir0 interrupt is used to driver columns/lines scanning.
 * \param kdb_dev is pointer to keyboard data structure.
 */
-static void avr32_matrix_kbd_stop_scan(cyg_kbd_avr32_t *kbd_dev)
+static void avr32_button_kbd_stop_scan(cyg_kbd_avr32_t *kbd_dev)
 {
     kbd_dev->scan_line  = 0;
     AVR32_AST.idr       = AVR32_AST_IDR_PER0_MASK;
@@ -561,12 +420,12 @@ static void avr32_matrix_kbd_stop_scan(cyg_kbd_avr32_t *kbd_dev)
 * \return value indicating to OS that DSR nead to be called.
 */
 static cyg_uint32
-avr32_matrix_kbd_timer_ISR(cyg_vector_t vector, cyg_addrword_t data)
+avr32_matric_kbd_timer_ISR(cyg_vector_t vector, cyg_addrword_t data)
 {
     cyg_kbd_avr32_t *kbd_dev = (cyg_kbd_avr32_t*)data;
     cyg_uint32           ret = CYG_ISR_HANDLED;
     
-    // is pir0 interrupt
+	// is pir0 interrupt
     if(AVR32_AST.sr&AVR32_AST_SR_PER0_MASK)
     {
         // Clear pir0 interupt
@@ -575,173 +434,36 @@ avr32_matrix_kbd_timer_ISR(cyg_vector_t vector, cyg_addrword_t data)
         }
         AVR32_AST.scr  = AVR32_AST_SCR_PER0_MASK;
         
-        if(kbd_dev->scan_line == 0)
+        if(kbd_dev->glitch_cnt < CYG_DEV_KBD_GLITCH_CNT_NUM)
         {
-            // If scan line is zero set line to scan
-            gpio_set_pin_high(AVR32_PIN_PA21);
-            gpio_set_pin_low(AVR32_PIN_PA22);
-            gpio_set_pin_low(AVR32_PIN_PA23);
-            gpio_set_pin_low(AVR32_PIN_PA24);
-#if CYGNUM_DEVS_KBD_MATRIX_4x5 == 1
-            gpio_set_pin_low(AVR32_PIN_PA25);
-#endif
-            ++kbd_dev->scan_line;
-            kbd_dev->scan_code = 0;
-        }
-        else if(kbd_dev->scan_line == 1)
-        {
-            // If scan line is non zero scan 
-            // for active rows and update scan code
-            if(gpio_get_pin_value(AVR32_PIN_PA26))
+            cyg_uint32 scan_code = 0;
+            if(gpio_get_pin_value(CYG_DEV_KB0_PIN) == CYG_DEB_KBD_PIN_ACTIVE_VALUE)
             {
-                kbd_dev->scan_code |= 0x0001;
+                scan_code |= 0x0001;
             }
-            if(gpio_get_pin_value(AVR32_PIN_PA27))
+            if(gpio_get_pin_value(CYG_DEV_KB1_PIN) == CYG_DEB_KBD_PIN_ACTIVE_VALUE)
             {
-                kbd_dev->scan_code |= 0x0002;
+                scan_code |= 0x0002;
             }
-            if(gpio_get_pin_value(AVR32_PIN_PA28))
+            if(gpio_get_pin_value(CYG_DEV_KB2_PIN) == CYG_DEB_KBD_PIN_ACTIVE_VALUE)
             {
-                kbd_dev->scan_code |= 0x0004;
+                scan_code |= 0x0004;
             }
-            if(gpio_get_pin_value(AVR32_PIN_PA29))
+            if(gpio_get_pin_value(CYG_DEV_KB3_PIN) == CYG_DEB_KBD_PIN_ACTIVE_VALUE)
             {
-                kbd_dev->scan_code |= 0x0008;
-            }
-            // Set next line to scan
-            gpio_set_pin_low(AVR32_PIN_PA21);
-            gpio_set_pin_high(AVR32_PIN_PA22);
-            gpio_set_pin_low(AVR32_PIN_PA23);
-            gpio_set_pin_low(AVR32_PIN_PA24);
-#if CYGNUM_DEVS_KBD_MATRIX_4x5 == 1
-            gpio_set_pin_low(AVR32_PIN_PA25);
-#endif
-
-            ++kbd_dev->scan_line;
-        }
-        else if(kbd_dev->scan_line == 2)
-        {
-            if(gpio_get_pin_value(AVR32_PIN_PA26))
-            {
-                 kbd_dev->scan_code |= 0x0010;
-            }
-            if(gpio_get_pin_value(AVR32_PIN_PA27))
-            {
-                 kbd_dev->scan_code |= 0x0020;
-            }
-            if(gpio_get_pin_value(AVR32_PIN_PA28))
-            {
-                 kbd_dev->scan_code |= 0x0040;
-            }
-            if(gpio_get_pin_value(AVR32_PIN_PA29))
-            {
-                 kbd_dev->scan_code |= 0x0080;
+                scan_code |= 0x0008;
             }
 
-            gpio_set_pin_low(AVR32_PIN_PA21);
-            gpio_set_pin_low(AVR32_PIN_PA22);
-            gpio_set_pin_high(AVR32_PIN_PA23);
-            gpio_set_pin_low(AVR32_PIN_PA24);
-#if CYGNUM_DEVS_KBD_MATRIX_4x5 == 1
-            gpio_set_pin_low(AVR32_PIN_PA25);
-#endif
-            
-            ++kbd_dev->scan_line;
-        }
-        else if(kbd_dev->scan_line == 3)
-        {
-            if(gpio_get_pin_value(AVR32_PIN_PA26))
-            {
-                kbd_dev->scan_code |=  0x0100;
-            }
-            if(gpio_get_pin_value(AVR32_PIN_PA27))
-            {
-                kbd_dev->scan_code |= 0x0200;
-            }
-            if(gpio_get_pin_value(AVR32_PIN_PA28))
-            {
-                kbd_dev->scan_code |= 0x0400;
-            }
-            if(gpio_get_pin_value(AVR32_PIN_PA29))
-            {
-                kbd_dev->scan_code |= 0x0800;
-            }
+            kbd_dev->glitch_cnt++;
 
-            gpio_set_pin_low(AVR32_PIN_PA21);
-            gpio_set_pin_low(AVR32_PIN_PA22);
-            gpio_set_pin_low(AVR32_PIN_PA23);
-            gpio_set_pin_high(AVR32_PIN_PA24);
-#if CYGNUM_DEVS_KBD_MATRIX_4x5 == 1
-            gpio_set_pin_low(AVR32_PIN_PA25);
-#endif
-            ++kbd_dev->scan_line;
-        }
-        else if(kbd_dev->scan_line == 4)
-        {
-            if(gpio_get_pin_value(AVR32_PIN_PA26))
-            {
-                kbd_dev->scan_code |=  0x1000;
-            }
-            if(gpio_get_pin_value(AVR32_PIN_PA27))
-            {
-                kbd_dev->scan_code |= 0x2000;
-            }
-            if(gpio_get_pin_value(AVR32_PIN_PA28))
-            {
-                kbd_dev->scan_code |= 0x4000;
-            }
-            if(gpio_get_pin_value(AVR32_PIN_PA29))
-            {
-                kbd_dev->scan_code |= 0x8000;
-            }
-
-            gpio_set_pin_low(AVR32_PIN_PA21);
-            gpio_set_pin_low(AVR32_PIN_PA22);
-            gpio_set_pin_low(AVR32_PIN_PA23);
-            gpio_set_pin_low(AVR32_PIN_PA24);
-#if CYGNUM_DEVS_KBD_MATRIX_4x5 == 1
-            gpio_set_pin_low(AVR32_PIN_PA25);
-#endif
-
-            ++kbd_dev->scan_line;
-        }
-        else if(kbd_dev->scan_line == 5)
-        {
-            if(gpio_get_pin_value(AVR32_PIN_PA26))
-            {
-                kbd_dev->scan_code |= 0x10000;
-            }
-            if(gpio_get_pin_value(AVR32_PIN_PA27))
-            {
-                kbd_dev->scan_code |= 0x20000;
-            }
-            if(gpio_get_pin_value(AVR32_PIN_PA28))
-            {
-                kbd_dev->scan_code |= 0x40000;
-            }
-            if(gpio_get_pin_value(AVR32_PIN_PA29))
-            {
-               kbd_dev->scan_code |= 0x80000;
-            }
-
-            // All keyboard lines was scanned 
-            // put all lines to inactive state
-            gpio_set_pin_high(AVR32_PIN_PA21);
-            gpio_set_pin_high(AVR32_PIN_PA22);
-            gpio_set_pin_high(AVR32_PIN_PA23);
-            gpio_set_pin_high(AVR32_PIN_PA24);
-#if CYGNUM_DEVS_KBD_MATRIX_4x5 == 1
-            gpio_set_pin_low(AVR32_PIN_PA25);
-#endif
-            // Disable scan timer interrupt and
-            // indicate that DSR nead to be processed
-            AVR32_AST.idr       = AVR32_AST_IDR_PER0_MASK;
-            kbd_dev->scan_line	= 0;
-			ret |= CYG_ISR_CALL_DSR;            
+            if((kbd_dev->scan_code != scan_code))
+                kbd_dev->glitch_cnt = 0;
         }
         else
         {
-            CYG_ASSERT(false,"Unexpected scan position");
+            AVR32_AST.idr       = AVR32_AST_IDR_PER0_MASK;
+            kbd_dev->glitch_cnt = 0;
+            ret |= CYG_ISR_CALL_DSR;
         }
     }
     
@@ -758,7 +480,7 @@ avr32_matrix_kbd_timer_ISR(cyg_vector_t vector, cyg_addrword_t data)
 * \param data is pointer to driver data structure.
 */
 static void       
-avr32_matrix_kbd_timer_DSR(cyg_vector_t vector, cyg_ucount32 count, cyg_addrword_t data)
+avr32_button_kbd_timer_DSR(cyg_vector_t vector, cyg_ucount32 count, cyg_addrword_t data)
 {
     cyg_kbd_avr32_t *kbd_dev = (cyg_kbd_avr32_t*)data;
     
@@ -770,11 +492,7 @@ avr32_matrix_kbd_timer_DSR(cyg_vector_t vector, cyg_ucount32 count, cyg_addrword
         if(kbd_dev->push_cnt == 0)
         {
             // Convert scan code to linux keyboard code
-            #if CYGNUM_DEVS_KBD_MATRIX_4x5 == 1
-            cyg_uint16 key = kbd_scan_code_to_key_gs4x5(kbd_dev->scan_code);    
-            #else
-            cyg_uint16 key = kbd_scan_code_to_key_pmg4x4(kbd_dev->scan_code);
-            #endif
+            cyg_uint16 key = kbd_scan_code_to_key(kbd_dev->scan_code);
             // if latest key is different from current
             // use longer interval
             if(kbd_dev->scan_code != kbd_dev->last_scan_code)
@@ -855,11 +573,17 @@ avr32_matrix_kbd_timer_DSR(cyg_vector_t vector, cyg_ucount32 count, cyg_addrword
         // timer interrupt was disabled in ISR
         kbd_dev->push_cnt = 0;
 
-        AVR32_EIC.icr = AVR32_EIC_ICR_INT4_MASK | AVR32_EIC_ICR_INT3_MASK |
-                        AVR32_EIC_ICR_INT2_MASK | AVR32_EIC_ICR_INT1_MASK;
+        gpio_clear_pin_interrupt_flag(CYG_DEV_KB0_PIN);
+        gpio_enable_pin_interrupt(CYG_DEV_KB0_PIN,GPIO_FALLING_EDGE);
 
-        AVR32_EIC.ier = AVR32_EIC_IER_INT4_MASK | AVR32_EIC_IER_INT3_MASK |
-                        AVR32_EIC_IER_INT2_MASK | AVR32_EIC_IER_INT1_MASK;
+        gpio_clear_pin_interrupt_flag(CYG_DEV_KB1_PIN);
+        gpio_enable_pin_interrupt(CYG_DEV_KB0_PIN,GPIO_FALLING_EDGE);
+
+        gpio_clear_pin_interrupt_flag(CYG_DEV_KB2_PIN);
+        gpio_enable_pin_interrupt(CYG_DEV_KB0_PIN,GPIO_FALLING_EDGE);
+
+        gpio_clear_pin_interrupt_flag(CYG_DEV_KB3_PIN);
+        gpio_enable_pin_interrupt(CYG_DEV_KB0_PIN,GPIO_FALLING_EDGE);
     }
 
     kbd_dev->last_scan_code = kbd_dev->scan_code; 
@@ -874,13 +598,16 @@ avr32_matrix_kbd_timer_DSR(cyg_vector_t vector, cyg_ucount32 count, cyg_addrword
 */
 cyg_uint32 avr32_matrix_kbd_pin_ISR(cyg_vector_t vector, cyg_addrword_t data)
 {
-    AVR32_EIC.icr = AVR32_EIC_ICR_INT4_MASK | AVR32_EIC_ICR_INT3_MASK |
-                    AVR32_EIC_ICR_INT2_MASK | AVR32_EIC_ICR_INT1_MASK;
-
-    AVR32_EIC.idr = AVR32_EIC_IDR_INT4_MASK | AVR32_EIC_IDR_INT3_MASK |
-                    AVR32_EIC_IDR_INT2_MASK | AVR32_EIC_IDR_INT1_MASK;
-
-    avr32_matrix_kbd_start_scan((cyg_kbd_avr32_t *)data);
+    gpio_clear_pin_interrupt_flag(CYG_DEV_KB0_PIN);
+    gpio_disable_pin_interrupt(CYG_DEV_KB0_PIN);
+    gpio_clear_pin_interrupt_flag(CYG_DEV_KB1_PIN);
+    gpio_disable_pin_interrupt(CYG_DEV_KB1_PIN);
+    gpio_clear_pin_interrupt_flag(CYG_DEV_KB2_PIN);
+    gpio_disable_pin_interrupt(CYG_DEV_KB2_PIN);
+    gpio_clear_pin_interrupt_flag(CYG_DEV_KB3_PIN);
+    gpio_disable_pin_interrupt(CYG_DEV_KB3_PIN);
+	
+    avr32_button_kbd_start_scan((cyg_kbd_avr32_t *)data);
     return CYG_ISR_HANDLED;
 }
 

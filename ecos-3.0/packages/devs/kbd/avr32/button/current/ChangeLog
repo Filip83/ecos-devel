@@ -1,6 +1,6 @@
-2016-11-23  Filip  <filip.gnu@gmail.com>
+2016-11-22  Filip  <filip.gnu@gmail.com>
 
-	* Matrix keyboard driver for AVR32.
+	* Button keyboard driver for AVR32.
 
 //===========================================================================
 // ####GPLCOPYRIGHTBEGIN####                                                
