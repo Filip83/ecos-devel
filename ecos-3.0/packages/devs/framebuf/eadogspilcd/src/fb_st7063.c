@@ -1,8 +1,8 @@
 //==========================================================================
 //
-//      AT42QT1060_kbd.c
+//      fv_st7063.c
 //
-//      Keyboard driver for the AVR32UC3C-EK touch button
+//      Frame buffer st7063 driver
 //
 //==========================================================================
 // ####ECOSGPLCOPYRIGHTBEGIN####
@@ -39,11 +39,11 @@
 //==========================================================================
 //#####DESCRIPTIONBEGIN####
 //
-// Author(s):    Filip filip.gnu@gmail.com
+// Author(s):    Filip <filip.gnu@gmail.com>
 // Contributors:
 // Date:         2016-11-23
 // Purpose:
-// Description:  Keyboardd driver for AVR32
+// Description:  SPI framebuffer driver for st7036
 //
 //####DESCRIPTIONEND####
 //
@@ -201,41 +201,41 @@ void cyg_st7063_fb_write_pixel_fn(cyg_fb* fb, cyg_ucount16 x, cyg_ucount16 y,
 {
     if(x < fb->fb_width && y < fb->fb_height)
     {
-	cyg_uint32 color_mask = ~((-1) << fb->fb_depth);
+	cyg_uint8 color_mask = 1;
 	colour &= color_mask;
 	
-	x *=fb->fb_depth;// bits_per_pixel;
+        // eni potreba mam jnom jednu moznost jedn bit jeden pixel
+	//y *=fb->fb_depth;// bits_per_pixel;
 
-	cyg_uint32 x_bit = x&0x7;
+	cyg_ucount16 y_byte = y >> 3;//y/8;
+	cyg_ucount16 y_bit  = y&0x07;//y%8;
 #if GRL_ENDIAN_TYPE == 0
-	colour <<= (7-x_bit);
-	color_mask <<= (7-x_bit);
+	colour <<= (7-y_bit);
+	color_mask <<= (7-y_bit);
 #else
-	colour <<= (x_bit);
-	color_mask <<= (x_bit);
+	colour <<= (y_bit);
+	color_mask <<= (y_bit);
 #endif
-	if((y*fb->fb_stride + (x >> 3)) < fb->fb_flags0)
-	{
-            cyg_uint8 *cbit_map = (cyg_uint8*)fb->fb_base;
-            cbit_map[y*fb->fb_stride + (x >> 3)] &= ~color_mask;
-            cbit_map[y*fb->fb_stride + (x >> 3)] |= colour;
-	}
+        cyg_uint8 *cbit_map = (cyg_uint8*)fb->fb_base;
+        cbit_map[y_byte*fb->fb_stride + x] &= ~color_mask;
+        cbit_map[y_byte*fb->fb_stride + x] |= colour;
     }
 }
 
 cyg_fb_colour cyg_st7063_fb_read_pixel_fn(cyg_fb* fb, cyg_ucount16 x,
         cyg_ucount16 y)
 {
-    cyg_uint32 color_mask =  ~((-1) << fb->fb_depth);
+    cyg_uint32 color_mask =  1;
     cyg_uint8 *cbit_map   = (cyg_uint8*)fb->fb_base;
 
-    x *= fb->fb_depth;
+    cyg_ucount16 y_byte = y >> 3;//y/8;
+    cyg_ucount16 y_bit  = y&0x07;//y%8;
 
-    cyg_uint32 x_bit  = x&0x7;
 #if GRL_ENDIAN_TYPE == 0
-    return (cbit_map[y*fb->fb_stride + (x >> 3)] >> (7 - x_bit)) & color_mask;
+    color_mask <<= (7-y_bit);
+    return (cbit_map[y_byte*fb->fb_stride + x] >> (7 - y_bit)) & color_mask;
 #else
-    return (cbit_map[(px_width*y + x)/8] >> (x_bit)) & color_mask;
+    return (cbit_map[y_byte*fb->fb_stride + x] >> (y_bit)) & color_mask;
 #endif
 }
 
@@ -254,7 +254,13 @@ void cyg_st7063_fb_write_vline_fn(cyg_fb* fb, cyg_ucount16 x, cyg_ucount16 y,
 void cyg_st7063_fb_fill_block_fn(cyg_fb* fb, cyg_ucount16 x, cyg_ucount16 y, 
         cyg_ucount16 width, cyg_ucount16 height, cyg_fb_colour colour)
 {
-    
+    for(cyg_ucount16 iy = y; iy < (y + height); iy++)
+    {
+        for(cyg_ucount16 ix = x; ix < (x + width); ix++) 
+        {
+            cyg_st7063_fb_write_pixel_fn(ix,iy,colour);
+        }
+    }
 }
 
 void cyg_st7063_fb_write_block_fn(cyg_fb* fb, cyg_ucount16 x, cyg_ucount16 y, 
@@ -275,7 +281,7 @@ void cyg_st7063_fb_move_block_fn(cyg_fb* fb, cyg_ucount16 x, cyg_ucount16 y,
         cyg_ucount16 width, cyg_ucount16 height, cyg_ucount16 new_x, 
         cyg_ucount16 new_y)
 {
-    
+
 }
 
 
@@ -287,6 +293,7 @@ static cyg_uint8            cyg_st7063_fb0_default_base[CYG_FB_ST7063_HEIGHT *
 // Driver-specific data needed for interacting with the auxiliary.
 //static synth_fb_data    cyg_synth_fb0_data;
 
+// flags0 - pixel maxk
 CYG_FB_FRAMEBUFFER(CYG_FB_fb0_STRUCT,
                    CYG_FB_fb0_DEPTH,
                    CYG_FB_fb0_FORMAT,
