@@ -315,6 +315,14 @@ typedef struct cyg_fb_ioctl_backlight {
     cyg_ucount32    fbbl_max;
 } cyg_fb_ioctl_backlight;
 
+# define CYG_FB_IOCTL_CONTRAST_GET              0x0500
+# define CYG_FB_IOCTL_CONTRAST_SET              0x0501
+
+typedef struct cyg_fb_ioctl_backlight {
+    cyg_ucount32    fbco_current;
+    cyg_ucount32    fbco_max;
+} cyg_fb_ioctl_backlight;
+
 // ----------------------------------------------------------------------------
 // The functional API. This can be implemented either by inlines or by
 // explicit functions, the latter allowing extra assertions.

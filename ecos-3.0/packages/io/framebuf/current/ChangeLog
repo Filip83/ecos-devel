@@ -1,3 +1,7 @@
+2016-11-24  Filip <filip.gnu@gmail.com>
+
+        * framebuf.h: added support to get/set display contrast.
+
 2009-02-09  Bart Veer  <bartv@ecoscentric.com>
 
 	* doc/framebuf.sgml: clarify the meaning of the true colour
