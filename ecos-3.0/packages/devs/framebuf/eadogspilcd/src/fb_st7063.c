@@ -57,6 +57,8 @@
 
 externC cyg_spi_avr32_device_t lcd_spi_device;
 
+#define GRL_ENDIAN_TYPE CYG_FB_FLAGS0_LE
+
 // Switch on a framebuffer device. This may get called multiple
 // times, e.g. when switching between different screen modes.
 // It just involves sending a message to the auxiliary.
@@ -343,38 +345,38 @@ void cyg_st7063_fb_move_block_fn(cyg_fb* fb, cyg_ucount16 x, cyg_ucount16 y,
 
 // A default area of memory for the framebuffer, if the auxiliary is not
 // running.
-static cyg_uint8            cyg_st7063_fb_default_base[CYG_FB_ST7063_HEIGHT * 
-                                              CYG_FB_ST7063_STRIDE];
+static cyg_uint8 cyg_st7063_fb_default_base[CYGNUM_DEVS_FRAMEBUF_ST7063_FB_WIDTH * 
+                                              CYGNUM_DEVS_FRAMEBUF_ST7063_FB_STRIDE];
 
 // Driver-specific data needed for interacting with the auxiliary.
 //static synth_fb_data    cyg_synth_fb0_data;
 
 // flags0 - pixel maxk
-CYG_FB_FRAMEBUFFER(CYG_FB_fb0_STRUCT,
-                   CYG_FB_fb0_DEPTH,
-                   CYG_FB_fb0_FORMAT,
-                   CYG_FB_fb0_WIDTH,
-                   CYG_FB_fb0_HEIGHT,
-                   CYG_FB_fb0_VIEWPORT_WIDTH,
-                   CYG_FB_fb0_VIEWPORT_HEIGHT,
+CYG_FB_FRAMEBUFFER(cyg_fb_fb0,
+                   1,
+                   CYG_FB_FORMAT_1BPP_MONO_0_WHITE,
+                   CYGNUM_DEVS_FRAMEBUF_ST7063_FB_WIDTH,
+                   CYGNUM_DEVS_FRAMEBUF_ST7063_FB_HEIGHT,
+                   0,
+                   0,
                    cyg_st7063_fb_default_base,
-                   CYG_FB_fb0_STRIDE,
-                   CYG_FB_fb0_FLAGS0,
-                   CYG_FB_fb0_FLAGS1,
-                   CYG_FB_fb0_FLAGS2,
-                   CYG_FB_fb0_FLAGS3,
+                   CYGNUM_DEVS_FRAMEBUF_ST7063_FB_STRIDE,
+                   CYG_FB_FORMAT_1BPP_MONO_0_WHITE,
+                   CYG_FB_FLAGS0_LE | CYG_FB_FLAGS0_DOUBLE_BUFFER | CYG_FB_FLAGS0_BACKLIGHT,
+                   0,
+                   0,
                    (CYG_ADDRWORD) 0,  // id, 0 - 3
                    (CYG_ADDRWORD) 0,
                    (CYG_ADDRWORD) 0,
                    (CYG_ADDRWORD) 0,
-                   &cyg_synth_fb_on,
-                   &cyg_synth_fb_off,
-                   &cyg_synth_fb_ioctl,
-                   &cyg_synth_fb_synch,
-                   &CYG_FB_fb0_READ_PALETTE_FN,
-                   &CYG_FB_fb0_WRITE_PALETTE_FN,
-                   &CYG_FB_fb0_MAKE_COLOUR_FN,
-                   &CYG_FB_fb0_BREAK_COLOUR_FN,
+                   &cyg_st7063_fb_on,
+                   &cyg_st7063_fb_off,
+                   &cyg_st7063_fb_ioctl,
+                   &cyg_st7063_fb_synch,
+                   &NULL,
+                   &NULL
+                   &NULL,
+                   &NULL,
                    &cyg_st7063_fb_write_pixel_fn,
                    &cyg_st7063_fb_read_pixel_fn,
                    &cyg_st7063_fb_write_hline_fn,
