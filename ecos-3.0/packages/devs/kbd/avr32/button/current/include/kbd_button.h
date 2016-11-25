@@ -1,5 +1,5 @@
-﻿#ifndef CYGONCE_DEVS_KBD_BUTTON_UC3C_H
-#define CYGONCE_DEVS_KBD_BUTTON_UC3C_H
+﻿#ifndef CYGONCE_DEVS_KBD_BUTTON_AVR32_H
+#define CYGONCE_DEVS_KBD_BUTTON_AVR32_H
 //==========================================================================
 //
 //      kbd_button.h
@@ -56,8 +56,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-	
-#include <pkgconf/hal.h>
+
 #include <pkgconf/devs_kbd_button.h>
 
 #include <cyg/infra/cyg_type.h>
@@ -80,11 +79,10 @@ typedef struct cyg_pins_isr_s
     cyg_vector_t      kbd_pin_interrupt_number; /**< Pin interrupt number. */ 
 }cyg_pins_isr_t;
 
-typedef struct cyg_kbd_key_s
-{
-    cyg_uint16 key;
-    cyg_uint16 param;
-}cyg_kbd_key_t;
+#if CYGNUM_DEVS_KBD_BUTTON_LINUX_KEYBOARD == 1
+typedef cyg_uint16 cyg_kbd_key_t;
+#else
+typedef cyg_uint8 cyg_kbd_key_t;
 
 /** Matrix keyboard driver data structure
 *
@@ -103,12 +101,13 @@ typedef struct cyg_kbd_avr32_s
     cyg_handle_t      kbd_interrupt_handle; /**< Keyboard timer interrupt handle. */
     cyg_vector_t      interrupt_number;     /**< Keyboard timer interrupt number. */
     cyg_uint32        interrupt_prio;	    /**< Keyboard interrupts priority. */
-    cyg_pins_isr_t    kb_pins_isr[CYGNUM_DEVS_KBD_MATRIX_ISR_PINS]; /**< Keyboard rows pins interrupts. \see cyg_pins_isr_t */
+    cyg_pins_isr_t    kb_pins_isr[CYGNUM_DEVS_KBD_BUTTON_NUM_IO_INTERRUPTS_GROUPS]; /**< Keyboard rows pins interrupts. \see cyg_pins_isr_t */
     (void (*call_back)(cyg_uint16, cyg_uint16)) kbd_callback;
 #if CYGNUM_DEVS_KBD_MATRIX_CALLBACK_MODE == 0
     cyg_kbd_key_t     key_buffer[CYGNUM_DEVS_KBD_MATRIX_EVENT_BUFFER_SIZE];
     cyg_uint16        num_events;
     cyg_uint16        event_put;
+    cyg_uint16        event_get;
     cyg_bool          kbd_select_active;
     cyg_selinfo       kbd_select_info; 
 #endif
@@ -119,8 +118,8 @@ typedef struct cyg_kbd_avr32_s
 } // closing brace for extern "C"
 #endif
 
-#endif // CYGONCE_DEVS_KBD_BUTTON_UC3C_H
+#endif // CYGONCE_DEVS_KBD_BUTTON_AVR32_H
 
 /** @} */
 //-----------------------------------------------------------------------------
-// End of matrix_kbd.h
+// End of kbd_button.h

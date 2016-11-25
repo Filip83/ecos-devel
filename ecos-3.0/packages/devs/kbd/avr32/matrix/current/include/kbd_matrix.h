@@ -57,31 +57,15 @@
 extern "C" {
 #endif
 	
-#include <pkgconf/hal.h>
 #include <pkgconf/devs_kbd_matrix.h>
 
 #include <cyg/infra/cyg_type.h>
 #include <cyg/hal/drv_api.h>
 
-/**
- * @defgroup Matrix keyboard driver configuration flags
- *
- * @{
- */
-#if 0
-/** Keyboard debug output enable */
-#define CYGDAT_DEVS_KBD_MATRIX_DEBUG_OUTPUT				0
-/** Intervals in which keyboard rows are scanned. This value
-* for 32765Hz oscillator makes 0.0078125s kbd scan interval. */
-#define CYGNUM_DEVS_KBD_MATRIX_SCAN_INTERVAL			7
-/** Keyboard interrupts priority. */
-#define CYGNUM_DEVS_KBD_MATRIX_INTERRUPT_PRIO			3
-#endif
+
 /** Number of matrix keyboard rows. */
 #define CYGNUM_DEVS_KBD_MATRIX_ISR_PINS	4
     
-
-
 
 /** @} */
 
@@ -99,11 +83,11 @@ typedef struct cyg_pins_isr_s
     cyg_vector_t      kbd_pin_interrupt_number; /**< Pin interrupt number. */ 
 }cyg_pins_isr_t;
 
-typedef struct cyg_kbd_key_s
-{
-    cyg_uint16 key;
-    cyg_uint16 param;
-}cyg_kbd_key_t;
+#if CYGNUM_DEVS_KBD_MATRIX_LINUX_KEYBOARD == 1
+typedef cyg_uint16 cyg_kbd_key_t;
+#else
+typedef cyg_uint8 cyg_kbd_key_t;
+
 
 /** Matrix keyboard driver data structure
 *
@@ -127,6 +111,7 @@ typedef struct cyg_kbd_avr32_s
     cyg_kbd_key_t     key_buffer[CYGNUM_DEVS_KBD_MATRIX_EVENT_BUFFER_SIZE];
     cyg_uint16        num_events;
     cyg_uint16        event_put;
+    cyg_uint16        event_get;
     cyg_bool          kbd_select_active;
     cyg_selinfo       kbd_select_info; 
 #endif

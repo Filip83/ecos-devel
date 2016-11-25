@@ -318,10 +318,10 @@ typedef struct cyg_fb_ioctl_backlight {
 # define CYG_FB_IOCTL_CONTRAST_GET              0x0500
 # define CYG_FB_IOCTL_CONTRAST_SET              0x0501
 
-typedef struct cyg_fb_ioctl_backlight {
+typedef struct cyg_fb_ioctl_contrast {
     cyg_ucount32    fbco_current;
     cyg_ucount32    fbco_max;
-} cyg_fb_ioctl_backlight;
+} cyg_fb_ioctl_contrast;
 
 // ----------------------------------------------------------------------------
 // The functional API. This can be implemented either by inlines or by

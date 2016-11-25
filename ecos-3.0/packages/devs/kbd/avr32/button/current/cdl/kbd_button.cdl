@@ -57,9 +57,14 @@ cdl_package CYGPKG_DEVS_KBD_BUTTON {
     requires    CYGPKG_IO
     requires    CYGFUN_KERNEL_API_C
 
-    compile       -library=libextras.a kbd_matrix.c
+    compile       -library=libextras.a kbd_button.c
 
-    description "Keyboard driver for the button"
+    description "Keyboard driver for the buttons. The buttons are connected
+                 to gpio the edge on which interrupt si genrated can be selected.
+                 The glitch filter interval and repeated scan interval is derived
+                 from AST PIR0 periodic timer. The AST frequcne must be ca. 
+                 32765Hz. The number of gpio interrupt groups is limted at max
+                 to four, tis limits number of connected buttons to 32."
 
     cdl_component CYGPKG_DEVS_KBD_BUTTON_OPTIONS {
         display "options"
@@ -87,15 +92,58 @@ cdl_package CYGPKG_DEVS_KBD_BUTTON {
         cdl_option CYGNUM_DEVS_KBD_BUTTON_SCAN_INTERVAL {
             display "Keyboard scan interval"
             flavor data
-            legal_value   1 to 128
+            legal_value     7
             default_value { 7 }
             description "
                 This option defines keyboard scan interval.
                 This interval is used for glitch filter and key
-                repeat scan."
+                repeat scan. T = 2^(interval + 1)/32764"
         }
 
-        cdl_option CYGNUM_DEVS_KBD_BUTTON_NUM_IO_INTERRUPTS_GROUP {
+        cdl_option CYGNUM_DEVS_KBD_BUTTON_GLITCH_CNT {
+            display "Keyboard scan interval"
+            flavor data
+            legal_value     1 to 10
+            default_value { 3 }
+            description "
+                The number samples of keyboard state to decide the key
+                is relay pusshed."
+        }
+
+        cdl_option CYGNUM_DEVS_KBD_BUTTON_CALLBACK_MODE {
+            display "Keyboard driver callback mode"
+            flavor bool
+            default_value { 0 }
+            description "
+                This option enable callback only mode. In this mode
+                callback function to deliver key strokes is used.
+                Keyboard IO functionality is disabled."
+        }
+
+        cdl_option CYGNUM_DEVS_KBD_BUTTON_EVENT_BUFFER_SIZE {
+            display "Number of events the driver can buffer"
+            active_if CYGNUM_DEVS_KBD_BUTTON_CALLBACK_MODE == 0
+            flavor data
+            default_value { 5 }
+            description "
+                This option defines the size of the keypad device internal
+            buffer. The cyg_io_read() function will return as many of these
+            as there is space for in the buffer passed."
+        }
+
+        cdl_option CYGNUM_DEVS_KBD_BUTTON_LINUX_KEYBOARD {
+            display "Enable linux keyboard key mapping"
+            active_if CYGNUM_DEVS_KBD_MATRIX_CALLBACK_MODE == 0
+            flavor bool
+            default_value { 1 }
+            description "
+                If this option is enabled a key value is represetnted as 16-bit
+                integer. If a key value is les than 255 it can be interpreted
+                as ASCII character, otherwise it is function key. Function keys
+                are interpreted acording linux_keyboard.h."
+        }
+
+        cdl_option CYGNUM_DEVS_KBD_BUTTON_NUM_IO_INTERRUPTS_GROUPS {
             display "Numer to gpio interrupst gorups to use"
             flavor data
             legal_value   1 to 4
@@ -106,14 +154,25 @@ cdl_package CYGPKG_DEVS_KBD_BUTTON {
                 interrupt group to which button are connected."
         }
 
-        cdl_option CYGNUM_DEVS_KBD_MATRIX_BUTTON_MODE {
-            display "Keyboard driver callback mode"
-            flavor bool
-            default_value { 0 }
-            description "
-                This option enable callback only mode. In this mode
-                callback function to deliver key strokes is used.
-                Keyboard IO functionality is disabled."
+        for { set _ig 0 } { $_ig < CYGNUM_DEVS_KBD_BUTTON_NUM_IO_INTERRUPTS_GROUP } { incr _ig } {
+            cdl_option CYGNUM_DEVS_KBD_BUTTON_INTERRUPTS_GROUP[set _ig]_VECTOR {
+                display		"Interrupt group$_ig isr vector"
+                flavor 		data
+                default_value	"CYGNUM_HAL_VECTOR_GPIO_0"
+            }
+        }
+
+        cdl_option CYGNUM_DEVS_KBD_BUTTON_INTERRUPTS_EDGE {
+            display "Edge on which pin interrupt is gnerated"
+            flavor data
+            legal_value   {"FALLING_EDGE" "RISING_EDGE"} 
+            default_value { "FALLING_EDGE" }
+        }
+
+        cdl_option CYGNUM_DEVS_KBD_BUTTON_ACTIVE_VALUE {
+            display "Value of active pin state"
+            flavor data
+            calculated  (CYGNUM_DEVS_KBD_BUTTON_INTERRUPTS_EDGE == FALLING_EDGE) ? 0:1  
         }
 
         cdl_option CYGNUM_DEVS_KBD_BUTTON_INTERRUPT_PRIO {
@@ -125,15 +184,11 @@ cdl_package CYGPKG_DEVS_KBD_BUTTON {
                 This option set keyboard river insterrupt priortiy."
         }
 
-        cdl_option CYGNUM_DEVS_KBD_BUTTON_EVENT_BUFFER_SIZE {
-            display "Number of events the driver can buffer"
-            active_if CYGNUM_DEVS_KBD_MATRIX_CALLBACK_MODE == 0
+        cdl_option CYGDAT_DEVS_KBD_BUTTON_DEBUG_OUTPUT {
+            display "Enable keyboard driver debug utput"
             flavor data
-            default_value { 5 }
-            description "
-                This option defines the size of the keypad device internal
-            buffer. The cyg_io_read() function will return as many of these
-            as there is space for in the buffer passed."
+            legal_values  0 to 3
+            default_value { 0 }
         }
     }
 }

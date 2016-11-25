@@ -1,8 +1,8 @@
 # ====================================================================
 #
-#      fb%st7063.cdl
+#      fb_st7565.cdl
 #
-#      Framebuffer device driver for the st7063 target.
+#      Framebuffer device driver for the ST7565 target.
 #
 # ====================================================================
 # ####ECOSGPLCOPYRIGHTBEGIN####                                             
@@ -39,14 +39,14 @@
 # ====================================================================
 ######DESCRIPTIONBEGIN####
 #
-# Author(s):     Filip  
+# Author(s):     Filip  <filip.gnu@gmail.com>
 # Date:          2016-11-24
 #
 #####DESCRIPTIONEND####
 #========================================================================
 
-cdl_package CYGPKG_DEVS_FRAMEBUF_ST7063 {
-    display		"ST7063 Target Framebuffer device driver"
+cdl_package CYGPKG_DEVS_FRAMEBUF_ST7565 {
+    display		"ST7565 Target Framebuffer device driver"
     parent		CYGPKG_IO_FRAMEBUF
     active_if		CYGPKG_IO_FRAMEBUF
     implements		CYGINT_IO_FRAMEBUF_DEVICES
@@ -56,30 +56,57 @@ cdl_package CYGPKG_DEVS_FRAMEBUF_ST7063 {
 
     description "
         This package provides a framebuffer device driver for the
-        ST7063 target."
+        ST7565 target."
 
-    cdl_option CYGNUM_DEVS_FRAMEBUF_ST7063_FB_WIDTH {
+    cdl_option CYGNUM_DEVS_FRAMEBUF_ST7565_FB_WIDTH {
         display		"Display width"
         flavor 		data
         default_value	132
         legal_values	16 to 132
     }
 
-    cdl_option CYGNUM_DEVS_FRAMEBUF_ST7063_FB_HEIGHT {
+    cdl_option CYGNUM_DEVS_FRAMEBUF_ST7565_FB_HEIGHT {
         display		"Display height"
         flavor 		data
         default_value	32
-        legal_values	16 to 64
+        legal_values	8 to 64
     }
 
-    cdl_option CYGNUM_DEVS_FRAMEBUF_ST7063_FB_STRIDE {
+    cdl_option CYGNUM_DEVS_FRAMEBUF_ST7565_FB_STRIDE {
         display		"Display stride"
         flavor 		data
         default_value	4
         legal_values	1 to 4
     }
+    
+    cdl_option CYGNUM_DEVS_FRAMEBUF_ST7565_FB_ENDIAN {
+        display		"Display endian"
+        flavor 		data
+        default_value	"CYG_FB_FLAGS0_LE"
+        legal_values	"CYG_FB_FLAGS0_LE"
+        description "This option cannot be modified by user."
+    }
 
-    cdl_component CYGPKG_DEVS_FRAMEBUF_ST7063_OPTIONS {
+    cdl_option CYGNUM_DEVS_FRAMEBUF_ST7565_ENABLE_BACKLIGHT_CONTROL {
+        display		"Enable driver to control back light"
+        flavor 		bool
+        default_value	1
+    }
+
+    cdl_option CYGNUM_DEVS_FRAMEBUF_ST7565_BACKLIGHT_PIN {
+        display		"Pin name used to control backlight"
+        flavor 		data
+        default_value	"AVR32_PIN_PC15"
+        active_if       CYGNUM_DEVS_FRAMEBUF_ST7565_ENABLE_BACKLIGHT_CONTROL
+    }
+
+    cdl_option CYGNUM_DEVS_FRAMEBUF_ST7565_A0_PIN {
+        display		"Display pin to control command/data"
+        flavor 		data
+        default_value	"AVR32_PIN_PC15"
+    }
+
+    cdl_component CYGPKG_DEVS_FRAMEBUF_ST7565_OPTIONS {
         display "Framebuffer build options"
         flavor  none
         description   "
@@ -87,7 +114,7 @@ cdl_package CYGPKG_DEVS_FRAMEBUF_ST7063 {
 	    compiler flags used only in building the synthetic
             target framebuffer device driver."
 
-        cdl_option CYGPKG_DEVS_FRAMEBUF_ST7063_CFLAGS_ADD {
+        cdl_option CYGPKG_DEVS_FRAMEBUF_ST7565_CFLAGS_ADD {
             display "Additional compiler flags"
             flavor  data
             no_define
@@ -98,7 +125,7 @@ cdl_package CYGPKG_DEVS_FRAMEBUF_ST7063 {
                 are used in addition to the set of global flags."
         }
 
-        cdl_option CYGPKG_DEVS_FRAMEBUF_ST7063_CFLAGS_REMOVE {
+        cdl_option CYGPKG_DEVS_FRAMEBUF_ST7565_CFLAGS_REMOVE {
             display "Suppressed compiler flags"
             flavor  data
             no_define

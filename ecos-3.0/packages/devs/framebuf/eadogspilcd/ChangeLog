@@ -1,6 +1,6 @@
 2016-11-22  Filip  <filip.gnu@gmail.com>
 
-	* SPI displays driver with ST7036 driver.
+	* SPI displays driver with ST7565 LCD driver.
 
 //===========================================================================
 // ####GPLCOPYRIGHTBEGIN####                                                

@@ -104,6 +104,9 @@ static cyg_kbd_avr32_t cyg_kbd_avr32 =
     .kb_pins_isr[3].kbd_pin_interrupt_number	= CYGNUM_HAL_VECTOR_EIC_4,
     .kbd_callback                               = NULL,
 #if CYGNUM_DEVS_KBD_MATRIX_CALLBACK_MODE == 0
+    .num_events                                 = 0,
+    .event_put                                  = 0,
+    .event_get                                  = 0,
     .kbd_select_active                          = false,
 #endif
 };
@@ -165,7 +168,9 @@ avr32_matrix_kbd_pin_DSR(cyg_vector_t vector, cyg_ucount32 count, cyg_addrword_t
 */
 static cyg_uint16 kbd_scan_code_to_key_gs4x5(cyg_uint32 scan_code)
 {
-    //diag_printf("Scan Code: 0x%X\n",scan_code);
+#ifdef CYGDAT_DEVS_KBD_MATRIX_DEBUG_OUTPUT > 0
+    diag_printf("Kbd dev scan Code: 0x%X\n",scan_code);
+#endif
     switch(scan_code)
     {
         case 0x10000:
@@ -247,7 +252,9 @@ static cyg_uint16 kbd_scan_code_to_key_gs4x5(cyg_uint32 scan_code)
 */
 static cyg_uint16 kbd_scan_code_to_key_pmg4x4(cyg_uint32 scan_code)
 {
-    //diag_printf("Scan Code: 0x%X\n",scan_code);
+#ifdef CYGDAT_DEVS_KBD_MATRIX_DEBUG_OUTPUT > 0
+    diag_printf("Kbd dev scan Code: 0x%X\n",scan_code);
+#endif
     switch(scan_code)
     {
         case 0x1000:
@@ -311,21 +318,21 @@ kbd_read(cyg_io_handle_t handle,
 #if CYGNUM_DEVS_KBD_MATRIX_CALLBACK_MODE == 0
     cyg_kbd_avr32_t * priv = (cyg_kbd_avr32_t*)handle;
 
-    unsigned char *ev;
+    cyg_kbd_key_t *ev;
     int tot = *len;
-    unsigned char *bp = (unsigned char *)buffer;
+    cyg_kbd_key_t *bp = (cyg_kbd_key_t*)buffer;
 
     cyg_scheduler_lock();  // Prevent interaction with DSR code
     while (tot >= sizeof(*ev)) {
         if (priv->num_events > 0) {
-            ev = &_events[_event_get++];
-            if (_event_get == MAX_EVENTS) {
-                _event_get = 0;
+            ev = &_events[priv->event_get++];
+            if (priv->event_get == MAX_EVENTS) {
+                priv->event_get = 0;
             }
             memcpy(bp, ev, sizeof(*ev));
             bp += sizeof(*ev);
             tot -= sizeof(*ev);
-            num_events--;
+            priv->num_events--;
         } else {
             break;  // No more events
         }
@@ -380,7 +387,10 @@ kbd_set_config(cyg_io_handle_t handle,
             if(*len == sizeof(cyg_uint32))
             {
                 cyg_uint32 *repeat = (cyg_uint32*)buffer;
-                priv->repeat_interval = *repeat;
+                if(repat > 2 && repeat < 50)
+                    priv->repeat_interval = *repeat;
+                else
+                    ret = EINVAL;
             }
             else
                 ret = EINVAL;
@@ -502,16 +512,17 @@ kbd_init(struct cyg_devtab_entry *tab)
     AVR32_EIC.edge |= (AVR32_EIC_EDGE_INT4_MASK  | AVR32_EIC_EDGE_INT3_MASK	|
                        AVR32_EIC_EDGE_INT2_MASK  | AVR32_EIC_EDGE_INT1_MASK);
 
-    AVR32_EIC.en   = AVR32_EIC_EN_INT4_MASK	 | AVR32_EIC_EN_INT3_MASK	|
-                     AVR32_EIC_EN_INT2_MASK      | AVR32_EIC_EN_INT1_MASK;
+    AVR32_EIC.en    = AVR32_EIC_EN_INT4_MASK	 | AVR32_EIC_EN_INT3_MASK	|
+                      AVR32_EIC_EN_INT2_MASK      | AVR32_EIC_EN_INT1_MASK;
 
-    AVR32_EIC.icr = AVR32_EIC_ICR_INT4_MASK | AVR32_EIC_ICR_INT3_MASK |
-                    AVR32_EIC_ICR_INT2_MASK | AVR32_EIC_ICR_INT1_MASK;
+    AVR32_EIC.icr   = AVR32_EIC_ICR_INT4_MASK | AVR32_EIC_ICR_INT3_MASK |
+                      AVR32_EIC_ICR_INT2_MASK | AVR32_EIC_ICR_INT1_MASK;
 
-    AVR32_EIC.ier = AVR32_EIC_IER_INT4_MASK | AVR32_EIC_IER_INT3_MASK |
-                    AVR32_EIC_IER_INT2_MASK | AVR32_EIC_IER_INT1_MASK;
+    AVR32_EIC.ier   = AVR32_EIC_IER_INT4_MASK | AVR32_EIC_IER_INT3_MASK |
+                      AVR32_EIC_IER_INT2_MASK | AVR32_EIC_IER_INT1_MASK;
         
     cyg_selinit(&kbd_dev->kbd_select_info);
+ 
     return true;
 }
 
@@ -523,7 +534,10 @@ kbd_lookup(struct cyg_devtab_entry **tab,
     cyg_kbd_avr32_t * const kbd = (cyg_kbd_avr32_t *) (*tab)->priv;
     
     if(!kbd->is_open)
+    {
         kbd_init(*tab);
+        kbd_dev->is_open = true;
+    }
     return ENOERR;
 }
 
@@ -737,7 +751,7 @@ avr32_matrix_kbd_timer_ISR(cyg_vector_t vector, cyg_addrword_t data)
             // indicate that DSR nead to be processed
             AVR32_AST.idr       = AVR32_AST_IDR_PER0_MASK;
             kbd_dev->scan_line	= 0;
-			ret |= CYG_ISR_CALL_DSR;            
+            ret                |= CYG_ISR_CALL_DSR;            
         }
         else
         {
@@ -791,8 +805,7 @@ avr32_matrix_kbd_timer_DSR(cyg_vector_t vector, cyg_ucount32 count, cyg_addrword
                         if (kbd_dev->event_put == CYGNUM_DEVS_KBD_BUFFER_LEN) {
                             kbd_dev->event_put = 0;
                         }
-                        ev->key = key;
-                        ev->param = WM_KEY_DOWN;
+                        *ev = (cyg_kbd_key_t)key;
                         if (kbd_dev->kbd_select_active)
                         {
                             kbd_dev->kbd_select_active = false;
@@ -802,7 +815,7 @@ avr32_matrix_kbd_timer_DSR(cyg_vector_t vector, cyg_ucount32 count, cyg_addrword
                     #endif
                     if(kbd_dev->kbd_callback != NULL)
                     {
-                        kbd_dev->kbd_callback(ev->key,ev->param);
+                        kbd_dev->kbd_callback(key, CYG_KBD_KEY_DOWNO);
                     }
                 }
             }
@@ -821,8 +834,7 @@ avr32_matrix_kbd_timer_DSR(cyg_vector_t vector, cyg_ucount32 count, cyg_addrword
                         if (kbd_dev->event_put == CYGNUM_DEVS_KBD_BUFFER_LEN) {
                             kbd_dev->event_put = 0;
                         }
-                        ev->key = key;
-                        ev->param = WM_KEY_HOLD;
+                        *ev = (cyg_kbd_key_t)key;
                         if (kbd_dev->kbd_select_active)
                         {
                             kbd_dev->kbd_select_active = false;
@@ -832,7 +844,7 @@ avr32_matrix_kbd_timer_DSR(cyg_vector_t vector, cyg_ucount32 count, cyg_addrword
                     #endif
                     if(kbd_dev->kbd_callback != NULL)
                     {
-                        kbd_dev->kbd_callback(ev->key,ev->param);
+                        kbd_dev->kbd_callback(key,CYG_KBD_KEY_HOLD);
                     }
                 }
             }

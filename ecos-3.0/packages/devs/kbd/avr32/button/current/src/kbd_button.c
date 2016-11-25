@@ -43,15 +43,14 @@
 // Contributors:
 // Date:         2016-11-23
 // Purpose:
-// Description:  Keyboardd driver for AVR32
+// Description:  Button keyboardd driver for AVR32
 //
 //####DESCRIPTIONEND####
 //
 //==========================================================================
 
 
-#include <pkgconf/devs_kbd_matrix.h>
-#include <cyg/devs/kbd_matrix.h>
+#include <pkgconf/devs_kbd_button.h>
 
 #include <cyg/kernel/kapi.h>
 #include <cyg/hal/hal_io.h>
@@ -69,7 +68,7 @@
 #include <cyg/io/devtab.h>
 #include CYGBLD_HAL_BOARD_H
 
-#define MAX_EVENTS CYGNUM_DEVS_KBD_MATRIX_EVENT_BUFFER_SIZE
+#define MAX_EVENTS CYGNUM_DEVS_KBD_BUTTON_EVENT_BUFFER_SIZE
 
 /** Declaration and initialization of matrix keyborad data structure.
 *
@@ -86,17 +85,29 @@ static cyg_kbd_avr32_t cyg_kbd_avr32 =
     .kbd_interrupt          = NULL,
     .kbd_interrupt_handle   = NULL,
     .interrupt_number       = CYGNUM_HAL_VECTOR_AST_PER,
-    .interrupt_prio         = CYGNUM_DEVS_KBD_MATRIX_INTERRUPT_PRIO,
+    .interrupt_prio         = CYGNUM_DEVS_KBD_BUTTON_INTERRUPT_PRIO,
     .kb_pins_isr[0].kbd_pin_interrupt		= NULL,
     .kb_pins_isr[0].kbd_pin_interrupt_handle	= NULL,
-    .kb_pins_isr[0].kbd_pin_interrupt_number	= CYGNUM_HAL_VECTOR_GPIO_0,
+    .kb_pins_isr[0].kbd_pin_interrupt_number	= CYGNUM_DEVS_KBD_BUTTON_INTERRUPTS_GROUP0_VECTOR,
+#if CYGNUM_DEVS_KBD_BUTTON_NUM_IO_INTERRUPTS_GROUPS > 1
     .kb_pins_isr[1].kbd_pin_interrupt		= NULL,
     .kb_pins_isr[1].kbd_pin_interrupt_handle	= NULL,
-    .kb_pins_isr[1].kbd_pin_interrupt_number	= CYGNUM_HAL_VECTOR_GPIO_1,
+    .kb_pins_isr[1].kbd_pin_interrupt_number	= CYGNUM_DEVS_KBD_BUTTON_INTERRUPTS_GROUP0_VECTOR,
+#endif
+#if CYGNUM_DEVS_KBD_BUTTON_NUM_IO_INTERRUPTS_GROUPS > 2
     .kb_pins_isr[2].kbd_pin_interrupt		= NULL,
     .kb_pins_isr[2].kbd_pin_interrupt_handle	= NULL,
-    .kb_pins_isr[2].kbd_pin_interrupt_number	= CYGNUM_HAL_VECTOR_GPIO_2
+    .kb_pins_isr[2].kbd_pin_interrupt_number	= CYGNUM_DEVS_KBD_BUTTON_INTERRUPTS_GROUP0_VECTOR,
+#endif
+#if CYGNUM_DEVS_KBD_BUTTON_NUM_IO_INTERRUPTS_GROUPS > 3    
+    .kb_pins_isr[3].kbd_pin_interrupt		= NULL,
+    .kb_pins_isr[3].kbd_pin_interrupt_handle	= NULL,
+    .kb_pins_isr[3].kbd_pin_interrupt_number	= CYGNUM_DEVS_KBD_BUTTON_INTERRUPTS_GROUP0_VECTOR,
+#endif
 #if CYGNUM_DEVS_KBD_MATRIX_CALLBACK_MODE == 0
+    .num_events                                 = 0,
+    .event_put                                  = 0,
+    .event_get                                  = 0,
     .kbd_select_active                          = false,
 #endif
 };
@@ -131,7 +142,7 @@ CHAR_DEVIO_TABLE(kbd_handlers,
                  kbd_set_config);
 
 CHAR_DEVTAB_ENTRY(kbd_device,
-                  CYGDAT_DEVS_KBD_MATRIX_NAME,
+                  CYGDAT_DEVS_KBD_BUTTON_NAME,
                   NULL,                           // Base device name
                   &kbd_handlers,
                   kbd_init,
@@ -158,7 +169,9 @@ avr32_button_kbd_pin_DSR(cyg_vector_t vector, cyg_ucount32 count, cyg_addrword_t
 */
 static cyg_uint16 kbd_scan_code_to_key(cyg_uint32 scan_code)
 {
-    //diag_printf("Scan Code: 0x%X\n",scan_code);
+#ifdef CYGDAT_DEVS_KBD_BUTTON_DEBUG_OUTPUT > 0
+    diag_printf("Kbd dev scan Code: 0x%X\n",scan_code);
+#endif
     switch(scan_code)
     {
         case 0x00001:
@@ -183,24 +196,24 @@ kbd_read(cyg_io_handle_t handle,
          void *buffer,
          cyg_uint32 *len)
 {
-#if CYGNUM_DEVS_KBD_MATRIX_CALLBACK_MODE == 0
+#if CYGNUM_DEVS_KBD_BUTTON_CALLBACK_MODE == 0
     cyg_kbd_avr32_t * priv = (cyg_kbd_avr32_t*)handle;
 
-    unsigned char *ev;
+    cyg_kbd_key_t *ev;
     int tot = *len;
-    unsigned char *bp = (unsigned char *)buffer;
+    cyg_kbd_key_t *bp = (cyg_kbd_key_t*)buffer;
 
     cyg_scheduler_lock();  // Prevent interaction with DSR code
     while (tot >= sizeof(*ev)) {
         if (priv->num_events > 0) {
-            ev = &_events[_event_get++];
-            if (_event_get == MAX_EVENTS) {
-                _event_get = 0;
+            ev = &_events[priv->event_get++];
+            if (priv->event_get == MAX_EVENTS) {
+                priv->event_get = 0;
             }
             memcpy(bp, ev, sizeof(*ev));
             bp += sizeof(*ev);
             tot -= sizeof(*ev);
-            num_events--;
+            priv->num_events--;
         } else {
             break;  // No more events
         }
@@ -219,7 +232,7 @@ kbd_select(cyg_io_handle_t handle,
            cyg_uint32 which,
            cyg_addrword_t info)
 {
-#if CYGNUM_DEVS_KBD_MATRIX_CALLBACK_MODE == 0
+#if CYGNUM_DEVS_KBD_BUTTON_CALLBACK_MODE == 0
     cyg_kbd_avr32_t * priv = (cyg_kbd_avr32_t*)handle;
     if (which == CYG_FREAD) {
         cyg_scheduler_lock();  // Prevent interaction with DSR code
@@ -255,7 +268,10 @@ kbd_set_config(cyg_io_handle_t handle,
             if(*len == sizeof(cyg_uint32))
             {
                 cyg_uint32 *repeat = (cyg_uint32*)buffer;
-                priv->repeat_interval = *repeat;
+                if(repat > 2 && repeat < 50)
+                    priv->repeat_interval = *repeat;
+                else
+                    ret = EINVAL;
             }
             else
                 ret = EINVAL;
@@ -325,10 +341,10 @@ kbd_init(struct cyg_devtab_entry *tab)
     {
     }		
     // set pir interrupt interval = fc/2^(pir0 + 1)
-    AVR32_AST.pir0 = CYGNUM_DEVS_KBD_MATRIX_SCAN_INTERVAL;
+    AVR32_AST.pir0 = CYGNUM_DEVS_KBD_BUTTON_SCAN_INTERVAL;
 
     // Configure GPIO pins used by keyboard
-    gpio_configure_pin(CYG_DEV_KB0_PIN, GPIO_DIR_INPUT );
+    gpio_configure_pin(CYG_DEV_KB0_PIN, GPIO_DIR_INPUT);
     gpio_configure_pin(CYG_DEV_KB1_PIN, GPIO_DIR_INPUT);
     gpio_configure_pin(CYG_DEV_KB2_PIN, GPIO_DIR_INPUT);
     gpio_configure_pin(CYG_DEV_KB3_PIN, GPIO_DIR_INPUT);
@@ -358,16 +374,20 @@ kbd_init(struct cyg_devtab_entry *tab)
 
     //Configure pin interupt
     gpio_clear_pin_interrupt_flag(CYG_DEV_KB0_PIN);
-    gpio_enable_pin_interrupt(CYG_DEV_KB0_PIN,GPIO_FALLING_EDGE);
+    gpio_enable_pin_interrupt(CYG_DEV_KB0_PIN,
+            GPIO_##CYGNUM_DEVS_KBD_BUTTON_INTERRUPTS_EDGE);
 
     gpio_clear_pin_interrupt_flag(CYG_DEV_KB1_PIN);
-    gpio_enable_pin_interrupt(CYG_DEV_KB0_PIN,GPIO_FALLING_EDGE);
+    gpio_enable_pin_interrupt(CYG_DEV_KB0_PIN,
+            GPIO_##CYGNUM_DEVS_KBD_BUTTON_INTERRUPTS_EDGE);
 
     gpio_clear_pin_interrupt_flag(CYG_DEV_KB2_PIN);
-    gpio_enable_pin_interrupt(CYG_DEV_KB0_PIN,GPIO_FALLING_EDGE);
+    gpio_enable_pin_interrupt(CYG_DEV_KB0_PIN,
+            GPIO_##CYGNUM_DEVS_KBD_BUTTON_INTERRUPTS_EDGE);
 
     gpio_clear_pin_interrupt_flag(CYG_DEV_KB3_PIN);
-    gpio_enable_pin_interrupt(CYG_DEV_KB0_PIN,GPIO_FALLING_EDGE);
+    gpio_enable_pin_interrupt(CYG_DEV_KB0_PIN,
+            GPIO_##CYGNUM_DEVS_KBD_BUTTON_INTERRUPTS_EDGE);
         
     cyg_selinit(&kbd_dev->kbd_select_info);
     return true;
@@ -381,7 +401,10 @@ kbd_lookup(struct cyg_devtab_entry **tab,
     cyg_kbd_avr32_t * const kbd = (cyg_kbd_avr32_t *) (*tab)->priv;
     
     if(!kbd->is_open)
+    {
         kbd_init(*tab);
+        kbd->is_open = true;
+    }
     return ENOERR;
 }
 
@@ -434,32 +457,32 @@ avr32_matric_kbd_timer_ISR(cyg_vector_t vector, cyg_addrword_t data)
         }
         AVR32_AST.scr  = AVR32_AST_SCR_PER0_MASK;
         
-        if(kbd_dev->glitch_cnt < CYG_DEV_KBD_GLITCH_CNT_NUM)
+        
+        
+        cyg_uint32 scan_code = 0;
+        if(gpio_get_pin_value(CYG_DEV_KB0_PIN) == CYGNUM_DEVS_KBD_BUTTON_ACTIVE_VALUE)
         {
-            cyg_uint32 scan_code = 0;
-            if(gpio_get_pin_value(CYG_DEV_KB0_PIN) == CYG_DEB_KBD_PIN_ACTIVE_VALUE)
-            {
-                scan_code |= 0x0001;
-            }
-            if(gpio_get_pin_value(CYG_DEV_KB1_PIN) == CYG_DEB_KBD_PIN_ACTIVE_VALUE)
-            {
-                scan_code |= 0x0002;
-            }
-            if(gpio_get_pin_value(CYG_DEV_KB2_PIN) == CYG_DEB_KBD_PIN_ACTIVE_VALUE)
-            {
-                scan_code |= 0x0004;
-            }
-            if(gpio_get_pin_value(CYG_DEV_KB3_PIN) == CYG_DEB_KBD_PIN_ACTIVE_VALUE)
-            {
-                scan_code |= 0x0008;
-            }
-
-            kbd_dev->glitch_cnt++;
-
-            if((kbd_dev->scan_code != scan_code))
-                kbd_dev->glitch_cnt = 0;
+            scan_code |= 0x0001;
         }
-        else
+        if(gpio_get_pin_value(CYG_DEV_KB1_PIN) == CYGNUM_DEVS_KBD_BUTTON_ACTIVE_VALUE)
+        {
+            scan_code |= 0x0002;
+        }
+        if(gpio_get_pin_value(CYG_DEV_KB2_PIN) == CYGNUM_DEVS_KBD_BUTTON_ACTIVE_VALUE)
+        {
+            scan_code |= 0x0004;
+        }
+        if(gpio_get_pin_value(CYG_DEV_KB3_PIN) == CYGNUM_DEVS_KBD_BUTTON_ACTIVE_VALUE)
+        {
+            scan_code |= 0x0008;
+        }
+
+        kbd_dev->glitch_cnt++;
+
+        if((kbd_dev->scan_code != scan_code))
+            kbd_dev->glitch_cnt = 0;
+        
+        if(kbd_dev->glitch_cnt == CYG_DEV_KBD_GLITCH_CNT_NUM)
         {
             AVR32_AST.idr       = AVR32_AST_IDR_PER0_MASK;
             kbd_dev->glitch_cnt = 0;
@@ -509,8 +532,7 @@ avr32_button_kbd_timer_DSR(cyg_vector_t vector, cyg_ucount32 count, cyg_addrword
                         if (kbd_dev->event_put == CYGNUM_DEVS_KBD_BUFFER_LEN) {
                             kbd_dev->event_put = 0;
                         }
-                        ev->key = key;
-                        ev->param = WM_KEY_DOWN;
+                        *ev = (cyg_kbd_key_t)key;
                         if (kbd_dev->kbd_select_active)
                         {
                             kbd_dev->kbd_select_active = false;
@@ -520,7 +542,7 @@ avr32_button_kbd_timer_DSR(cyg_vector_t vector, cyg_ucount32 count, cyg_addrword
                     #endif
                     if(kbd_dev->kbd_callback != NULL)
                     {
-                        kbd_dev->kbd_callback(ev->key,ev->param);
+                        kbd_dev->kbd_callback(key,CYG_KBD_KEY_DOWNO);
                     }
                 }
             }
@@ -539,8 +561,7 @@ avr32_button_kbd_timer_DSR(cyg_vector_t vector, cyg_ucount32 count, cyg_addrword
                         if (kbd_dev->event_put == CYGNUM_DEVS_KBD_BUFFER_LEN) {
                             kbd_dev->event_put = 0;
                         }
-                        ev->key = key;
-                        ev->param = WM_KEY_HOLD;
+                        *ev = (cyg_kbd_key_t)key;
                         if (kbd_dev->kbd_select_active)
                         {
                             kbd_dev->kbd_select_active = false;
@@ -550,7 +571,7 @@ avr32_button_kbd_timer_DSR(cyg_vector_t vector, cyg_ucount32 count, cyg_addrword
                     #endif
                     if(kbd_dev->kbd_callback != NULL)
                     {
-                        kbd_dev->kbd_callback(ev->key,ev->param);
+                        kbd_dev->kbd_callback(key,CYG_KBD_KEY_HOLD);
                     }
                 }
             }
@@ -574,16 +595,20 @@ avr32_button_kbd_timer_DSR(cyg_vector_t vector, cyg_ucount32 count, cyg_addrword
         kbd_dev->push_cnt = 0;
 
         gpio_clear_pin_interrupt_flag(CYG_DEV_KB0_PIN);
-        gpio_enable_pin_interrupt(CYG_DEV_KB0_PIN,GPIO_FALLING_EDGE);
+        gpio_enable_pin_interrupt(CYG_DEV_KB0_PIN,
+                GPIO_##CYGNUM_DEVS_KBD_BUTTON_INTERRUPTS_EDGE);
 
         gpio_clear_pin_interrupt_flag(CYG_DEV_KB1_PIN);
-        gpio_enable_pin_interrupt(CYG_DEV_KB0_PIN,GPIO_FALLING_EDGE);
+        gpio_enable_pin_interrupt(CYG_DEV_KB0_PIN,
+                GPIO_##CYGNUM_DEVS_KBD_BUTTON_INTERRUPTS_EDGE);
 
         gpio_clear_pin_interrupt_flag(CYG_DEV_KB2_PIN);
-        gpio_enable_pin_interrupt(CYG_DEV_KB0_PIN,GPIO_FALLING_EDGE);
+        gpio_enable_pin_interrupt(CYG_DEV_KB0_PIN,
+                GPIO_##CYGNUM_DEVS_KBD_BUTTON_INTERRUPTS_EDGE);
 
         gpio_clear_pin_interrupt_flag(CYG_DEV_KB3_PIN);
-        gpio_enable_pin_interrupt(CYG_DEV_KB0_PIN,GPIO_FALLING_EDGE);
+        gpio_enable_pin_interrupt(CYG_DEV_KB0_PIN,
+                GPIO_##CYGNUM_DEVS_KBD_BUTTON_INTERRUPTS_EDGE);
     }
 
     kbd_dev->last_scan_code = kbd_dev->scan_code; 

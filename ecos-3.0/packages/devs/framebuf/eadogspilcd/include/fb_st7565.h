@@ -1,10 +1,10 @@
-﻿#ifndef CYGONCE_DEVS_FB_ST7063_H
-#define CYGONCE_DEVS_FB_ST7063_H
+﻿#ifndef CYGONCE_DEVS_FB_ST7565_H
+#define CYGONCE_DEVS_FB_ST7565_H
 //==========================================================================
 //
-//      fb_st7063.h
+//      fb_st7565.h
 //
-//      ST7063 LCD driver defines
+//      ST7565 LCD driver defines
 //
 //==========================================================================
 // ####ECOSGPLCOPYRIGHTBEGIN####
@@ -41,7 +41,7 @@
 //==========================================================================
 //#####DESCRIPTIONBEGIN####
 //
-// Author(s):     Filip Adamec
+// Author(s):     Filip
 // Date:          2016-11-23
 //
 //####DESCRIPTIONEND####
@@ -57,60 +57,55 @@
 extern "C" {
 #endif
 	
-#include <pkgconf/hal.h>
-#include <pkgconf/devs_fb_st7063.h>
-
-#include <cyg/infra/cyg_type.h>
-#include <cyg/hal/drv_api.h>
     
-#define DISP_OFF                0xae
-#define DISP_ON                 0xaf
-#define DISP_SET_START_LINE     0x40
-#define DISP_SET_REF_VM         0x81
-#define DISP_SET_PAGE           0xb0
-#define DISP_SET_C_ADR_MSB      0x10
-#define DISP_SET_C_ADR_LSB      0x00
-#define DISP_SET_ADC_NORMAL     0xa0
-#define DISP_SET_ADC_REVERS     0xa1
-#define DISP_REVERS_OFF         0xa6
-#define DISP_REVERS_ON          0xa7
-#define DISP_ENTRIE_OFF         0xa4
-#define DISP_ENTRIE_ON          0xa5
-#define DISP_BIAS_SELECT_OFF    0xa2
-#define DISP_BIAS_SELECT_ON     0xa3
-#define DIPS_SET_MODIFI_READ    0xe0
-#define DISP_RESET_MODIFI_READ  0xee
-#define DISP_RESET              0xe2
-#define DISP_SHL_NORMAL         0xc0
-#define DISP_SHL_REVERS         0xc8
-#define DISP_POWR_CONTROL       0x28
-#define DISP_REG_RES_SELECT     0x20
-#define DISP_SET_STATIC_IND     0xad
-#define DISP_BOOSTER_RATION     0xf8
-#define DISP_SET_STATIC_IND     0xac
+#define DISP_OFF                            0xae
+#define DISP_ON                             0xaf
+#define DISP_START_LINE_SET                 0x40
+#define DISP_PAGE_ADDRESS_SET               0xb0
+#define DISP_COLUMN_ADDRESS_MSB             0x10
+#define DISP_COLUMN_ADDRESS_LSB             0x00
+#define DISP_ADC_SELECT_NORMAL              0xa0
+#define DISP_ADC_SELECT_REVERS              0xa1
+#define DISP_NORMAL                         0xa6
+#define DISP_REVERS                         0xa7
+#define DISP_ALL_POINTS_ON                  0xa5    
+#define DISP_ALL_POINTS_NORMAL              0xa4
+#define DISP_BIAS_SET_1_9                   0xa2
+#define DISP_BIAS_SET_1_7                   0xa3
+#define DISP_RESET                          0xe2    
+#define DISP_COMMON_OUTPUT_MODE_NORMAL      0xc0
+#define DISP_COMMON_OUTPUT_MODE_REVERS      0xc8
+#define DISP_POWER_CONTROL_SET              0x28
+#define DISP_POWER_CONTROL_BOOSTER_ON       0x04
+#define DISP_POWER_CONTROL_V_REG_ON         0x02
+#define DISP_POWER_CONTROL_V_FOLLOWER_ON    0x01
+#define DISP_VOTAGE_REG_RESISTOR_RATIO_SEL  0x20
+#define DISP_ELECTRONIC_VOLUME_MODE_SET     0x81
+#define DISP_STATIC_INDICATOR_OFF           0xac
+#define DISP_STATIC_INDICATOR_ON            0xad
+#define STATIC_INDICATOR_ON_1SB             0x01
+#define STATIC_INDICATOR_ON_05SB            0x02
+#define STATIC_INDICATOR_ON                 0x03
+#define DISP_BOOSTER_RATIO                  0xf8
+#define BOOSTER_RATIO_2x_3x_4x              0x00
+#define BOOSTER_RATIO_5x                    0x01
+#define BOOSTER_RATIO_6x                    0x02
 
 
-#define VOLTAGE_CONVERTOR_ON    4 
-#define VOLTAGE_CONVERTOR_OFF   0
-#define VOLTAGE_REGULATOR_ON    2 
-#define VOLTAGE_REGULATOR_OFF   0
-#define VOLTAGE_FOLLOWER_ON     1 
-#define VOLTAGE_FOLLOWER_OFF    0
+#define DIPS_READ_MODIFY_WRITE              0xe0
+#define DISP_READ_MODIFY_WRITE_END          0xee
 
-#define STATIC_INDICATOR_OFF         0
-#define STATIC_INDICATOR_ON_1SB      1
-#define STATIC_INDICATOR_ON_05SB     2
-#define STATIC_INDICATOR_ON          3
 
-#define PAGE_COUNT                   9
+
+#define PAGE_COUNT                  9
 
 
 #ifdef __cplusplus
 } // closing brace for extern "C"
 #endif
 
-#endif // CYGONCE_DEVS_FB_ST7063_H
+#endif // CYGONCE_DEVS_FB_ST7565_H
 
 /** @} */
 //-----------------------------------------------------------------------------
-// End of fb_st7063.h
+// End of fb_st7565.h
