@@ -193,10 +193,10 @@ init_pcf_hwclock2(void)
 
     if (pcf_read_registers(PCF_CONTROL1,10,regs) != 0)
     {
-	    // The device has not responded to the address byte.
-	    ok = false;
-	    SET_HW_ERRROR(HW_ERROR_RTC_NO_RESPONSE);
-		DEBUG("Cannto conntect to PCF2129A\n");
+        // The device has not responded to the address byte.
+        ok = false;
+        SET_HW_ERRROR(HW_ERROR_RTC_NO_RESPONSE);
+        DEBUG("Cannto conntect to PCF2129A\n");
     }
     else
     {

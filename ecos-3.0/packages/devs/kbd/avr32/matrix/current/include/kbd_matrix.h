@@ -57,8 +57,8 @@
 extern "C" {
 #endif
 	
-#include <pkgconf/devs_kbd_matrix.h>
-
+#include <pkgconf/devs_kbd_matrix_avr32.h>
+#include <cyg/io/kbd_io.h>
 #include <cyg/infra/cyg_type.h>
 #include <cyg/hal/drv_api.h>
 
@@ -87,7 +87,7 @@ typedef struct cyg_pins_isr_s
 typedef cyg_uint16 cyg_kbd_key_t;
 #else
 typedef cyg_uint8 cyg_kbd_key_t;
-
+#endif
 
 /** Matrix keyboard driver data structure
 *
@@ -106,15 +106,15 @@ typedef struct cyg_kbd_avr32_s
     cyg_vector_t      interrupt_number;     /**< Keyboard timer interrupt number. */
     cyg_uint32        interrupt_prio;	    /**< Keyboard interrupts priority. */
     cyg_pins_isr_t    kb_pins_isr[CYGNUM_DEVS_KBD_MATRIX_ISR_PINS]; /**< Keyboard rows pins interrupts. \see cyg_pins_isr_t */
-    (void (*call_back)(cyg_uint16, cyg_uint16)) kbd_callback;
-#if CYGNUM_DEVS_KBD_MATRIX_CALLBACK_MODE == 0
+    kbd_call_back_t   kbd_call_back;
+#ifdef CYGNUM_DEVS_KBD_MATRIX_CALLBACK_MODE
     cyg_kbd_key_t     key_buffer[CYGNUM_DEVS_KBD_MATRIX_EVENT_BUFFER_SIZE];
     cyg_uint16        num_events;
     cyg_uint16        event_put;
     cyg_uint16        event_get;
     cyg_bool          kbd_select_active;
-    cyg_selinfo       kbd_select_info; 
 #endif
+    cyg_selinfo       kbd_select_info; 
 }cyg_kbd_avr32_t;
 
 

@@ -50,8 +50,7 @@
 //==========================================================================
 
 
-#include <pkgconf/devs_kbd_matrix.h>
-#include <cyg/devs/kbd_matrix.h>
+#include <pkgconf/devs_kbd_matrix_avr32.h>
 
 #include <cyg/kernel/kapi.h>
 #include <cyg/hal/hal_io.h>
@@ -64,7 +63,11 @@
 #include <cyg/io/linux_keyboard.h>
 #include <cyg/io/kbd_io.h>
 
+#include <cyg/hal/gpio.h>
+
 #include <cyg/fileio/fileio.h>  // For select() functionality
+
+#include <cyg/io/kbd_matrix.h>
 
 #include <cyg/io/devtab.h>
 #include CYGBLD_HAL_BOARD_H
@@ -102,8 +105,8 @@ static cyg_kbd_avr32_t cyg_kbd_avr32 =
     .kb_pins_isr[3].kbd_pin_interrupt		= NULL,
     .kb_pins_isr[3].kbd_pin_interrupt_handle	= NULL,
     .kb_pins_isr[3].kbd_pin_interrupt_number	= CYGNUM_HAL_VECTOR_EIC_4,
-    .kbd_callback                               = NULL,
-#if CYGNUM_DEVS_KBD_MATRIX_CALLBACK_MODE == 0
+    .kbd_call_back                              = NULL,
+#ifdef CYGNUM_DEVS_KBD_MATRIX_CALLBACK_MODE
     .num_events                                 = 0,
     .event_put                                  = 0,
     .event_get                                  = 0,
@@ -168,7 +171,7 @@ avr32_matrix_kbd_pin_DSR(cyg_vector_t vector, cyg_ucount32 count, cyg_addrword_t
 */
 static cyg_uint16 kbd_scan_code_to_key_gs4x5(cyg_uint32 scan_code)
 {
-#ifdef CYGDAT_DEVS_KBD_MATRIX_DEBUG_OUTPUT > 0
+#if CYGDAT_DEVS_KBD_MATRIX_DEBUG_OUTPUT > 0
     diag_printf("Kbd dev scan Code: 0x%X\n",scan_code);
 #endif
     switch(scan_code)
@@ -252,7 +255,7 @@ static cyg_uint16 kbd_scan_code_to_key_gs4x5(cyg_uint32 scan_code)
 */
 static cyg_uint16 kbd_scan_code_to_key_pmg4x4(cyg_uint32 scan_code)
 {
-#ifdef CYGDAT_DEVS_KBD_MATRIX_DEBUG_OUTPUT > 0
+#if CYGDAT_DEVS_KBD_MATRIX_DEBUG_OUTPUT > 0
     diag_printf("Kbd dev scan Code: 0x%X\n",scan_code);
 #endif
     switch(scan_code)
@@ -315,7 +318,7 @@ kbd_read(cyg_io_handle_t handle,
          void *buffer,
          cyg_uint32 *len)
 {
-#if CYGNUM_DEVS_KBD_MATRIX_CALLBACK_MODE == 0
+#ifdef CYGNUM_DEVS_KBD_MATRIX_CALLBACK_MODE
     cyg_kbd_avr32_t * priv = (cyg_kbd_avr32_t*)handle;
 
     cyg_kbd_key_t *ev;
@@ -351,7 +354,7 @@ kbd_select(cyg_io_handle_t handle,
            cyg_uint32 which,
            cyg_addrword_t info)
 {
-#if CYGNUM_DEVS_KBD_MATRIX_CALLBACK_MODE == 0
+#ifdef CYGNUM_DEVS_KBD_MATRIX_CALLBACK_MODE
     cyg_kbd_avr32_t * priv = (cyg_kbd_avr32_t*)handle;
     if (which == CYG_FREAD) {
         cyg_scheduler_lock();  // Prevent interaction with DSR code
@@ -387,7 +390,7 @@ kbd_set_config(cyg_io_handle_t handle,
             if(*len == sizeof(cyg_uint32))
             {
                 cyg_uint32 *repeat = (cyg_uint32*)buffer;
-                if(repat > 2 && repeat < 50)
+                if(repeat > 2 && repeat < 50)
                     priv->repeat_interval = *repeat;
                 else
                     ret = EINVAL;
@@ -404,13 +407,13 @@ kbd_set_config(cyg_io_handle_t handle,
             break;
         case CYG_KBD_SET_CONFIG_CALLBACK:
         {
-            (void (*call_back)(cyg_uint16, cyg_uint16)) kbd_callback =
-                    (void (*call_back)(cyg_uint16, cyg_uint16))buffer;
-            priv->kbd_callback = kbd_callback;
+            kbd_call_back_t kbd_callback =
+                    (kbd_call_back_t)buffer;
+            priv->kbd_call_back = kbd_callback;
         }
         break;
         case CYG_KBD_SET_CONFIG_CALLBACK_REMOVE:
-            priv->kbd_callback = NULL;
+            priv->kbd_call_back = NULL;
             break;
         case CYG_KBD_SET_CONFIG_DEFAULT_INTERVAL:
             priv->repeat_interval = 20;
@@ -467,7 +470,7 @@ kbd_init(struct cyg_devtab_entry *tab)
     gpio_configure_pin(AVR32_PIN_PA22, GPIO_DIR_OUTPUT | GPIO_INIT_HIGH);
     gpio_configure_pin(AVR32_PIN_PA23, GPIO_DIR_OUTPUT | GPIO_INIT_HIGH);
     gpio_configure_pin(AVR32_PIN_PA24, GPIO_DIR_OUTPUT | GPIO_INIT_HIGH);
-#if CYGNUM_DEVS_KBD_MATRIX_4x5 == 1
+#ifdef CYGNUM_DEVS_KBD_MATRIX_4x5
     gpio_configure_pin(AVR32_PIN_PA25, GPIO_DIR_OUTPUT | GPIO_INIT_HIGH);
 #endif
 
@@ -596,7 +599,7 @@ avr32_matrix_kbd_timer_ISR(cyg_vector_t vector, cyg_addrword_t data)
             gpio_set_pin_low(AVR32_PIN_PA22);
             gpio_set_pin_low(AVR32_PIN_PA23);
             gpio_set_pin_low(AVR32_PIN_PA24);
-#if CYGNUM_DEVS_KBD_MATRIX_4x5 == 1
+#ifdef CYGNUM_DEVS_KBD_MATRIX_4x5
             gpio_set_pin_low(AVR32_PIN_PA25);
 #endif
             ++kbd_dev->scan_line;
@@ -627,7 +630,7 @@ avr32_matrix_kbd_timer_ISR(cyg_vector_t vector, cyg_addrword_t data)
             gpio_set_pin_high(AVR32_PIN_PA22);
             gpio_set_pin_low(AVR32_PIN_PA23);
             gpio_set_pin_low(AVR32_PIN_PA24);
-#if CYGNUM_DEVS_KBD_MATRIX_4x5 == 1
+#ifdef CYGNUM_DEVS_KBD_MATRIX_4x5
             gpio_set_pin_low(AVR32_PIN_PA25);
 #endif
 
@@ -656,7 +659,7 @@ avr32_matrix_kbd_timer_ISR(cyg_vector_t vector, cyg_addrword_t data)
             gpio_set_pin_low(AVR32_PIN_PA22);
             gpio_set_pin_high(AVR32_PIN_PA23);
             gpio_set_pin_low(AVR32_PIN_PA24);
-#if CYGNUM_DEVS_KBD_MATRIX_4x5 == 1
+#ifdef CYGNUM_DEVS_KBD_MATRIX_4x5
             gpio_set_pin_low(AVR32_PIN_PA25);
 #endif
             
@@ -685,7 +688,7 @@ avr32_matrix_kbd_timer_ISR(cyg_vector_t vector, cyg_addrword_t data)
             gpio_set_pin_low(AVR32_PIN_PA22);
             gpio_set_pin_low(AVR32_PIN_PA23);
             gpio_set_pin_high(AVR32_PIN_PA24);
-#if CYGNUM_DEVS_KBD_MATRIX_4x5 == 1
+#ifdef CYGNUM_DEVS_KBD_MATRIX_4x5
             gpio_set_pin_low(AVR32_PIN_PA25);
 #endif
             ++kbd_dev->scan_line;
@@ -713,7 +716,7 @@ avr32_matrix_kbd_timer_ISR(cyg_vector_t vector, cyg_addrword_t data)
             gpio_set_pin_low(AVR32_PIN_PA22);
             gpio_set_pin_low(AVR32_PIN_PA23);
             gpio_set_pin_low(AVR32_PIN_PA24);
-#if CYGNUM_DEVS_KBD_MATRIX_4x5 == 1
+#ifdef CYGNUM_DEVS_KBD_MATRIX_4x5
             gpio_set_pin_low(AVR32_PIN_PA25);
 #endif
 
@@ -744,7 +747,7 @@ avr32_matrix_kbd_timer_ISR(cyg_vector_t vector, cyg_addrword_t data)
             gpio_set_pin_high(AVR32_PIN_PA22);
             gpio_set_pin_high(AVR32_PIN_PA23);
             gpio_set_pin_high(AVR32_PIN_PA24);
-#if CYGNUM_DEVS_KBD_MATRIX_4x5 == 1
+#ifdef CYGNUM_DEVS_KBD_MATRIX_4x5
             gpio_set_pin_low(AVR32_PIN_PA25);
 #endif
             // Disable scan timer interrupt and
@@ -784,7 +787,7 @@ avr32_matrix_kbd_timer_DSR(cyg_vector_t vector, cyg_ucount32 count, cyg_addrword
         if(kbd_dev->push_cnt == 0)
         {
             // Convert scan code to linux keyboard code
-            #if CYGNUM_DEVS_KBD_MATRIX_4x5 == 1
+            #ifdef CYGNUM_DEVS_KBD_MATRIX_4x5
             cyg_uint16 key = kbd_scan_code_to_key_gs4x5(kbd_dev->scan_code);    
             #else
             cyg_uint16 key = kbd_scan_code_to_key_pmg4x4(kbd_dev->scan_code);
@@ -796,7 +799,7 @@ avr32_matrix_kbd_timer_DSR(cyg_vector_t vector, cyg_ucount32 count, cyg_addrword
                 kbd_dev->push_cnt = 25;
                 if(kbd_dev->enabled)
                 {
-                    #if CYGNUM_DEVS_KBD_MATRIX_CALLBACK_MODE == 0
+                    #ifdef CYGNUM_DEVS_KBD_MATRIX_CALLBACK_MODE 
                     if (kbd_dev->num_events < CYGNUM_DEVS_KBD_BUFFER_LEN) 
                     {
                         cyg_kbd_key_t *ev;
@@ -813,9 +816,9 @@ avr32_matrix_kbd_timer_DSR(cyg_vector_t vector, cyg_ucount32 count, cyg_addrword
                         }
                     }
                     #endif
-                    if(kbd_dev->kbd_callback != NULL)
+                    if(kbd_dev->kbd_call_back != NULL)
                     {
-                        kbd_dev->kbd_callback(key, CYG_KBD_KEY_DOWNO);
+                        kbd_dev->kbd_call_back(key, CYG_KBD_KEY_DOWNO);
                     }
                 }
             }
@@ -825,7 +828,7 @@ avr32_matrix_kbd_timer_DSR(cyg_vector_t vector, cyg_ucount32 count, cyg_addrword
                 kbd_dev->push_cnt = kbd_dev->repeat_interval;
                 if(kbd_dev->enabled)
                 {
-                    #if CYGNUM_DEVS_KBD_MATRIX_CALLBACK_MODE == 0
+                    #ifdef CYGNUM_DEVS_KBD_MATRIX_CALLBACK_MODE
                     if (kbd_dev->num_events < CYGNUM_DEVS_KBD_BUFFER_LEN) 
                     {
                         cyg_kbd_key_t *ev;
@@ -842,9 +845,9 @@ avr32_matrix_kbd_timer_DSR(cyg_vector_t vector, cyg_ucount32 count, cyg_addrword
                         }
                     }
                     #endif
-                    if(kbd_dev->kbd_callback != NULL)
+                    if(kbd_dev->kbd_call_back != NULL)
                     {
-                        kbd_dev->kbd_callback(key,CYG_KBD_KEY_HOLD);
+                        kbd_dev->kbd_call_back(key,CYG_KBD_KEY_HOLD);
                     }
                 }
             }

@@ -1013,13 +1013,23 @@ package CYGPKG_DEVS_KBD_IPAQ {
 	   on the Compaq iPAQ Pocket PC."
 }
 
-package CYGPKG_DEVS_AVR32_KBD_MATRIX  {
+package CYGPKG_DEVS_KBD_MATRIX_AVR32  {
 	alias 		{ "Matrix keyboar support for AVR32 CPU" kbd_matrix }
 	directory	devs/kbd/avr32/matrix
 	script		kbd_matrix.cdl
 	hardware
         description "
            This package contains hardware support for matrix keyboar
+           ont AVR32 CPU."
+}
+
+package CYGPKG_DEVS_KBD_BUTTON_AVR32  {
+	alias 		{ "Button keyboar support for AVR32 CPU" kbd_button }
+	directory	devs/kbd/avr32/button
+	script		kbd_button.cdl
+	hardware
+        description "
+           This package contains hardware support for button keyboar
            ont AVR32 CPU."
 }
 
@@ -1033,15 +1043,6 @@ package CYGPKG_DEVS_TOUCH_AAED2000 {
 	   on the Agilent AAED2000 prototype."
 }
 
-package CYGPKG_DEVS_KBD_AAED2000 {
-	alias 		{ "Keyboard support for Agilent AAED2000" kbd_aaed2000 }
-	directory	devs/kbd/arm/aaed2000
-	script		kbd_aaed2000.cdl
-	hardware
-        description "
-           This package contains hardware support for the keyboard
-	   on the Agilent AAED2000 prototype."
-}
 
 package CYGPKG_DEVS_KBD_TOUCH {
 	alias 		{ "Keyboard support for Atmel AT42QT1060" kbd_at42qt1060 }
@@ -2631,6 +2632,15 @@ package CYGPKG_IO_SPI {
           The generic SPI package provides an API for accessing devices
           attached to an SPI bus. It also provides support for writing
           bus drivers and for defining SPI device structures."
+}
+
+package CYGPKG_IO_KBD {
+        alias      { "Generic KBD support" kbd io_kbd kbd_io }
+        directory  io/kbd
+        script     kbd.cdl
+        hardware
+        description "
+          The generic KBD package provides defintions for kbd drivers."
 }
 
 package CYGPKG_IO_I2C {
@@ -6834,7 +6844,40 @@ target KM_8 {
             CYGPKG_IO_USB
             CYGPKG_IO_USB_SLAVE
             CYGPKG_DEVS_USB_UC3C
-                          
+            CYGPKG_IO_KBD
+            CYGPKG_DEVS_KBD_BUTTON_AVR32
+            CYGPKG_IO_FRAMEBUF
+            CYGPKG_DEVS_FRAMEBUF_ST7565
+	}
+	description "
+	   None."
+}
+
+target KM_8_BL {
+	alias 		{ "KM-8 board bot loader" uc3c }
+	packages { 
+            CYGPKG_HAL_AVR32
+            CYGPKG_HAL_AVR32_KM_8 
+            CYGPKG_IO_EHCI_SERIAL_AVR32_UC3C
+            CYGPKG_IO_FLASH
+            CYGPKG_DEVICES_WALLCLOCK_AVR32_AST
+
+            CYGPKG_DEVS_FLASH_SPI_FM25VXX
+            CYGPKG_DEVS_FLASH_AVR32_CDW
+            CYGPKG_IO_SPI
+            CYGPKG_DEVS_SPI_ISR_AVR32_UC3C
+            CYGPKG_DEVS_USART_SPI_AVR32_UC3C
+            CYGPKG_IO
+
+            CYGPKG_IO_ADC
+            CYGPKG_DEVS_ADC_AVR32_ADCIFB
+            CYGPKG_IO_USB_SLAVE_SERIAL
+            CYGPKG_IO_USB
+            CYGPKG_IO_USB_SLAVE
+            CYGPKG_DEVS_USB_UC3C
+
+            CYGPKG_IO_FRAMEBUF
+            CYGPKG_DEVS_FRAMEBUF_ST7565
 	}
 	description "
 	   None."
@@ -7331,6 +7374,17 @@ package CYGPKG_DEVS_FRAMEBUF_SYNTH {
     description "
         This package provides a framebuffer device driver for the
         synthetic target."
+}
+
+package CYGPKG_DEVS_FRAMEBUF_ST7565 {
+    alias		{ "ST7565 target framebuffer device driver" devs_framebuf_st7565 st7565_framebuf_driver }
+    hardware
+    directory		devs/framebuf/st7565
+    script		fb_st7565.cdl
+    
+    description "
+        This package provides a framebuffer device driver for the
+        ST7565 target."
 }
 
 # --------------------------------------------------------------------------

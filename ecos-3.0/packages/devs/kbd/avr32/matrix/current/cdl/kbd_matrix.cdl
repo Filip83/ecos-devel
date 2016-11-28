@@ -49,13 +49,13 @@
 #
 #==========================================================================
 
-cdl_package CYGPKG_DEVS_KBD_MATRIX {
+cdl_package CYGPKG_DEVS_KBD_MATRIX_AVR32 {
     display     "Matrix keyboard driver."
-    include_dir cyg/io
-
-    active_if   CYGPKG_IO_FILEIO
+    parent	CYGPKG_IO_KBD
+    active_if   CYGPKG_IO_KBD
     requires    CYGPKG_IO
-    requires    CYGFUN_KERNEL_API_C
+    requires    CYGPKG_HAL_AVR32
+
 
     compile       -library=libextras.a kbd_matrix.c
 
@@ -79,78 +79,78 @@ cdl_package CYGPKG_DEVS_KBD_MATRIX {
                building the keypad driver package. These flags
                are used in addition to the set of global flags."
         }
+    }
 
-        cdl_option CYGDAT_DEVS_KBD_MATRIX_NAME {
-            display "Device name for the keyboard driver"
-            flavor data
-            default_value {"\"/dev/kbd\""}
-            description " This option specifies the name of the keypad device"
-        }
-        
-        cdl_option CYGNUM_DEVS_KBD_MATRIX_4x5 {
-            display "Keyboard 4x5 defalut is 4x4"
-            flavor bool
-            default_value { 0 }
-            description " "
-        }
+    cdl_option CYGDAT_DEVS_KBD_MATRIX_NAME {
+        display "Device name for the keyboard driver"
+        flavor data
+        default_value {"\"/dev/kbd\""}
+        description " This option specifies the name of the keypad device"
+    }
 
-        cdl_option CYGNUM_DEVS_KBD_MATRIX_SCAN_INTERVAL {
-            display "Keyboard rows scan interval"
-            flavor data
-            legal_value     7
-            default_value { 7 }
-            description "
-                This option defines keyboard scan interval.
-                T = 2^(interval + 1)/32764"
-        }
+    cdl_option CYGNUM_DEVS_KBD_MATRIX_4x5 {
+        display "Keyboard 4x5 defalut is 4x4"
+        flavor bool
+        default_value { 0 }
+        description " "
+    }
 
-        cdl_option CYGNUM_DEVS_KBD_MATRIX_CALLBACK_MODE {
-            display "Keyboard driver callback mode"
-            flavor bool
-            default_value { 0 }
-            description "
-                This option enable callback only mode. In this mode
-                callback function to deliver key strokes is used.
-                Keyboard IO functionality is disabled."
-        }
+    cdl_option CYGNUM_DEVS_KBD_MATRIX_SCAN_INTERVAL {
+        display "Keyboard rows scan interval"
+        flavor data
+        legal_values     7
+        default_value { 7 }
+        description "
+            This option defines keyboard scan interval.
+            T = 2^(interval + 1)/32764"
+    }
 
-        cdl_option CYGNUM_DEVS_KBD_MATRIX_EVENT_BUFFER_SIZE {
-            display "Number of events the driver can buffer"
-            active_if CYGNUM_DEVS_KBD_MATRIX_CALLBACK_MODE == 0
-            flavor data
-            default_value { 5 }
-            description "
-                This option defines the size of the keypad device internal
-            buffer. The cyg_io_read() function will return as many of these
-            as there is space for in the buffer passed."
-        }
-        
-        cdl_option CYGNUM_DEVS_KBD_MATRIX_LINUX_KEYBOARD {
-            display "Enable linux keyboard key mapping"
-            active_if CYGNUM_DEVS_KBD_MATRIX_CALLBACK_MODE == 0
-            flavor bool
-            default_value { 1 }
-            description "
-                If this option is enabled a key value is represetnted as 16-bit
-                integer. If a key value is les than 255 it can be interpreted
-                as ASCII character, otherwise it is function key. Function keys
-                are interpreted acording linux_keyboard.h."
-        }
-            
-        cdl_option CYGNUM_DEVS_KBD_MATRIX_INTERRUPT_PRIO {
-            display "Keyboard driver interrupt priority"
-            flavor data
-            legal_values  0 to 3
-            default_value { 0 }
-            description "
-                This option set keyboard river insterrupt priortiy."
-        }
+    cdl_option CYGNUM_DEVS_KBD_MATRIX_CALLBACK_MODE {
+        display "Keyboard driver callback mode"
+        flavor bool
+        default_value { 0 }
+        description "
+            This option enable callback only mode. In this mode
+            callback function to deliver key strokes is used.
+            Keyboard IO functionality is disabled."
+    }
 
-        cdl_option CYGDAT_DEVS_KBD_MATRIX_DEBUG_OUTPUT {
-            display "Enable keyboard driver debug utput"
-            flavor data
-            legal_values  0 to 3
-            default_value { 0 }
-        }
+    cdl_option CYGNUM_DEVS_KBD_MATRIX_EVENT_BUFFER_SIZE {
+        display "Number of events the driver can buffer"
+        active_if CYGNUM_DEVS_KBD_MATRIX_CALLBACK_MODE == 0
+        flavor data
+        default_value { 5 }
+        description "
+            This option defines the size of the keypad device internal
+        buffer. The cyg_io_read() function will return as many of these
+        as there is space for in the buffer passed."
+    }
+
+    cdl_option CYGNUM_DEVS_KBD_MATRIX_LINUX_KEYBOARD {
+        display "Enable linux keyboard key mapping"
+        active_if CYGNUM_DEVS_KBD_MATRIX_CALLBACK_MODE == 0
+        flavor bool
+        default_value { 1 }
+        description "
+            If this option is enabled a key value is represetnted as 16-bit
+            integer. If a key value is les than 255 it can be interpreted
+            as ASCII character, otherwise it is function key. Function keys
+            are interpreted acording linux_keyboard.h."
+    }
+
+    cdl_option CYGNUM_DEVS_KBD_MATRIX_INTERRUPT_PRIO {
+        display "Keyboard driver interrupt priority"
+        flavor data
+        legal_values  0 to 3
+        default_value { 0 }
+        description "
+            This option set keyboard river insterrupt priortiy."
+    }
+
+    cdl_option CYGDAT_DEVS_KBD_MATRIX_DEBUG_OUTPUT {
+        display "Enable keyboard driver debug utput"
+        flavor data
+        legal_values  0 to 3
+        default_value { 0 }
     }
 }
