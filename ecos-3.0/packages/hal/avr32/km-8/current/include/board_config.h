@@ -395,4 +395,14 @@ void hal_board_init(void);
 
 #define CYG_HAL_AVR32_TWIMS0_TWCK_PIN           AVR32_TWIMS0_TWCK_PIN
 #define CYG_HAL_AVR32_TWIMS0_TWCK_FUNCTION      AVR32_TWIMS0_TWCK_FUNCTION
+
+// Beeper pin signal
+#define CYG_HAL_AVR32_BEEP_PIN                  AVR32_TC0_A0_0_1_PIN
+#define CYG_HAL_AVR32_BEEP_FUNCTION             AVR32_TC0_A0_0_1_FUNCTION
+
+// Button keyboard pins
+#define CYG_DEV_KB0_PIN                         AVR32_PIN_PA07
+#define CYG_DEV_KB1_PIN                         AVR32_PIN_PA15
+#define CYG_DEV_KB2_PIN                         AVR32_PIN_PA18
+#define CYG_DEV_KB3_PIN                         AVR32_PIN_PA16
 #endif /* BOARD_CONFIG_H_ */

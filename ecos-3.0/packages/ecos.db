@@ -1043,7 +1043,6 @@ package CYGPKG_DEVS_TOUCH_AAED2000 {
 	   on the Agilent AAED2000 prototype."
 }
 
-
 package CYGPKG_DEVS_KBD_TOUCH {
 	alias 		{ "Keyboard support for Atmel AT42QT1060" kbd_at42qt1060 }
 	directory	devs/kbd/avr32/touch
@@ -1052,6 +1051,16 @@ package CYGPKG_DEVS_KBD_TOUCH {
         description "
            This package contains hardware support for the keyboard
 	   on the AVR32 UC3-EK."
+}
+
+package CYGPKG_DEVS_BEEP_AVR32 {
+	alias 		{ "Beeper support for Atmel AVR32" bep_avr32 }
+	directory	devs/beeper/avr32
+	script		beep_avr32.cdl
+	hardware
+        description "
+           This package contains hardware support for beeper using
+           AVR32 timer."
 }
 
 package CYGPKG_IO_SERIAL_ARM_EBSA285 {
@@ -6848,6 +6857,7 @@ target KM_8 {
             CYGPKG_DEVS_KBD_BUTTON_AVR32
             CYGPKG_IO_FRAMEBUF
             CYGPKG_DEVS_FRAMEBUF_ST7565
+            CYGPKG_DEVS_BEEP_AVR32
 	}
 	description "
 	   None."

@@ -90,7 +90,7 @@ cyg_uint64	_hw_error = 0;
 */
 cyg_spi_avr32_device_t fram_spi_device =
 {
-    .spi_device     = &(cyg_spi_avr32_bus0),
+    .spi_device     = {&cyg_spi_avr32_bus0},
     .dev_num        = FRAM_FM25WXX_SPI_DEV_CS_NUM,
     .bits           = FRAM_FM25WXX_SPI_DEV_BITS_NUM,
     .cl_pol         = FRAM_FM25WXX_SPI_DEV_CPOL,
@@ -106,7 +106,7 @@ cyg_spi_avr32_device_t fram_spi_device =
 */
 cyg_spi_avr32_device_t rtc_spi_device =
 {
-    .spi_device     = &(cyg_spi_avr32_bus0),
+    .spi_device     = {&cyg_spi_avr32_bus0},
     .dev_num        = RTC_SPI_DEV_CS_NUM,
     .bits           = RTC_SPI_DEV_BITS_NUM,
     .cl_pol         = RTC_SPI_DEV_CPOL,
@@ -122,7 +122,7 @@ cyg_spi_avr32_device_t rtc_spi_device =
 */
 cyg_spi_avr32_device_t lcd_spi_device =
 {
-    .spi_device     = &(cyg_spi_avr32_bus0),
+    .spi_device     = {&cyg_spi_avr32_bus0},
     .dev_num        = LCD_SPI_DEV_CS_NUM,
     .bits           = LCD_SPI_DEV_BITS_NUM,
     .cl_pol         = LCD_SPI_DEV_CPOL,
@@ -138,7 +138,7 @@ externC cyg_usart_spi_avr32_bus_t cyg_usart_spi_avr32_bus1;
 */
 cyg_usart_spi_avr32_device_t dac_control_spi_device =
 {
-    .spi_device     = &(cyg_usart_spi_avr32_bus1),
+    .spi_device     = {&cyg_usart_spi_avr32_bus1},
     .dev_num        = DAC_SPI_DEV_CS_NUM,
     .bits           = DAC_SPI_DEV_BITS_NUM,
     .cl_pol         = DAC_SPI_DEV_CPOL,
@@ -153,7 +153,7 @@ cyg_usart_spi_avr32_device_t dac_control_spi_device =
 */
 cyg_usart_spi_avr32_device_t adc_spi_device =
 {
-    .spi_device     = &(cyg_usart_spi_avr32_bus1),
+    .spi_device     = {&cyg_usart_spi_avr32_bus1},
     .dev_num        = ADC_SPI_DEV_CS_NUM,
     .bits           = ADC_SPI_DEV_BITS_NUM,
     .cl_pol         = ADC_SPI_DEV_CPOL,

@@ -83,8 +83,6 @@ static cyg_uint8 cyg_st7565_fb_default_base[132 *
 static int
 cyg_st7565_fb_on(struct cyg_fb* fb)
 {
-    cyg_st7565_fb_driver_t *driver_data = 
-            (cyg_st7565_fb_driver_t*)fb->fb_driver0;
     cyg_uint8 tx_data[15];
     gpio_set_pin_high(LCD_RESET_PIN);
     cyg_thread_delay(1);

@@ -316,6 +316,8 @@ cdl_package CYGPKG_HAL_AVR32_KM_8 {
 		    display       "Select open loop or cloded loop operation."
 		    flavor        bool
 		    default_value 1
+                    description "If this option is enabled closed llop mode is
+                                selected, open loop mode otherwise"
 		}
 
                 cdl_option CYGNUM_HAL_OSCILATORS_DFLL0_DITHERING {

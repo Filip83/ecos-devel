@@ -98,15 +98,15 @@
 
 //! The min DFLL output frequency
 #if (UC3L0128 || UC3L0256)
-#define SCIF_DFLL_MINFREQ_KHZ         20000
+#define SCIF_DFLL_MINFREQ_KHZ         20000UL
 #define SCIF_DFLL_MINFREQ_HZ          20000000UL
 #else
-#define SCIF_DFLL_MINFREQ_KHZ         40000
+#define SCIF_DFLL_MINFREQ_KHZ         40000UL
 #define SCIF_DFLL_MINFREQ_HZ          40000000UL
 #endif
 
 //! The max DFLL output frequency
-#define SCIF_DFLL_MAXFREQ_KHZ         150000
+#define SCIF_DFLL_MAXFREQ_KHZ         150000UL
 #define SCIF_DFLL_MAXFREQ_HZ          150000000UL
 
 #define SCIF_DFLL_COARSE_MAX  (AVR32_SCIF_COARSE_MASK >> AVR32_SCIF_COARSE_OFFSET)
@@ -535,10 +535,10 @@ void hal_oscilator_init(void)
 
     // DFLL0 configuration
 #ifdef CYGNUM_HAL_OSCILATORS_DFLL0_ENABLED
-#if CYGNUM_HAL_OSCILATORS_DFLL0_MODE == 0
-    hal_init_dfll_openloop();
-#else
+#ifdef CYGNUM_HAL_OSCILATORS_DFLL0_MODE
     hal_init_dfll_closedloop();
+#else
+    hal_init_dfll_openloop();
 #endif
 #endif
     

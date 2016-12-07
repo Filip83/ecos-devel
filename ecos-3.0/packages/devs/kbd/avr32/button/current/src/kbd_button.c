@@ -69,11 +69,6 @@
 #include <cyg/io/devtab.h>
 #include CYGBLD_HAL_BOARD_H
 
-#define CYG_DEV_KB0_PIN AVR32_PIN_PB10
-#define CYG_DEV_KB1_PIN AVR32_PIN_PB10
-#define CYG_DEV_KB2_PIN AVR32_PIN_PB10
-#define CYG_DEV_KB3_PIN AVR32_PIN_PB10
-
 #define MAX_EVENTS CYGNUM_DEVS_KBD_BUTTON_EVENT_BUFFER_SIZE
 
 #define FALLING_EDGE GPIO_FALLING_EDGE
@@ -431,17 +426,6 @@ static void avr32_button_kbd_start_scan(cyg_kbd_avr32_t *kbd_dev)
     AVR32_AST.ier       = AVR32_AST_IER_PER0_MASK;
 }
 
-/** Stop keyboard columns/lines scanning.
-*
-* The pir0 interrupt is used to driver columns/lines scanning.
-* \param kdb_dev is pointer to keyboard data structure.
-*/
-static void avr32_button_kbd_stop_scan(cyg_kbd_avr32_t *kbd_dev)
-{
-    kbd_dev->scan_line  = 0;
-    AVR32_AST.idr       = AVR32_AST_IDR_PER0_MASK;
-}
-
 /** Keyboard timer interrupt.
 *
 * The pir0 interrupt is handled in this function.
@@ -452,7 +436,7 @@ static void avr32_button_kbd_stop_scan(cyg_kbd_avr32_t *kbd_dev)
 * \return value indicating to OS that DSR nead to be called.
 */
 static cyg_uint32
-avr32_matric_kbd_timer_ISR(cyg_vector_t vector, cyg_addrword_t data)
+avr32_button_kbd_timer_ISR(cyg_vector_t vector, cyg_addrword_t data)
 {
     cyg_kbd_avr32_t *kbd_dev = (cyg_kbd_avr32_t*)data;
     cyg_uint32           ret = CYG_ISR_HANDLED;

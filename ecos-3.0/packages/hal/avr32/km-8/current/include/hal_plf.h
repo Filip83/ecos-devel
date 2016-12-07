@@ -54,7 +54,7 @@
 #define CYGONCE_HAL_AVR32_PLF_H
 
 #ifndef __ASSEMBLER__
-void hal_platform_init();
+void hal_platform_init(void);
 
 #endif
 

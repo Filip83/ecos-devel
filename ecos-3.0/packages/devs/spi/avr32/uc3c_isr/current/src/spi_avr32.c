@@ -112,9 +112,9 @@ cyg_spi_avr32_bus_t cyg_spi_avr32_bus0 = {
     .spi_bus.spi_set_config           = spi_avr32_set_config,
     .interrupt_number                 = CYGNUM_HAL_VECTOR_SPI0,
  #ifdef AVR32_SPI0_ADDRESS
-    .spi_dev                          = AVR32_SPI0_ADDRESS,
+    .spi_dev                          = (avr32_spi_t*)AVR32_SPI0_ADDRESS,
 #else
-    .spi_dev                          = AVR32_SPI_ADDRESS,
+    .spi_dev                          = (avr32_spi_t*)AVR32_SPI_ADDRESS,
 #endif
     .count                            = 0,
     .tx                               = NULL,
@@ -132,7 +132,7 @@ cyg_spi_avr32_bus_t cyg_spi_avr32_bus1 = {
     .spi_bus.spi_get_config           = spi_avr32_get_config,
     .spi_bus.spi_set_config           = spi_avr32_set_config,
     .interrupt_number                 = CYGNUM_HAL_VECTOR_SPI1,
-    .spi_dev                          = AVR32_SPI1_ADDRESS,
+    .spi_dev                          = (avr32_spi_t*)AVR32_SPI1_ADDRESS,
     .count                            = 0,
     .tx                               = NULL,
     .rx                               = NULL
