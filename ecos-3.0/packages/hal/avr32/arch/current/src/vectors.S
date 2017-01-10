@@ -68,6 +68,17 @@
     .global _start
     .type _start, @function
 _start:
+  //  movh    r0,0xffff
+  //  orl     r0,0x2c00
+
+  //  movh    r1,0x0008
+  //  orl     r1,0x0000
+  //  st.w    r0[88],r1
+
+  //  st.w    r0[68],r1
+
+  //  st.w    r0[0],r1
+    
 #ifdef BOOT_LOADER
     // If boot loader startup is enabled
     // this code load first 4B from user FLASH

@@ -397,7 +397,7 @@ static cyg_uint32 avr32_adc_isr(cyg_vector_t vector, cyg_addrword_t data)
     cyg_uint8 channel_no = (result >> 16)&0x0f;
     
     res |= CYG_ISR_HANDLED
-        |  cyg_adc_receive_sample(info->channel[channel_no], result&0xff);
+        |  cyg_adc_receive_sample(info->channel[channel_no], result&0xffff);
 
 
     adc_dev->icr = AVR32_ADCIFB_ICR_DRDY_MASK;

@@ -1,3 +1,7 @@
+2017-01-04  Filip <filip.gnu@gmail.com>
+
+        * flash_avr32_cdw.cdl: Modified FLASH end address.
+
 2016-06-05  Filip  <filip.gnu@gmail.com>
 
 	* Added option to cdl to select accessible FLASH region with

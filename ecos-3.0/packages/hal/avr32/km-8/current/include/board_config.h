@@ -93,7 +93,7 @@
 // Analog board DAC SPI on USART1
 #define DAC_SPI_DEV_CS_NUM                              0
 #define DAC_SPI_DEV_BITS_NUM                            8 // USART SPI
-#define DAC_SPI_DEV_CPOL                                1
+#define DAC_SPI_DEV_CPOL                                0
 #define DAC_SPI_DEV_NCPHA                               1
 #define DAC_SPI_DEV_BUD_RATE                            2000000
 #define DAC_SPI_DEV_CSUP_DLY                            0
@@ -102,7 +102,7 @@
 // Analog board ADC config SPI on USART1
 #define ADC_SPI_DEV_CS_NUM                              1
 #define ADC_SPI_DEV_BITS_NUM                            8 // USART SPI
-#define ADC_SPI_DEV_CPOL                                1
+#define ADC_SPI_DEV_CPOL                                0
 #define ADC_SPI_DEV_NCPHA                               1
 #define ADC_SPI_DEV_BUD_RATE                            2000000
 #define ADC_SPI_DEV_CSUP_DLY                            0
@@ -119,6 +119,7 @@
 #define LCD_RESET_PIN                   AVR32_PIN_PA11
 #define ANL_PW_EN_PIN                   AVR32_PIN_PA17
 #define BT_NSHUTD_PIN                   AVR32_PIN_PB10
+#define DAC_RESET_PIN                   AVR32_PIN_PB24
 
 
 /**

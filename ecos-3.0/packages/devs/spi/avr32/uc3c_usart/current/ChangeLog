@@ -1,3 +1,9 @@
+2017-01-10  Filip <filip.gnu@gmail.com>
+
+        * src/usart_spi_avr32.c: Mode register is configured in 
+          spi_avr32_start_transfer function to use diffrent configuration
+          for diffrent devices.
+
 2016-06-05  Filip <filip.gnu@gmail.com>
 
         * cdl/usart_spi_avr32.cdl:

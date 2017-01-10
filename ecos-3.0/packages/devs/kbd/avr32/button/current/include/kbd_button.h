@@ -104,8 +104,8 @@ typedef struct cyg_kbd_avr32_s
     cyg_uint32        interrupt_prio;	    /**< Keyboard interrupts priority. */
     cyg_pins_isr_t    kb_pins_isr[CYGNUM_DEVS_KBD_BUTTON_NUM_IO_INTERRUPTS_GROUPS]; /**< Keyboard rows pins interrupts. \see cyg_pins_isr_t */
     kbd_call_back_t   kbd_call_back;
-#ifdef CYGNUM_DEVS_KBD_BUTTON_CALLBACK_MODE
-    cyg_kbd_key_t     key_buffer[CYGNUM_DEVS_KBD_MATRIX_EVENT_BUFFER_SIZE];
+#ifndef CYGNUM_DEVS_KBD_BUTTON_CALLBACK_MODE
+    cyg_kbd_key_t     key_buffer[CYGNUM_DEVS_KBD_BUTTON_EVENT_BUFFER_SIZE];
     cyg_uint16        num_events;
     cyg_uint16        event_put;
     cyg_uint16        event_get;

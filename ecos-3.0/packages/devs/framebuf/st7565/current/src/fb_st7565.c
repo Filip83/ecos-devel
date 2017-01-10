@@ -64,6 +64,9 @@
 #include <cyg/hal/hal_io.h>
 #include <cyg/hal/board_config.h>
 
+#include <cyg/io/framebuf.inl>
+
+
 externC cyg_spi_avr32_device_t lcd_spi_device;
 
 cyg_st7565_fb_driver_t cy_st7565_fb_driver = 
@@ -108,7 +111,7 @@ cyg_st7565_fb_on(struct cyg_fb* fb)
     gpio_set_pin_low(CYGNUM_DEVS_FRAMEBUF_ST7565_A0_PIN);
     
     cyg_spi_transaction_begin((cyg_spi_device*)&lcd_spi_device);
-    cyg_spi_transaction_transfer((cyg_spi_device*)&lcd_spi_device, true, 12, tx_data, NULL, true);
+    cyg_spi_transaction_transfer((cyg_spi_device*)&lcd_spi_device, true, 14, tx_data, NULL, true);
     cyg_spi_transaction_end((cyg_spi_device*)&lcd_spi_device);
     return 0;
 }
@@ -244,68 +247,36 @@ cyg_st7565_fb_ioctl(struct cyg_fb* fb, cyg_ucount16 key, void* data, size_t* len
 void
 cyg_st7565_fb_synch(struct cyg_fb* fb, cyg_ucount16 when)
 {
+    int i;
     unsigned char command_buf[3] =
     {
-        DISP_COLUMN_ADDRESS_LSB,
         DISP_COLUMN_ADDRESS_MSB,
+        DISP_COLUMN_ADDRESS_LSB,
         DISP_PAGE_ADDRESS_SET
     };
     #if LCD_DIG_LEVEL > 0
     diag_printf("fb ST7565 draw\n");
     #endif
     
-    // Reset column and page addres
-    gpio_set_pin_low(CYGNUM_DEVS_FRAMEBUF_ST7565_A0_PIN);
-    
     cyg_spi_transaction_begin((cyg_spi_device*)&lcd_spi_device);
-
-    cyg_spi_transaction_transfer((cyg_spi_device*)&lcd_spi_device, true, 
-                                            3,(cyg_uint8*) command_buf, NULL, true);
-
-    cyg_spi_transaction_end((cyg_spi_device*)&lcd_spi_device);
     
     // Write data to display
-    gpio_set_pin_high(CYGNUM_DEVS_FRAMEBUF_ST7565_A0_PIN);
-    cyg_spi_transaction_begin((cyg_spi_device*)&lcd_spi_device);
-    cyg_spi_transaction_transfer((cyg_spi_device*)&lcd_spi_device, true, 
-                          sizeof(cyg_st7565_fb_default_base),
-                          (cyg_uint8*) fb->fb_base, NULL, true);
+    for(i = 0; i < (fb->fb_height >> 3); i++)
+    {
+        command_buf[2] = DISP_PAGE_ADDRESS_SET | i;
+        
+        gpio_set_pin_low(CYGNUM_DEVS_FRAMEBUF_ST7565_A0_PIN);
+        
+        cyg_spi_transaction_transfer((cyg_spi_device*)&lcd_spi_device, true, 
+                                            3,(cyg_uint8*) command_buf, NULL, true);
+        
+        gpio_set_pin_high(CYGNUM_DEVS_FRAMEBUF_ST7565_A0_PIN);
+        //cyg_spi_transaction_begin((cyg_spi_device*)&lcd_spi_device);
+        cyg_spi_transaction_transfer((cyg_spi_device*)&lcd_spi_device, true, 
+                              fb->fb_width,
+                ((cyg_uint8*) fb->fb_base) + fb->fb_width*i, NULL, true);
+    }
     cyg_spi_transaction_end((cyg_spi_device*)&lcd_spi_device);
-}
-
-static cyg_fb_colour cyg_fb_get_buffer_pixel(cyg_ucount16 x, cyg_ucount16 y, 
-         const void* source,  cyg_ucount16 offset, cyg_ucount16 stride)
-{
-    cyg_uint8 color_mask =  1;
-    cyg_uint8 *cbit_map = ((cyg_uint8*)source);
-
-    cyg_uint32 x_bit  = x&0x7;
-#if CYGNUM_DEVS_FRAMEBUF_ST7565_FB_ENDIAN == 0
-    return (cbit_map[y*stride + (x >> 3)] >> (7 - x_bit)) & color_mask;
-#else
-    return (cbit_map[(y*stride + x) >> 3] >> (x_bit)) & color_mask;
-#endif
-}
-
-static void cyg_fb_set_buffer_pixel(cyg_ucount16 x, cyg_ucount16 y, 
-         cyg_fb_colour colour, void* dest, 
-        cyg_ucount16 offset, cyg_ucount16 stride)
-{
-    cyg_uint8 *cbit_map       = (cyg_uint8*)dest;
-    cyg_fb_colour color_mask  = 1;
-    colour                   &= color_mask;
-
-    cyg_uint32 x_bit = x&0x07;
-#if CYGNUM_DEVS_FRAMEBUF_ST7565_FB_ENDIAN == 0
-    colour <<= (7-x_bit);
-    color_mask <<= (7-x_bit);
-#else
-    colour <<= (x_bit);
-    color_mask <<= (x_bit);
-#endif
-
-    cbit_map[y*stride + (x >> 3)] &= ~color_mask;
-    cbit_map[y*stride + (x >> 3)] |= colour;
 }
 
 
@@ -314,82 +285,77 @@ void cyg_st7565_fb_write_pixel_fn(cyg_fb* fb, cyg_ucount16 x, cyg_ucount16 y,
 {
     if(x < fb->fb_width && y < fb->fb_height)
     {
-	cyg_uint8 color_mask = 1;
-	colour &= color_mask;
-	
-        // eni potreba mam jnom jednu moznost jedn bit jeden pixel
-	//y *=fb->fb_depth;// bits_per_pixel;
-
-	cyg_ucount16 y_byte = y >> 3;//y/8;
-	cyg_ucount16 y_bit  = y&0x07;//y%8;
-#if CYGNUM_DEVS_FRAMEBUF_ST7565_FB_ENDIAN == 0
-	colour <<= (7-y_bit);
-	color_mask <<= (7-y_bit);
-#else
-	colour <<= (y_bit);
-	color_mask <<= (y_bit);
-#endif
-        cyg_uint8 *cbit_map = (cyg_uint8*)fb->fb_base;
-        cbit_map[y_byte*fb->fb_stride + x] &= ~color_mask;
-        cbit_map[y_byte*fb->fb_stride + x] |= colour;
+	cyg_fb_linear_write_pixel_paged_1LE_inl(fb->fb_base, fb->fb_width, 
+                x, y, colour);
     }
 }
 
 cyg_fb_colour cyg_st7565_fb_read_pixel_fn(cyg_fb* fb, cyg_ucount16 x,
         cyg_ucount16 y)
 {
-    cyg_uint32 color_mask =  1;
-    cyg_uint8 *cbit_map   = (cyg_uint8*)fb->fb_base;
-
-    cyg_ucount16 y_byte = y >> 3;//y/8;
-    cyg_ucount16 y_bit  = y&0x07;//y%8;
-
-#if CYGNUM_DEVS_FRAMEBUF_ST7565_FB_ENDIAN == 0
-    color_mask <<= (7-y_bit);
-    return (cbit_map[y_byte*fb->fb_stride + x] >> (7 - y_bit)) & color_mask;
-#else
-    return (cbit_map[y_byte*fb->fb_stride + x] >> (y_bit)) & color_mask;
-#endif
+    return cyg_fb_linear_read_pixel_paged_1LE_inl(fb->fb_base, fb->fb_width, x, y);
 }
 
 void cyg_st7565_fb_write_hline_fn(cyg_fb* fb, cyg_ucount16 x, cyg_ucount16 y, 
         cyg_ucount16 len, cyg_fb_colour colour)
 {
-    
+    cyg_fb_linear_write_hline_paged_1LE_inl(fb->fb_base, fb->fb_width,
+            x, y, len, colour);
 }
 
 void cyg_st7565_fb_write_vline_fn(cyg_fb* fb, cyg_ucount16 x, cyg_ucount16 y, 
         cyg_ucount16 len, cyg_fb_colour colour)
-{
-    
+{   
+    if(colour)
+    {
+        for ( ; len && y < fb->fb_height; len--, y++)
+        {
+            cyg_uint8*  _ptr8_  = ((cyg_uint8*)fb->fb_base) + 
+                    (fb->fb_width * (y >> 3)) + x;
+            cyg_uint8   _mask_  = 0x0001 << (y & 0x07);
+            *_ptr8_ |= _mask_;
+        }
+    }
+    else
+    {
+        for ( ; len && y < fb->fb_height; len--, y++)
+        {
+            cyg_uint8*  _ptr8_  = ((cyg_uint8*)fb->fb_base) + 
+                    (fb->fb_width * (y >> 3)) + x;
+            cyg_uint8   _mask_  = 0x0001 << (y & 0x07);
+            *_ptr8_ &= ~_mask_;
+        }
+    }
 }
 
 void cyg_st7565_fb_fill_block_fn(cyg_fb* fb, cyg_ucount16 x, cyg_ucount16 y, 
         cyg_ucount16 width, cyg_ucount16 height, cyg_fb_colour colour)
 {
-    cyg_ucount16 ix, iy;
-    for(ix = x; ix < (x + width) && ix < fb->fb_width; ix++) 
+    int h,_y;
+    if(colour)
     {
-        for(iy = y; iy < (y + height) && iy < fb->fb_height; iy++)
+        for(; width && x < fb->fb_width; x++, width--) 
         {
-            cyg_uint8 color_mask = 1;
-            colour &= color_mask;
-
-            // eni potreba mam jnom jednu moznost jedn bit jeden pixel
-            //y *=fb->fb_depth;// bits_per_pixel;
-
-            cyg_ucount16 y_byte = y >> 3;//y/8;
-            cyg_ucount16 y_bit  = y&0x07;//y%8;
-    #if CYGNUM_DEVS_FRAMEBUF_ST7565_FB_ENDIAN == 0
-            colour <<= (7-y_bit);
-            color_mask <<= (7-y_bit);
-    #else
-            colour <<= (y_bit);
-            color_mask <<= (y_bit);
-    #endif
-            cyg_uint8 *cbit_map = (cyg_uint8*)fb->fb_base;
-            cbit_map[y_byte*fb->fb_stride + x] &= ~color_mask;
-            cbit_map[y_byte*fb->fb_stride + x] |= colour;
+            for(h = height, _y = y; h && y < fb->fb_height; _y++, h--)
+            {
+                cyg_uint8*  _ptr8_  = ((cyg_uint8*)fb->fb_base) + 
+                        (fb->fb_width * (_y >> 3)) + x;
+                cyg_uint8   _mask_  = 0x0001 << (_y & 0x07);
+                *_ptr8_ |= _mask_;
+            }
+        }
+    }
+    else
+    {
+        for(; width && x < fb->fb_width; x++, width--) 
+        {
+            for(h = height, _y = y; h && y < fb->fb_height; _y++, h--)
+            {
+                cyg_uint8*  _ptr8_  = ((cyg_uint8*)fb->fb_base) + 
+                        (fb->fb_width * (_y >> 3)) + x;
+                cyg_uint8   _mask_  = 0x0001 << (_y & 0x07);
+                *_ptr8_ &= ~_mask_;
+            }
         }
     }
 }
@@ -398,14 +364,14 @@ void cyg_st7565_fb_write_block_fn(cyg_fb* fb, cyg_ucount16 x, cyg_ucount16 y,
         cyg_ucount16 width, cyg_ucount16 height, const void* source, 
         cyg_ucount16 offset, cyg_ucount16 stride)
 {
-    cyg_ucount16 ix, iy;
-    cyg_ucount16 bx, by;
-    for(ix = x, bx = 0; ix < (x + width) && ix < fb->fb_width; ix++, bx++) 
+    cyg_ucount16 bx, by, h;
+    for(bx = 0; width && (x + bx) < fb->fb_width; bx++, width--) 
     {
-        for(iy = y, by = 0; iy < (y + height) && iy < fb->fb_height; iy++, by++)
+        for(by = 0, h = height; h && (y + by) < fb->fb_height; by++, h--)
         {    
-            cyg_fb_colour colour = cyg_fb_get_buffer_pixel(bx, by, source, offset, stride);
-            cyg_st7565_fb_write_pixel_fn(fb, ix, iy,colour);
+            cyg_fb_colour colour = cyg_fb_linear_read_pixel_1BE_inl(source,stride,bx,by);
+            cyg_fb_linear_write_pixel_paged_1LE_inl(fb->fb_base, fb->fb_width, 
+                    x + bx, y + by, colour);
         }
     }
 }
@@ -414,14 +380,14 @@ void  cyg_st7565_fb_read_block_fn(cyg_fb* fb, cyg_ucount16 x, cyg_ucount16 y,
         cyg_ucount16 width, cyg_ucount16 height, void* dest, 
         cyg_ucount16 offset, cyg_ucount16 stride)
 {
-    cyg_ucount16 ix, iy;
-    cyg_ucount16 bx, by;
-    for(ix = x, bx = 0; ix < (x + width) && ix < fb->fb_width; ix++, bx++) 
+    cyg_ucount16 bx, by, h;
+    for(bx = 0; width && (x + bx) < fb->fb_width; bx++, width--) 
     {
-        for(iy = y, by = 0; iy < (y + height) && iy < fb->fb_height; iy++, by++)
+        for(by = 0, h = height; h && (y + by) < fb->fb_height; by++, h--)
         {    
-            cyg_fb_colour colour = cyg_st7565_fb_read_pixel_fn(fb, ix, by);
-            cyg_fb_set_buffer_pixel(bx, by,colour,dest, offset,stride);
+            cyg_fb_colour colour = cyg_fb_linear_read_pixel_paged_1LE_inl
+                    (fb->fb_base, fb->fb_width, x + bx, y + by);
+            cyg_fb_linear_write_pixel_1LE_inl(dest, stride, bx, by, colour);
         }
     }
 }
@@ -430,14 +396,15 @@ void cyg_st7565_fb_move_block_fn(cyg_fb* fb, cyg_ucount16 x, cyg_ucount16 y,
         cyg_ucount16 width, cyg_ucount16 height, cyg_ucount16 new_x, 
         cyg_ucount16 new_y)
 {
-    cyg_ucount16 ix, iy;
-    cyg_ucount16 bx, by;
-    for(ix = x, bx = new_x; ix < (x + width) && ix < fb->fb_width; ix++, bx++) 
+    cyg_ucount16 h;
+    for(; width && new_x < fb->fb_width; x++, new_x++, width--) 
     {
-        for(iy = y, by = new_y; iy < (y + height) && iy < fb->fb_height; iy++, by++)
+        for(h = height; h && new_y < fb->fb_height; y++, new_y++, h--)
         {    
-            cyg_fb_colour colour = cyg_st7565_fb_read_pixel_fn(fb, ix, iy);
-            cyg_st7565_fb_write_pixel_fn(fb, bx, by, colour);
+            cyg_fb_colour colour = cyg_fb_linear_read_pixel_paged_1LE_inl
+                    (fb->fb_base, fb->fb_width, x, y);
+            cyg_fb_linear_write_pixel_paged_1LE_inl
+                    (fb->fb_base, fb->fb_width, new_x, new_y, colour);
         }
     }
 }

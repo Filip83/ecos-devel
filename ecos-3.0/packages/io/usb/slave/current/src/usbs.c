@@ -447,6 +447,7 @@ usbs_handle_standard_control(usbs_control_endpoint* endpoint)
     direction   = req->type & USB_DEVREQ_DIRECTION_MASK;
     recipient   = req->type & USB_DEVREQ_RECIPIENT_MASK;
 
+    //diag_printf("USB %d, %d, %d\n",req->request, req->value_hi,length);
     if (USB_DEVREQ_CLEAR_FEATURE == req->request) {
         
         if (USB_DEVREQ_RECIPIENT_INTERFACE == recipient) {
@@ -587,16 +588,43 @@ usbs_handle_standard_control(usbs_control_endpoint* endpoint)
                 }
                 result = USBS_CONTROL_RETURN_HANDLED;
             }
-            
-            
-        } else if (USB_DEVREQ_DESCRIPTOR_TYPE_STRING == req->value_hi) {
+        } else if (USB_DEVREQ_DESCRIPTOR_TYPE_BOS == req->value_hi) {
+            // The device descriptor is easy, it is a single field in the
+            // enumeration data.
+            endpoint->buffer            = (unsigned char*) (endpoint->enumeration_data->bos_capability_descriptor);
+            endpoint->fill_buffer_fn    = (void (*)(usbs_control_endpoint*)) 0;
+            endpoint->complete_fn       = (usbs_control_return (*)(usbs_control_endpoint*, cyg_bool)) 0;
+            if (length < endpoint->enumeration_data->bos_capability_descriptor_len) {
+                endpoint->buffer_size = length;
+            } else {
+                endpoint->buffer_size = endpoint->enumeration_data->bos_capability_descriptor_len;
+            }
+            result = USBS_CONTROL_RETURN_HANDLED;
+                       
+        }  else if (USB_DEVREQ_DESCRIPTOR_TYPE_STRING == req->value_hi) {
 
             // As long as the index is valid, the rest is easy since
             // the strings are just held in a simple array.
             // NOTE: if multiple languages have to be supported
             // then things get more difficult.
+            //diag_printf("Get string: %d\n",req->value_lo);
             if (req->value_lo >= endpoint->enumeration_data->total_number_strings) {
-                result = USBS_CONTROL_RETURN_STALL;
+                if(req->value_lo == 0xee)
+                {
+                    int string_id = endpoint->enumeration_data->total_number_strings;
+                    endpoint->buffer                = (unsigned char*) endpoint->enumeration_data->strings[string_id];
+                    endpoint->fill_buffer_fn        = (void (*)(usbs_control_endpoint*)) 0;
+                    endpoint->complete_fn           = (usbs_control_return (*)(usbs_control_endpoint*, cyg_bool)) 0;
+
+                    if (length < endpoint->buffer[0]) {
+                        endpoint->buffer_size = length;
+                    } else {
+                        endpoint->buffer_size = endpoint->buffer[0];
+                    }
+                    result = USBS_CONTROL_RETURN_HANDLED;
+                }
+                else
+                    result = USBS_CONTROL_RETURN_STALL;
             } else {
                 endpoint->buffer                = (unsigned char*) endpoint->enumeration_data->strings[req->value_lo];
                 endpoint->fill_buffer_fn        = (void (*)(usbs_control_endpoint*)) 0;

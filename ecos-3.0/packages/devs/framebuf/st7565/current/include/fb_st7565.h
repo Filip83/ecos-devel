@@ -1,4 +1,4 @@
-﻿#ifndef CYGONCE_DEVS_FB_ST7565_H
+#ifndef CYGONCE_DEVS_FB_ST7565_H
 #define CYGONCE_DEVS_FB_ST7565_H
 //==========================================================================
 //

@@ -1,3 +1,8 @@
+2016-12-11  Filip  <filip.gnu@gmail.com>
+
+        * fb_st7565.c: Graphic functions modified to use inline functions from
+          framebuf.inl.
+
 2016-11-22  Filip  <filip.gnu@gmail.com>
 
 	* SPI displays driver with ST7565 LCD driver.

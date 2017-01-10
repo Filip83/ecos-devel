@@ -192,6 +192,12 @@ void hal_board_init(void)
     //Bluetooth modlue shut down
     gpio_configure_pin(BT_NSHUTD_PIN, GPIO_PULL_UP | GPIO_DRIVE_LOW | GPIO_DIR_OUTPUT | GPIO_INIT_LOW);
     
+    // Buz
+    gpio_configure_pin(AVR32_PIN_PA13, GPIO_PULL_UP | GPIO_DRIVE_LOW | GPIO_DIR_OUTPUT | GPIO_INIT_LOW);
+    
+    // DAC reset
+    gpio_configure_pin(DAC_RESET_PIN, GPIO_PULL_UP | GPIO_DRIVE_LOW | GPIO_DIR_OUTPUT | GPIO_INIT_LOW);
+    
     
 #if 0	
     //disable clock for unused peripherals

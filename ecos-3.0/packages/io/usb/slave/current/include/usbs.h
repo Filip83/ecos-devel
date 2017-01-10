@@ -133,6 +133,10 @@ typedef struct usbs_enumeration_data {
     const usb_interface_descriptor*     interfaces;
     const usb_endpoint_descriptor*      endpoints;
     const unsigned char**               strings;
+    const char*                         bos_capability_descriptor;
+    int                                 bos_capability_descriptor_len;
+    const char*                         bos_platform_descriptor;
+    int                                 bos_platform_descriptor_len;
 } usbs_enumeration_data;
     
 // The current state of a USB device. This involves a bit to mark

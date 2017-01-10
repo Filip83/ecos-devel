@@ -104,11 +104,19 @@ typedef struct usb_devreq {
 // GET_DESCRIPTOR and SET_DESCRIPTOR requests, with an index
 // in value_lo. They also go into the type fields of the
 // various descriptor structures.
-#define USB_DEVREQ_DESCRIPTOR_TYPE_DEVICE               1
-#define USB_DEVREQ_DESCRIPTOR_TYPE_CONFIGURATION        2
-#define USB_DEVREQ_DESCRIPTOR_TYPE_STRING               3
-#define USB_DEVREQ_DESCRIPTOR_TYPE_INTERFACE            4
-#define USB_DEVREQ_DESCRIPTOR_TYPE_ENDPOINT             5
+#define USB_DEVREQ_DESCRIPTOR_TYPE_DEVICE                       1
+#define USB_DEVREQ_DESCRIPTOR_TYPE_CONFIGURATION                2
+#define USB_DEVREQ_DESCRIPTOR_TYPE_STRING                       3
+#define USB_DEVREQ_DESCRIPTOR_TYPE_INTERFACE                    4
+#define USB_DEVREQ_DESCRIPTOR_TYPE_ENDPOINT                     5
+#define USB_DEVREQ_DESCRIPTOR_TYPE_DEVICE_QUALIFIER             6
+#define USB_DEVREQ_DESCRIPTOR_TYPE_OTHER_SPEED_CONFIGURATION    7
+#define USB_DEVREQ_DESCRIPTOR_TYPE_INTERFACE_POWER              8
+#define USB_DEVREQ_DESCRIPTOR_TYPE_OTG                          9
+#define USB_DEVREQ_DESCRIPTOR_TYPE_DEBUG                        10
+#define USB_DEVREQ_DESCRIPTOR_TYPE_INTERFACE_ASSOCIATION        11
+#define USB_DEVREQ_DESCRIPTOR_TYPE_BOS                          15
+#define USB_DEVREQ_DESCRIPTOR_TYPE_DEVICE_CAPABILITY            16
 
 // Feature selectors. These go into value_lo for the CLEAR_FEATURE and
 // SET_FEATURE requests, and in the first response byte for
@@ -239,7 +247,48 @@ typedef struct usb_endpoint_descriptor {
     (USB_CONFIGURATION_DESCRIPTOR_LENGTH +            \
      (interfaces * USB_INTERFACE_DESCRIPTOR_LENGTH) + \
      (endpoints  * USB_ENDPOINT_DESCRIPTOR_LENGTH)) / 256
+
+// BOD descriptors.
     
+#define USB_DEVICE_CAPABILITY_TYPE_WIRELESS_USB                     0x01
+#define USB_DEVICE_CAPABILITY_TYPE_USB20_EXTESION                   0x02
+#define USB_DEVICE_CAPABILITY_TYPE_SUPERSPEED_USB                   0x03
+#define USB_DEVICE_CAPABILITY_TYPE_CONTAINER_ID                     0x04
+#define USB_DEVICE_CAPABILITY_TYPE_PLATFORM                         0x05
+#define USB_DEVICE_CAPABILITY_TYPE_POWER_DELIVERY_CAPABILITY        0x06
+#define USB_DEVICE_CAPABILITY_TYPE_BATTERY_INFO_CAPABILITY          0x07
+#define USB_DEVICE_CAPABILITY_TYPE_PD_CONSUMER_PORT_CAPABILITY      0x08
+#define USB_DEVICE_CAPABILITY_TYPE_PD_PROVIDER_PORT_CAPABILITY      0x09
+#define USB_DEVICE_CAPABILITY_TYPE_SUPERSPEED_PLUS                  0x0a
+#define USB_DEVICE_CAPABILITY_TYPE_PRECISION_TIME_MEASUREMENT       0x0b
+#define USB_DEVICE_CAPABILITY_TYPE_WIRELESS_USB_EXT                 0x0c
+
+#define USB_DEVICE_BOS_DESCRIPTOR_LENGTH                            5
+#if 0
+typedef struct usb_bos_descriptor {
+    unsigned char       length;
+    unsigned char       type;
+    unsigned char       total_length_lo;
+    unsigned char       total_length_hi;
+    unsigned char       num_device_cap;
+} __attribute__((packed)) usb_bod_descriptor;
+
+typedef struct usb_device_capability_descriptor {
+    unsigned char       length;
+    unsigned char       type;
+    unsigned char       capabilty_type;
+    unsigned char       data[];
+} __attribute__((packed)) usb_device_capability_descriptor;
+
+typedef struct usb_device_capability_patform_descriptor {
+    unsigned char       length;
+    unsigned char       type;
+    unsigned char       capabilty_type;
+    unsigned char       reserved
+    unsigned char       UUID[16];
+    unsigned char       data[];
+} __attribute__((packed)) usb_device_capability_patform_descriptor;
+#endif
 #ifdef __cplusplus
 } // extern "C" {
 #endif

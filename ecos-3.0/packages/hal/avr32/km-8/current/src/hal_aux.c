@@ -244,6 +244,7 @@ void hal_init_dfll_closedloop(void)
     unsigned long             Imul;
     unsigned long             Fmul;
     unsigned int gc_source_clock_freq_hz;
+    unsigned long long target_freq_hz = 1e3*CYGNUM_HAL_OSCILATORS_DFLL0_FREQ;
 
     // This function only supports the following source clocks for the CLK_DFLLIF_REF generic clock:
     // SCIF_GCCTRL_SLOWCLOCK (aka RCSYS), SCIF_GCCTRL_OSC32K, SCIF_GCCTRL_RC32K,
@@ -284,18 +285,17 @@ void hal_init_dfll_closedloop(void)
     
     // Configure the DFLL.
     // The coarse value (= (dfll_f - SCIF_DFLL_MINFREQ_KHZ)*255/(SCIF_DFLL_MAXFREQ_KHZ - SCIF_DFLL_MINFREQ_KHZ))
-    Coarse = ((unsigned long long)(CYGNUM_HAL_OSCILATORS_DFLL0_FREQ - 
-       SCIF_DFLL_MINFREQ_HZ)*255)/(SCIF_DFLL_MAXFREQ_HZ - SCIF_DFLL_MINFREQ_HZ);
+    Coarse = ((target_freq_hz - SCIF_DFLL_MINFREQ_HZ)*255)/
+            (SCIF_DFLL_MAXFREQ_HZ - SCIF_DFLL_MINFREQ_HZ);
 
     // imul = (fDFLL)/fref,
     // fmul = (fDFLL*2^16)/fref - imul*2^16,
     // with fref being the frequency of the DFLL main reference generic clock
     // and fDFLL being the target frequency of the DFLL
-    Imul = ((unsigned long long)CYGNUM_HAL_OSCILATORS_DFLL0_FREQ)/
-                                                        gc_source_clock_freq_hz;
+    Imul = target_freq_hz/gc_source_clock_freq_hz;
 
-    Fmul = ((unsigned long long)CYGNUM_HAL_OSCILATORS_DFLL0_FREQ<<16)/
-          gc_source_clock_freq_hz - ((unsigned long long)(Imul)<<16);
+    Fmul = (target_freq_hz<<16)/gc_source_clock_freq_hz 
+            - ((unsigned long long)(Imul)<<16);
 
     
 #ifdef CYGNUM_HAL_OSCILATORS_DFLL0_CCEN
@@ -314,10 +314,10 @@ void hal_init_dfll_closedloop(void)
     }
     
     SCIF_UNLOCK(AVR32_SCIF_DFLL0STEP);
-    AVR32_SCIF.dfll0step = ((CYGNUM_HAL_OSCILATORS_DFLL0_FINE_MAX_STEPP << 
+    AVR32_SCIF.dfll0step = ((CYGNUM_HAL_OSCILATORS_DFLL0_COARSE_MAX_STEPP << 
                             AVR32_SCIF_DFLL0STEP_CSTEP_OFFSET)
                           &AVR32_SCIF_DFLL0STEP_CSTEP_MASK) |
-                           ((CYGNUM_HAL_OSCILATORS_DFLL0_COARSE_MAX_STEPP << 
+                           ((CYGNUM_HAL_OSCILATORS_DFLL0_FINE_MAX_STEPP << 
                             AVR32_SCIF_DFLL0STEP_FSTEP_OFFSET)
                           &AVR32_SCIF_DFLL0STEP_FSTEP_MASK);
     
@@ -402,6 +402,11 @@ void hal_init_dfll_closedloop(void)
         _hw_error |= HW_ERROR_DFLL_NO_LOCK;
         return;
     }
+    
+   /* AVR32_SCIF.gcctrl[5] = (2 << AVR32_SCIF_GCCTRL_OSCSEL_OFFSET) | 
+                                       AVR32_SCIF_GCCTRL_CEN_MASK;
+    
+    gpio_enable_module_pin(AVR32_SCIF_GCLK_5_0_PIN , AVR32_SCIF_GCLK_5_0_FUNCTION);*/
 
 }
 
@@ -421,13 +426,13 @@ int scif_pclksr_statushigh_wait(unsigned long statusMask)
 // Initialize CPU clock sources
 void hal_oscilator_init(void)
 {
-    SCIF_UNLOCK(AVR32_SCIF_VREGCR);
-    AVR32_SCIF.vregcr = (0x3 << 2);
+    /*SCIF_UNLOCK(AVR32_SCIF_VREGCR);
+    AVR32_SCIF.vregcr = (0x3 << 2);*/
     //oscilator 0 settings
 #ifdef CYGNUM_HAL_OSCILATORS_OSC0_ENABLED
     cyg_uint32 gain = 
-            (CYGNUM_HAL_OSCILATORS_OSC0_FREQV < 12000000) ? AVR32_SCIF_OSCCTRL0_GAIN_G0 :
-            (CYGNUM_HAL_OSCILATORS_OSC0_FREQV < 16000000) ? AVR32_SCIF_OSCCTRL0_GAIN_G1 :
+            (CYGNUM_HAL_OSCILATORS_OSC0_FREQV < 12) ? AVR32_SCIF_OSCCTRL0_GAIN_G0 :
+            (CYGNUM_HAL_OSCILATORS_OSC0_FREQV < 16) ? AVR32_SCIF_OSCCTRL0_GAIN_G1 :
             AVR32_SCIF_OSCCTRL0_GAIN_G2;
 
     SCIF_UNLOCK(AVR32_SCIF_OSCCTRL0);				  
@@ -595,7 +600,15 @@ void hal_clocks_init(void)
 
     //main clock source settings
     PM_UNLOCK(AVR32_PM_MCCTRL);
-    AVR32_PM.mcctrl = (CYGNUM_HAL_MAIN_CLOCK_SOURCE);
+#if CYGNUM_HAL_MAIN_CLOCK_SOURCE == OSC0
+    AVR32_PM.mcctrl = 1;
+#elif CYGNUM_HAL_MAIN_CLOCK_SOURCE == DFLL
+    AVR32_PM.mcctrl = 2;
+#elif CYGNUM_HAL_MAIN_CLOCK_SOURCE == RC120M
+    AVR32_PM.mcctrl = 3;
+#else
+    AVR32_PM.mcctrl = 0;
+#endif
 }
 
 //-----------------------------------------------------------------------------

@@ -98,6 +98,14 @@ flash_program_buf (struct cyg_flash_dev *dev, cyg_flashaddr_t base,
    
 }
 
+int  
+flash_read_buf(struct cyg_flash_dev *dev, const cyg_flashaddr_t base, 
+                         void* data, size_t len)
+{
+    memcpy(data,base,len);
+    return FLASH_ERR_OK;
+}
+
 // Flash cannot be bussy. Blocing errase and program used
 int flash_query(struct cyg_flash_dev *dev, void* data, size_t len)
 {
@@ -110,7 +118,7 @@ static const CYG_FLASH_FUNS(cyg_avr32_flash_funs,
 	               flash_query,
 	               flash_erase_block,
 	               flash_program_buf,
-	               NULL,              // read
+	               flash_read_buf,              // read
 	               cyg_flash_devfn_lock_nop,
 	               cyg_flash_devfn_unlock_nop);
 
@@ -118,7 +126,7 @@ static /*const*/ cyg_flash_block_info_t cyg_flash_avr32_block_info[1] =
 {
     {
          AVR32_FLASHCDW_PAGE_SIZE,
-        (AVR32_FLASHCDW_FLASH_SIZE /*- 0x73800*/)/AVR32_FLASHCDW_PAGE_SIZE
+        (AVR32_FLASHCDW_FLASH_SIZE/2 /*- 0x73800*/)/AVR32_FLASHCDW_PAGE_SIZE
     }
 };
 
@@ -133,7 +141,7 @@ static /*const*/ cyg_flash_block_info_t cyg_flash_user_avr32_block_info[1] =
 CYG_FLASH_DRIVER(cyg_flash_avr32_flashdev,
                  &cyg_avr32_flash_funs,
                  0,                     // Flags
-                 CYGPKG_DEVS_FLASH_AVR32_CDW_START,      // Start
+                 CYGPKG_DEVS_FLASH_AVR32_CDW_START + 0x20000,      // Start
                  CYGPKG_DEVS_FLASH_AVR32_CDW_END - 1,    // End
                  1,                     // Number of block infos
                  cyg_flash_avr32_block_info,

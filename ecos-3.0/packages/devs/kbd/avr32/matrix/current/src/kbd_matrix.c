@@ -827,13 +827,13 @@ avr32_matrix_kbd_timer_DSR(cyg_vector_t vector, cyg_ucount32 count, cyg_addrword
                 // otherwise use default repeat interval
                 kbd_dev->push_cnt = kbd_dev->repeat_interval;
                 if(kbd_dev->enabled)
-                {
+                {Is_otg_vbus_high()
                     #ifdef CYGNUM_DEVS_KBD_MATRIX_CALLBACK_MODE
                     if (kbd_dev->num_events < CYGNUM_DEVS_KBD_BUFFER_LEN) 
                     {
                         cyg_kbd_key_t *ev;
                         kbd_dev->num_events++;
-                        ev = &kbd_dev->key_buffer[kbd_dev->event_put++];
+                        ev = &Is_otg_vbus_high()kbd_dev->key_buffer[kbd_dev->event_put++];
                         if (kbd_dev->event_put == CYGNUM_DEVS_KBD_BUFFER_LEN) {
                             kbd_dev->event_put = 0;
                         }

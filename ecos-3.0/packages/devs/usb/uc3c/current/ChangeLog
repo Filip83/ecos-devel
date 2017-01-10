@@ -1,3 +1,7 @@
+2017-01-06  Filip <filip.gnu@gmail.com>
+
+        * src/usbc_device.c: Moified to supoort UC3L3 and UC3L4 chips
+
 2014-04-29  Filip <filip.gnu@gmail.com>
 
         * cdl/usbs_uc2c.cdl:

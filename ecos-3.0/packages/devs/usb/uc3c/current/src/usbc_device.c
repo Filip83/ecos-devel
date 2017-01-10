@@ -61,6 +61,7 @@
 #include <cyg/hal/hal_io.h>
 #include <cyg/hal/drv_api.h>
 #include <cyg/hal/hal_io.h>
+#include <cyg/hal/gpio.h>
 //#include <cyg/hal/hal_platform_ints.h>
 #include <cyg/infra/cyg_ass.h>
 #include <cyg/infra/cyg_trac.h>
@@ -69,14 +70,15 @@
 
 #include <cyg/kernel/kapi.h>
 
-#if CYGFUN_DEVS_USB_UC3C_STLIB_SUPPORT != 0
-    #define WM_ON_USB_PLUG					0x02000000
-    #define WM_ON_USB_UNPLUG				0x04000000
+#define WM_ON_USB_PLUG					0x02000000
+#define WM_ON_USB_UNPLUG				0x04000000
 
-    #ifndef BOOT_LOADER
-    extern int queue_put(unsigned int msg, unsigned int lparam, unsigned int rparam);
-    #endif
+#define BOOT_LOADER
+
+#ifndef BOOT_LOADER
+extern int queue_put(unsigned int msg, unsigned int lparam, unsigned int rparam);
 #endif
+
 
 #define USB_DEVICE_MAX_EP 6
 #define UDD_NO_SLEEP_MGR
@@ -92,7 +94,7 @@
 
 #define USB_DEVICE_EP_CTRL_SIZE    8
 //control ednpoint buffer
-cyg_uint8 buf[100];// __attribute__ ((section ("HSBSRAM")));
+cyg_uint8 buf[255];// __attribute__ ((section ("HSBSRAM")));
 cyg_bool  ep0_start = false;
 
 typedef struct
@@ -118,6 +120,9 @@ UDC_BSS(4) cyg_uint8 udd_ep_out_cache_buffer[USB_DEVICE_MAX_EP][64];
 
 static cyg_interrupt usbs_uc3c_intr_data;
 static cyg_handle_t  usbs_uc3c_intr_handle;
+
+static cyg_interrupt usbs_plug_intr_data;
+static cyg_handle_t  usbs_plug_intr_handle;
 
 static void usbs_uc3c_ep0_start(usbs_control_endpoint *);
 static void usbs_uc3c_poll(usbs_control_endpoint *);
@@ -1537,21 +1542,21 @@ usbs_uc3c_control_dsr (void)
     if (Is_udd_setup_received(0))
     {
         status = usbs_uc3c_control_setup(status);
-        return;
+        goto control_dsr_end;
     }
 
     // Check for received data on the control endpoint
     if (Is_udd_out_received(0))
     {
         status = usbs_uc3c_control_data_recv(status);
-        return;
+        goto control_dsr_end;
     }
 
     // Check if the last packet has been sent
     if (Is_udd_in_send(0) && Is_udd_in_send_interrupt_enabled(0)) 
     {
         status = usbs_uc3c_control_data_sent(status);
-        return;
+        goto control_dsr_end;
     }
 
     if (Is_udd_nak_out(0)) 
@@ -1571,6 +1576,7 @@ usbs_uc3c_control_dsr (void)
          return;
     }
 
+control_dsr_end:
     if (status == UDD_EPCTRL_STALL_REQ)
     {
         udd_enable_stall_handshake(0);
@@ -1693,18 +1699,16 @@ usbs_uc3c_dsr (cyg_vector_t vector, cyg_ucount32 count, cyg_addrword_t data)
 		
         if (which_dsr&DSR_USB_VBUS)
         {
-            #if CYGFUN_DEVS_USB_UC3C_STLIB_SUPPORT != 0
-            #ifndef BOOT_LOADER
+#ifndef BOOT_LOADER
             if(!Is_otg_vbus_high())
 	    {
-                queue_put(WM_ON_USB_UNPLUG,0,0);
+                    queue_put(WM_ON_USB_UNPLUG,0,0);
 	    }
             else
 	    {
-                queue_put(WM_ON_USB_PLUG,0,0);
+                    queue_put(WM_ON_USB_PLUG,0,0);
 	    }
-            #endif
-            #endif
+#endif
 	    usbs_uc3c_ep0.state = USBS_STATE_POWERED;
             usbs_state_notify (&usbs_uc3c_ep0);
             which_dsr &= ~DSR_USB_VBUS;
@@ -1803,6 +1807,35 @@ udd_interrupt_end:
   return ret;
 }
 
+cyg_uint32
+usbs_plug_isr (cyg_vector_t vector, cyg_addrword_t data)
+{
+    cyg_uint32 ret = CYG_ISR_HANDLED;
+
+    //CYG_ASSERT (CYGNUM_HAL_VECTOR_GPIO_4 == vector, "Wrong interrupts");
+    CYG_ASSERT (0 == data, "ISR needs no data");
+    
+    if (gpio_get_pin_interrupt_flag(AVR32_PIN_PB05)) 
+    {
+        gpio_clear_pin_interrupt_flag(AVR32_PIN_PB05);
+        // Ack Vbus transition and send status to high level
+        otg_unfreeze_clock();
+	otg_ack_vbus_transition();
+	otg_freeze_clock();
+        if (gpio_get_pin_value(AVR32_PIN_PB05) && ep0_start == true) 
+	{
+	  usbs_uc3c_attach();
+	} 
+	else
+	{
+	  usbs_uc3c_detach();
+	}
+
+        ret |= CYG_ISR_CALL_DSR;
+        which_dsr |= DSR_USB_VBUS;
+    }
+    return ret;
+}
 
 // ----------------------------------------------------------------------------
 // Polling support. It is not clear that this is going to work particularly
@@ -1837,7 +1870,7 @@ void usbs_uc3c_init (void)
     cyg_uint32 old_intr;
     SCIF_UNLOCK(AVR32_SCIF_GCCTRL);
     //TODOO: set this by configtool
-    AVR32_SCIF.gcctrl[0] = (5 << 8) | 1 | /*2 |*/ (1 << 16);
+    AVR32_SCIF.gcctrl[7] = (12 << 8) | 1 | /*2 |*/ (1 << 16);
 
     HAL_DISABLE_INTERRUPTS(old_intr);
     // ID pin not used then force device mode
@@ -1880,7 +1913,29 @@ void usbs_uc3c_init (void)
                             &usbs_uc3c_intr_handle, &usbs_uc3c_intr_data);
 
     cyg_drv_interrupt_attach (usbs_uc3c_intr_handle);
+    
+#if 0
+    cyg_drv_interrupt_create (CYGNUM_HAL_VECTOR_GPIO_4,
+                            0,  // priority
+                            0,  // data
+                            &usbs_plug_isr,
+                            &usbs_uc3c_dsr,
+                            &usbs_plug_intr_handle, &usbs_plug_intr_data);
 
+    cyg_drv_interrupt_attach (usbs_plug_intr_handle);
+    
+    gpio_configure_pin(AVR32_PIN_PB05, GPIO_DIR_INPUT | GPIO_INTERRUPT |
+                           GPIO_BOTHEDGES);
+
+    gpio_clear_pin_interrupt_flag(AVR32_PIN_PB05);
+    gpio_enable_pin_interrupt(AVR32_PIN_PB05,GPIO_PIN_CHANGE);
+#endif
+#if UC3L3_L4
+    usbs_uc3c_attach();
+    gpio_enable_module_pin(AVR32_USBC_DM_0_PIN, AVR32_USBC_DM_0_FUNCTION);
+    gpio_enable_module_pin(AVR32_USBC_DP_0_PIN, AVR32_USBC_DP_0_FUNCTION);
+#endif
+    //queue_init();
     HAL_RESTORE_INTERRUPTS(old_intr);
 
     usbs_uc3c_ep0.state = USBS_STATE_POWERED;

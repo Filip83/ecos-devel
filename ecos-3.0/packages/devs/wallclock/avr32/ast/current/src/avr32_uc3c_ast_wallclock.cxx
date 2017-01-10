@@ -65,7 +65,7 @@
 #define HW_ERROR_OSC32_NOT_RUNNING			0x0000000000000004
 
 externC cyg_uint64 _hw_error;
-           
+    
                
 int ast_is_busy(volatile avr32_ast_t *ast)
 {
@@ -165,8 +165,6 @@ Cyg_WallClock::set_hw_seconds(cyg_uint64 secs)
   //reset rtc prescaler
   AVR32_AST.cr |= AVR32_AST_CR_PCLR_MASK;
 
-
-  
   while((AVR32_AST.sr & AVR32_AST_SR_BUSY_MASK))
   {
   }

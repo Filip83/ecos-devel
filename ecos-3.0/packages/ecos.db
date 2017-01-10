@@ -1702,6 +1702,14 @@ package CYGPKG_IO_USB_SLAVE_SERIAL {
                          as serial devices to the host."
 }
 
+package CYGPKG_IO_USB_SLAVE_WINUSB_SERIAL {
+        alias		{ "USB slave-side winusb drivers" usbs_serial }
+        directory       io/usb/winusb/slave
+        script          usbs_winusb.cdl
+        description     "Support for USB peripherals that present themselves 
+                         as winusb devices to the host."
+}
+
 package CYGPKG_IO_USB_SLAVE_MSD {
        alias           { "USB slave-side mass-storage drivers" usbs_msd }
        directory       io/usb/msd/slave
@@ -6849,7 +6857,7 @@ target KM_8 {
             CYGPKG_IO_FILEIO
             CYGPKG_IO_ADC
             CYGPKG_DEVS_ADC_AVR32_ADCIFB
-            CYGPKG_IO_USB_SLAVE_SERIAL
+            CYGPKG_IO_USB_SLAVE_WINUSB_SERIAL
             CYGPKG_IO_USB
             CYGPKG_IO_USB_SLAVE
             CYGPKG_DEVS_USB_UC3C

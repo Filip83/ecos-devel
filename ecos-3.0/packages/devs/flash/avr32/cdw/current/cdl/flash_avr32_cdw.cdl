@@ -72,7 +72,7 @@ cdl_package CYGPKG_DEVS_FLASH_AVR32_CDW {
     cdl_option CYGPKG_DEVS_FLASH_AVR32_CDW_END {
          display "FLASH region end address"
          flavor  data
-         default_value 0x80004000
+         default_value 0x80040000
          description   "
              This option specifies the end address of internal FLASH
              memory to access with this driver."

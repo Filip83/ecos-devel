@@ -524,6 +524,252 @@ CYG_FB_LINEAR_INLINE_FN(void,
     }
 }
 
+// -----------------------------paged-------------------------------------------
+CYG_FB_LINEAR_INLINE_FN(void,
+                        cyg_fb_linear_write_pixel_paged_1LE_inl,
+                        (void* _fbaddr_, cyg_ucount16 _stride_, cyg_ucount16 _x_, cyg_ucount16 _y_, cyg_fb_colour _colour_))
+{
+    cyg_uint8*  _ptr8_  = ((cyg_uint8*)_fbaddr_) + (_stride_ * (_y_ >> 3)) + _x_;
+    cyg_uint8   _mask_  = 0x0001 << (_y_ & 0x07);
+    if (_colour_) {
+        *_ptr8_ |= _mask_;
+    } else {
+        *_ptr8_ &= ~_mask_;
+    }
+}
+                     
+CYG_FB_LINEAR_INLINE_FN(void,
+                        cyg_fb_linear_write_pixel_paged_1BE_inl,
+                        (void* _fbaddr_, cyg_ucount16 _stride_, cyg_ucount16 _x_, cyg_ucount16 _y_, cyg_fb_colour _colour_))
+{
+    cyg_uint8*  _ptr8_  = ((cyg_uint8*)_fbaddr_) + (_stride_ * (_y_ >> 3)) + _x_;
+    cyg_uint8   _mask_  = 0x0080 >> (_y_ & 0x07);
+    if (_colour_) {
+        *_ptr8_ |= _mask_;
+    } else {
+        *_ptr8_ &= ~_mask_;
+    }
+}
+
+CYG_FB_LINEAR_INLINE_FN(cyg_fb_colour,
+                        cyg_fb_linear_read_pixel_paged_1LE_inl,
+                        (void* _fbaddr_, cyg_ucount16 _stride_, cyg_ucount16 _x_, cyg_ucount16 _y_))
+{
+    cyg_uint8*  _ptr8_  = ((cyg_uint8*)_fbaddr_) + (_stride_ * (_y_ >> 3)) + _x_;
+    cyg_uint8   _mask_  = 0x0001 << (_y_ & 0x07);
+    return (*_ptr8_ & _mask_) ? 1 : 0;
+}
+
+CYG_FB_LINEAR_INLINE_FN(cyg_fb_colour,
+                        cyg_fb_linear_read_pixel_paged_1BE_inl,
+                        (void* _fbaddr_, cyg_ucount16 _stride_, cyg_ucount16 _x_, cyg_ucount16 _y_))
+{
+    cyg_uint8*  _ptr8_  = ((cyg_uint8*)_fbaddr_) + (_stride_ * (_y_ >> 3)) + _x_;
+    cyg_uint8   _mask_  = 0x0080 >> (_y_ & 0x07);
+    return (*_ptr8_ & _mask_) ? 1 : 0;
+}
+
+CYG_FB_LINEAR_INLINE_FN(void,
+                        cyg_fb_linear_write_hline_paged_1LE_inl,
+                        (void* _fbaddr_, cyg_ucount16 _stride_, cyg_ucount16 _x_,
+                  cyg_ucount16 _y_, cyg_ucount16 _len_, cyg_fb_colour _colour_))
+{
+    cyg_uint8*  _ptr8_  = ((cyg_uint8*)_fbaddr_) + (_stride_ * (_y_ >> 3)) + _x_;
+    cyg_uint8   _mask_  = 0x0001 << (_y_ & 0x07);
+    if (_colour_) {
+        for ( ; _len_; _len_--) {
+            *_ptr8_ |= _mask_;
+            _ptr8_  += 1;
+        }
+    } else {
+        _mask_  = ~_mask_;
+        for ( ; _len_; _len_--) {
+            *_ptr8_ &= _mask_;
+            _ptr8_  += 1;
+        }
+    }
+}
+
+CYG_FB_LINEAR_INLINE_FN(void,
+                        cyg_fb_linear_write_hline_paged_1BE_inl,
+                        (void* _fbaddr_, cyg_ucount16 _stride_, cyg_ucount16 _x_, cyg_ucount16 _y_, cyg_ucount16 _len_, cyg_fb_colour _colour_))
+{
+    cyg_uint8*  _ptr8_  = ((cyg_uint8*)_fbaddr_) + (_stride_ * (_y_ >> 3)) + _x_;
+    cyg_uint8   _mask_  = 0x0080 >> (_y_ & 0x07);
+    if (_colour_) {
+        for ( ; _len_; _len_--) {
+            *_ptr8_ |= _mask_;
+            _ptr8_  += 1;
+        }
+    } else {
+        _mask_  = ~_mask_;
+        for ( ; _len_; _len_--) {
+            *_ptr8_ &= _mask_;
+            _ptr8_  += 1;
+        }
+    }
+}
+
+// ----------------------------------------------------------------------------
+
+CYG_FB_LINEAR_INLINE_FN(void,
+                        cyg_fb_linear_write_pixel_paged_2LE_inl,
+                        (void* _fbaddr_, cyg_ucount16 _stride_, cyg_ucount16 _x_, cyg_ucount16 _y_, cyg_fb_colour _colour_))
+{
+    cyg_uint8*  _ptr8_  = ((cyg_uint8*)_fbaddr_) + (_stride_ * (_y_ >> 2)) + _x_;
+    cyg_uint8   _shift_ = (_y_ & 0x03) << 1;
+
+    *_ptr8_ = (*_ptr8_ & ~(0x03 << _shift_)) | (_colour_ << _shift_);
+}
+
+CYG_FB_LINEAR_INLINE_FN(void,
+                        cyg_fb_linear_write_pixel_paged_2BE_inl,
+                        (void* _fbaddr_, cyg_ucount16 _stride_, cyg_ucount16 _x_, cyg_ucount16 _y_, cyg_fb_colour _colour_))
+{
+    cyg_uint8*  _ptr8_  = ((cyg_uint8*)_fbaddr_) + (_stride_ * (_y_ >> 2)) + _x_;
+    cyg_uint8   _shift_ = 6 - ((_y_ & 0x03) << 1);
+
+    *_ptr8_ = (*_ptr8_ & ~(0x03 << _shift_)) | (_colour_ << _shift_);
+}
+
+CYG_FB_LINEAR_INLINE_FN(cyg_fb_colour,
+                        cyg_fb_linear_read_pixel_paged_2LE_inl,
+                        (void* _fbaddr_, cyg_ucount16 _stride_, cyg_ucount16 _x_, cyg_ucount16 _y_))
+{
+    cyg_uint8*  _ptr8_  = ((cyg_uint8*)_fbaddr_) + (_stride_ * (_y_ >> 2)) + _x_;
+    cyg_uint8   _shift_ = (_y_ & 0x03) << 1;
+
+    return (*_ptr8_ >> _shift_) & 0x03;
+}
+                     
+CYG_FB_LINEAR_INLINE_FN(cyg_fb_colour,
+                        cyg_fb_linear_read_pixel_paged_2BE_inl,
+                        (void* _fbaddr_, cyg_ucount16 _stride_, cyg_ucount16 _x_, cyg_ucount16 _y_))
+{
+    cyg_uint8*  _ptr8_  = ((cyg_uint8*)_fbaddr_) + (_stride_ * (_y_ >> 2)) + _x_;
+    cyg_uint8   _shift_ = 6 - ((_y_ & 0x03) << 1);
+
+    return (*_ptr8_ >> _shift_) & 0x03;
+}
+
+CYG_FB_LINEAR_INLINE_FN(void,
+                        cyg_fb_linear_write_hline_paged_2LE_inl,
+                        (void* _fbaddr_, cyg_ucount16 _stride_, cyg_ucount16 _x_, cyg_ucount16 _y_, cyg_ucount16 _len_, cyg_fb_colour _colour_))
+{
+    cyg_uint8*  _ptr8_  = ((cyg_uint8*)_fbaddr_) + (_stride_ * (_y_ >> 2)) + _x_;
+    cyg_uint8   _shift_ = (_y_ & 0x03) << 1;
+    cyg_uint8   _mask_  = ~(0x03 << _shift_);
+    _colour_    <<= _shift_;
+
+    for ( ; _len_; _len_--) {
+        *_ptr8_  = (*_ptr8_ & _mask_) | _colour_;
+        _ptr8_  += 1;
+    }
+}
+
+CYG_FB_LINEAR_INLINE_FN(void,
+                        cyg_fb_linear_write_hline_paged_2BE_inl,
+                        (void* _fbaddr_, cyg_ucount16 _stride_, cyg_ucount16 _x_, cyg_ucount16 _y_, cyg_ucount16 _len_, cyg_fb_colour _colour_))
+{
+    cyg_uint8*  _ptr8_  = ((cyg_uint8*)_fbaddr_) + (_stride_ * (_y_ >> 2)) + _x_;
+    cyg_uint8   _shift_ = 6 - ((_y_ & 0x03) << 1);
+    cyg_uint8   _mask_  = ~(0x03 << _shift_);
+    _colour_    <<= _shift_;
+
+    for ( ; _len_; _len_--) {
+        *_ptr8_  = (*_ptr8_ & _mask_) | _colour_;
+        _ptr8_  += 1;
+    }
+}
+
+// ----------------------------------------------------------------------------
+
+CYG_FB_LINEAR_INLINE_FN(void,
+                        cyg_fb_linear_write_pixel_paged_4LE_inl,
+                        (void* _fbaddr_, cyg_ucount16 _stride_, cyg_ucount16 _x_, cyg_ucount16 _y_, cyg_fb_colour _colour_))
+{
+    cyg_uint8*  _ptr8_  = ((cyg_uint8*)_fbaddr_) + (_stride_ * (_y_ >> 1)) + _x_;
+    if (_y_ & 0x01) {
+        *_ptr8_ = (*_ptr8_ & 0x000F) | (_colour_ << 4);
+    } else {
+        *_ptr8_ = (*_ptr8_ & 0x00F0) | _colour_;
+    }
+}
+
+CYG_FB_LINEAR_INLINE_FN(void,
+                        cyg_fb_linear_write_pixel_paged_4BE_inl,
+                        (void* _fbaddr_, cyg_ucount16 _stride_, cyg_ucount16 _x_, cyg_ucount16 _y_, cyg_fb_colour _colour_))
+{
+    cyg_uint8*  _ptr8_  = ((cyg_uint8*)_fbaddr_) + (_stride_ * (_y_ >> 1)) + _x_;
+    if (_y_ & 0x01) {
+        *_ptr8_ = (*_ptr8_ & 0x00F0) | _colour_;
+    } else {
+        *_ptr8_ = (*_ptr8_ & 0x000F) | (_colour_ << 4);
+    }
+}
+
+CYG_FB_LINEAR_INLINE_FN(cyg_fb_colour,
+                        cyg_fb_linear_read_pixel_paged_4LE_inl,
+                        (void* _fbaddr_, cyg_ucount16 _stride_, cyg_ucount16 _x_, cyg_ucount16 _y_))
+{
+    cyg_uint8*  _ptr8_  = ((cyg_uint8*)_fbaddr_) + (_stride_ * (_y_ >> 1)) + _x_;
+    if (_y_ & 0x01) {
+        return (*_ptr8_ >> 4) & 0x000F;
+    } else {
+        return *_ptr8_ & 0x000F;
+    }
+}
+                     
+CYG_FB_LINEAR_INLINE_FN(cyg_fb_colour,
+                        cyg_fb_linear_read_pixel_paged_4BE_inl,
+                        (void* _fbaddr_, cyg_ucount16 _stride_, cyg_ucount16 _x_, cyg_ucount16 _y_))
+{
+    cyg_uint8*  _ptr8_  = ((cyg_uint8*)_fbaddr_) + (_stride_ * (_y_ >> 1)) + _x_;
+    if (_y_ & 0x01) {
+        return *_ptr8_ & 0x000F;
+    } else {
+        return (*_ptr8_ >> 4) & 0x000F;
+    }
+}
+
+CYG_FB_LINEAR_INLINE_FN(void,
+                        cyg_fb_linear_write_hline_paged_4LE_inl,
+                        (void* _fbaddr_, cyg_ucount16 _stride_, cyg_ucount16 _x_, cyg_ucount16 _y_, cyg_ucount16 _len_, cyg_fb_colour _colour_))
+{
+    cyg_uint8*  _ptr8_  = ((cyg_uint8*)_fbaddr_) + (_stride_ * (_y_ >> 1)) + _x_;
+    if (_y_ & 0x01) {
+        _colour_ <<= 4;
+        for ( ; _len_; _len_--) {
+            *_ptr8_  = (*_ptr8_ & 0x000F) | _colour_;
+            _ptr8_  += 1;
+        }
+    } else {
+        for ( ; _len_; _len_--) {
+            *_ptr8_ = (*_ptr8_ & 0x00F0) | _colour_;
+            _ptr8_  += 1;
+        }
+    }
+}
+
+CYG_FB_LINEAR_INLINE_FN(void,
+                        cyg_fb_linear_write_hline_paged_4BE_inl,
+                        (void* _fbaddr_, cyg_ucount16 _stride_, cyg_ucount16 _x_, cyg_ucount16 _y_, cyg_ucount16 _len_, cyg_fb_colour _colour_))
+{
+    cyg_uint8*  _ptr8_  = ((cyg_uint8*)_fbaddr_) + (_stride_ * (_y_ >> 1)) + _x_;
+    if (_y_ & 0x01) {
+        for ( ; _len_; _len_--) {
+            *_ptr8_ = (*_ptr8_ & 0x00F0) | _colour_;
+            _ptr8_  += 1;
+        }
+    } else {
+        _colour_ <<= 4;
+        for ( ; _len_; _len_--) {
+            *_ptr8_  = (*_ptr8_ & 0x000F) | _colour_;
+            _ptr8_  += 1;
+        }
+    }
+}
+
 // ----------------------------------------------------------------------------
 CYG_FB_LINEAR_INLINE_FN(void,
                         cyg_fb_linear_write_pixel_8_inl,

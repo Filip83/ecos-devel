@@ -1,3 +1,9 @@
+2016-12-08  Filip <filip.gnu@gmail.com>
+
+        * src/usbs.c, include/usbs.h: Added support to handle BOS descriptor 
+          request. In usbs.h extended usbs_enumeration_data struct for BOS
+          descriptor data and bos pltform descriptor data.
+
 2010-10-26  John Dallaway  <john@dallaway.org.uk>
 
 	* src/usbs.c, include/usbs.h: Extend usbs_control_endpoint struct and

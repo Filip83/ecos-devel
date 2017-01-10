@@ -609,6 +609,29 @@ spi_avr32_start_transfer(cyg_usart_spi_avr32_device_t *dev)
     // follow each other w/o delay, then we have to wait here in order for
     // the peripheral device to detect cs transition from inactive to active.
     //CYGACC_CALL_IF_DELAY_US(dev->tr_bt_udly);
+    
+    if(dev->bits == 9)
+    {
+       // use USART undivided clock and enable clock to CLK pin
+        spi_bus->spi_dev->mr = 
+                (AVR32_USART_MR_USCLKS_MCK  << AVR32_USART_MR_USCLKS_OFFSET)  |
+                (AVR32_USART_MR_USCLKS_MCK << AVR32_USART_MR_USCLKS_OFFSET)   |
+                (AVR32_USART_MR_MODE_SPI_MASTER << AVR32_USART_MR_MODE_OFFSET)|
+                ((dev->cl_pha & 0x1) << AVR32_USART_MR_SYNC_OFFSET)        |
+                ((dev->cl_pol & 0x1) << AVR32_USART_MR_MSBF_OFFSET)        |
+                AVR32_USART_MR_CLKO_MASK | AVR32_USART_MR_MODE9_MASK;
+    }
+    else
+    {
+        spi_bus->spi_dev->mr = 
+                (AVR32_USART_MR_USCLKS_MCK  << AVR32_USART_MR_USCLKS_OFFSET)  |
+                (AVR32_USART_MR_USCLKS_MCK << AVR32_USART_MR_USCLKS_OFFSET)   |
+                (AVR32_USART_MR_MODE_SPI_MASTER << AVR32_USART_MR_MODE_OFFSET)|
+                ((dev->cl_pha & 0x1) << AVR32_USART_MR_SYNC_OFFSET)        |
+                ((dev->cl_pol & 0x1) << AVR32_USART_MR_MSBF_OFFSET)        |
+                ((dev->bits - 5) << AVR32_USART_MR_CHRL_OFFSET)            |
+                AVR32_USART_MR_CLKO_MASK;
+    }	
 
     // Raise CS
     spi_avr32_set_npcs(spi_bus,dev->dev_num);

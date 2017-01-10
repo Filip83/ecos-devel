@@ -151,14 +151,15 @@ beep_set_config(cyg_io_handle_t handle,
                const void *buffer,
                cyg_uint32 *len)
 {
-    cyg_beep_avr32_t * priv = (cyg_beep_avr32_t*)handle;
+    cyg_devtab_entry_t *hnd = (cyg_devtab_entry_t*)handle;
+    cyg_beep_avr32_t * priv = (cyg_beep_avr32_t*)hnd->priv;
     cyg_uint32 ret = ENOERR;
     
     switch(key)
     {
         case CYG_BEEP_IOCTL_SET_BEEP:
         {
-            if(*len == 0)
+            if(*len == -1)
             {
                 priv->cnt = 0;
                 priv->timer_base->channel[CYGNUM_DEVS_BEEP_CHANNEL].rc = 
@@ -215,13 +216,14 @@ beep_get_config(cyg_io_handle_t handle,
                void *buffer,
                cyg_uint32 *len)
 {
-    cyg_beep_avr32_t * priv = (cyg_beep_avr32_t*)handle;
+    cyg_devtab_entry_t *hnd = (cyg_devtab_entry_t*)handle;
+    cyg_beep_avr32_t * priv = (cyg_beep_avr32_t*)hnd->priv;
     switch(key)
     {
         case CYG_BEEP_IOCTL_GET_BEEPING:
             if(*len == sizeof(cyg_uint32))
             {
-                *((cyg_uint32*)buffer) = priv->beeping;
+                *((cyg_uint32*)buffer) = (cyg_uint32)priv->beeping;
                 return ENOERR;
             }
             break;
@@ -252,12 +254,16 @@ beep_init(struct cyg_devtab_entry *tab)
                                     (1 << AVR32_TC_CMR0_TCCLKS_OFFSET);
     
     
+    // Souce clock is PBA/2
+    // On compare pin value is toogle
     beep_dev->timer_cmp_value = 
-            (1e6*CYGHWR_HAL_AVR32_CPU_FREQ)/CYGDAT_DEVS_BEEP_DEFAULT_FREQUENCY;
+            (1e6*CYGHWR_HAL_AVR32_CPU_FREQ/2)/(2*CYGDAT_DEVS_BEEP_DEFAULT_FREQUENCY);
     
-    beep_dev->time_to_cnt = (CYGDAT_DEVS_BEEP_DEFAULT_FREQUENCY*1e-3);
+    beep_dev->time_to_cnt = (2*CYGDAT_DEVS_BEEP_DEFAULT_FREQUENCY*1e-3);
     
     gpio_enable_module_pin(CYG_HAL_AVR32_BEEP_PIN, CYG_HAL_AVR32_BEEP_FUNCTION);
+    
+    beep_dev->init = true;
         
     return true;
 }
@@ -272,7 +278,6 @@ beep_lookup(struct cyg_devtab_entry **tab,
     if(!priv->init)
     {
         beep_init(*tab);
-        priv->init = true;
     }
     return ENOERR;
 }
@@ -289,7 +294,7 @@ cyg_uint32 avr32_beep_ISR(cyg_vector_t vector, cyg_addrword_t data)
                     AVR32_TC_SR0_CPCS_MASK;
             
             // disable clock
-            priv->timer_base->channel[CYGNUM_DEVS_BEEP_CHANNEL].ccr = 2;
+            priv->timer_base->channel[CYGNUM_DEVS_BEEP_CHANNEL].ccr = 2 | 4;
             
             priv->beeping = false;
         }
