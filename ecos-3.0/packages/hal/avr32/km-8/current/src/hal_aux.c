@@ -358,6 +358,7 @@ void hal_init_dfll_closedloop(void)
         return;
     }
     
+#ifdef CYGNUM_HAL_OSCILATORS_DFLL0_DITHERING
 #if CYGNUM_HAL_OSCILATORS_DFLL0_DITHERING == 1
     #if CYGNUM_HAL_OSCILATORS_DFLL0_SOURCE == RCSYS
         AVR32_SCIF.gcctrl[1] = (0 << AVR32_SCIF_GCCTRL_OSCSEL_OFFSET) | 
@@ -395,6 +396,7 @@ void hal_init_dfll_closedloop(void)
         _hw_error |= HW_ERROR_DFLL_NO_LOCK;
         return;
     }
+#endif
 #endif
 
     if(scif_pclksr_statushigh_wait(AVR32_SCIF_PCLKSR_DFLL0LOCKF_MASK) != 1)
@@ -585,14 +587,14 @@ void hal_clocks_init(void)
     
 #ifdef CYGNUM_HAL_PBA_CLOCK_DIVIDER
     PM_UNLOCK(AVR32_PM_PBASEL);
-    AVR32_PM.pbasel = AVR32_PM_PBASEL_PBADIV_MASK | CYGNUM_HAL_PBA_CLOCK_DIVIDER;
+    AVR32_PM.pbasel = 0x80 | CYGNUM_HAL_PBA_CLOCK_DIVIDER;
 #else
     AVR32_PM.pbasel = 0;
 #endif
 
 #ifdef CYGNUM_HAL_PBB_CLOCK_DIVIDER
     PM_UNLOCK(AVR32_PM_PBBSEL);
-    AVR32_PM.pbbsel = AVR32_PM_PBBSEL_PBBDIV_MASK | CYGNUM_HAL_PBB_CLOCK_DIVIDER;
+    AVR32_PM.pbbsel = 0x80 | CYGNUM_HAL_PBB_CLOCK_DIVIDER;
 #else
     AVR32_PM.pbbsel = 0;
 #endif

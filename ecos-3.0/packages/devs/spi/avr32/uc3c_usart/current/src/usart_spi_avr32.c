@@ -67,9 +67,9 @@
 static void spi_avr32_init_bus(cyg_usart_spi_avr32_bus_t * bus);
 static void spi_avr32_init_device(cyg_usart_spi_avr32_device_t * device);
 
-static cyg_uint32 spi_avr32_ISR(cyg_vector_t vector, cyg_addrword_t data);
+static cyg_uint32 usart_spi_avr32_ISR(cyg_vector_t vector, cyg_addrword_t data);
 
-static void spi_avr32_DSR(cyg_vector_t   vector,
+static void usart_spi_avr32_DSR(cyg_vector_t   vector,
                          cyg_ucount32   count,
                          cyg_addrword_t data);
 
@@ -452,8 +452,8 @@ static void spi_avr32_init_bus(cyg_usart_spi_avr32_bus_t * spi_bus)
     cyg_drv_interrupt_create(spi_bus->interrupt_number,
                              0,
                              (cyg_addrword_t)spi_bus,
-                             &spi_avr32_ISR,
-                             &spi_avr32_DSR,
+                             &usart_spi_avr32_ISR,
+                             &usart_spi_avr32_DSR,
                              &spi_bus->spi_interrupt_handle,
                              &spi_bus->spi_interrupt);
 
@@ -473,7 +473,7 @@ static void spi_avr32_init_bus(cyg_usart_spi_avr32_bus_t * spi_bus)
 }
 
 static cyg_uint32
-spi_avr32_ISR(cyg_vector_t vector, cyg_addrword_t data)
+usart_spi_avr32_ISR(cyg_vector_t vector, cyg_addrword_t data)
 {
     cyg_uint32 stat;
     cyg_uint8 tmp;
@@ -506,7 +506,7 @@ spi_avr32_ISR(cyg_vector_t vector, cyg_addrword_t data)
 }
 
 static void
-spi_avr32_DSR(cyg_vector_t vector, cyg_ucount32 count, cyg_addrword_t data)
+usart_spi_avr32_DSR(cyg_vector_t vector, cyg_ucount32 count, cyg_addrword_t data)
 {
     cyg_usart_spi_avr32_bus_t *spi_bus = (cyg_usart_spi_avr32_bus_t *) data;
 
@@ -522,11 +522,12 @@ spi_avr32_DSR(cyg_vector_t vector, cyg_ucount32 count, cyg_addrword_t data)
 static cyg_bool
 spi_avr32_calc_scbr(cyg_usart_spi_avr32_device_t *dev)
 {
-
+    cyg_usart_spi_avr32_bus_t *spi_bus = 
+            (cyg_usart_spi_avr32_bus_t *)dev->spi_device.spi_bus;
     cyg_uint32 cd;
     cyg_bool   res = true;
     
-    cd = (CYGHWR_HAL_AVR32_CPU_FREQ + dev->cl_brate / 2) / dev->cl_brate;
+    cd = (CYGHWR_HAL_AVR32_CPU_FREQ*1e6 + dev->cl_brate / 2) / dev->cl_brate;
 
     if (cd < 4)
     {
@@ -541,9 +542,9 @@ spi_avr32_calc_scbr(cyg_usart_spi_avr32_device_t *dev)
         
 
     /*dev->spi_dev->mr = (usart->mr & ~AVR32_USART_MR_USCLKS_MASK) |
-        AVR32_USART_MR_USCLKS_MCK << AVR32_USART_MR_USCLKS_OFFSET;
+        AVR32_USART_MR_USCLKS_MCK << AVR32_USART_MR_USCLKS_OFFSET;*/
 
-    dev->spi_dev->brgr = cd << AVR32_USART_BRGR_CD_OFFSET;*/
+    spi_bus->spi_dev->brgr = cd << AVR32_USART_BRGR_CD_OFFSET;
     dev->cl_scbr       = cd;
 
     return res;
@@ -608,30 +609,7 @@ spi_avr32_start_transfer(cyg_usart_spi_avr32_device_t *dev)
     // Force minimal delay between two transfers - in case two transfers
     // follow each other w/o delay, then we have to wait here in order for
     // the peripheral device to detect cs transition from inactive to active.
-    //CYGACC_CALL_IF_DELAY_US(dev->tr_bt_udly);
-    
-    if(dev->bits == 9)
-    {
-       // use USART undivided clock and enable clock to CLK pin
-        spi_bus->spi_dev->mr = 
-                (AVR32_USART_MR_USCLKS_MCK  << AVR32_USART_MR_USCLKS_OFFSET)  |
-                (AVR32_USART_MR_USCLKS_MCK << AVR32_USART_MR_USCLKS_OFFSET)   |
-                (AVR32_USART_MR_MODE_SPI_MASTER << AVR32_USART_MR_MODE_OFFSET)|
-                ((dev->cl_pha & 0x1) << AVR32_USART_MR_SYNC_OFFSET)        |
-                ((dev->cl_pol & 0x1) << AVR32_USART_MR_MSBF_OFFSET)        |
-                AVR32_USART_MR_CLKO_MASK | AVR32_USART_MR_MODE9_MASK;
-    }
-    else
-    {
-        spi_bus->spi_dev->mr = 
-                (AVR32_USART_MR_USCLKS_MCK  << AVR32_USART_MR_USCLKS_OFFSET)  |
-                (AVR32_USART_MR_USCLKS_MCK << AVR32_USART_MR_USCLKS_OFFSET)   |
-                (AVR32_USART_MR_MODE_SPI_MASTER << AVR32_USART_MR_MODE_OFFSET)|
-                ((dev->cl_pha & 0x1) << AVR32_USART_MR_SYNC_OFFSET)        |
-                ((dev->cl_pol & 0x1) << AVR32_USART_MR_MSBF_OFFSET)        |
-                ((dev->bits - 5) << AVR32_USART_MR_CHRL_OFFSET)            |
-                AVR32_USART_MR_CLKO_MASK;
-    }	
+    //CYGACC_CALL_IF_DELAY_US(dev->tr_bt_udly);	
 
     // Raise CS
     spi_avr32_set_npcs(spi_bus,dev->dev_num);
@@ -728,6 +706,32 @@ spi_avr32_transaction_begin(cyg_usart_spi_avr32_device_t *dev)
         avr32_spi_dev->init = true;
         spi_avr32_calc_scbr(avr32_spi_dev);
 	spi_avr32_init_device(avr32_spi_dev);
+    }
+    
+    // Cofigure SPI accoridng device setting
+    spi_bus->spi_dev->brgr = dev->cl_scbr << AVR32_USART_BRGR_CD_OFFSET;
+    
+    if(dev->bits == 9)
+    {
+       // use USART undivided clock and enable clock to CLK pin
+        spi_bus->spi_dev->mr = 
+                (AVR32_USART_MR_USCLKS_MCK  << AVR32_USART_MR_USCLKS_OFFSET)  |
+                (AVR32_USART_MR_USCLKS_MCK << AVR32_USART_MR_USCLKS_OFFSET)   |
+                (AVR32_USART_MR_MODE_SPI_MASTER << AVR32_USART_MR_MODE_OFFSET)|
+                ((dev->cl_pha & 0x1) << AVR32_USART_MR_SYNC_OFFSET)        |
+                ((dev->cl_pol & 0x1) << AVR32_USART_MR_MSBF_OFFSET)        |
+                AVR32_USART_MR_CLKO_MASK | AVR32_USART_MR_MODE9_MASK;
+    }
+    else
+    {
+        spi_bus->spi_dev->mr = 
+                (AVR32_USART_MR_USCLKS_MCK  << AVR32_USART_MR_USCLKS_OFFSET)  |
+                (AVR32_USART_MR_USCLKS_MCK << AVR32_USART_MR_USCLKS_OFFSET)   |
+                (AVR32_USART_MR_MODE_SPI_MASTER << AVR32_USART_MR_MODE_OFFSET)|
+                ((dev->cl_pha & 0x1) << AVR32_USART_MR_SYNC_OFFSET)        |
+                ((dev->cl_pol & 0x1) << AVR32_USART_MR_MSBF_OFFSET)        |
+                ((dev->bits - 5) << AVR32_USART_MR_CHRL_OFFSET)            |
+                AVR32_USART_MR_CLKO_MASK;
     }
 
     // Configure SPI channel 0 - this is the only channel we

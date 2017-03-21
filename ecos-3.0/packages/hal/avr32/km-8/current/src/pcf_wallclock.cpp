@@ -33,13 +33,14 @@
 # define DEBUG(_format_, ...) diag_printf(_format_, ## __VA_ARGS__)
 #endif
 
-#define SPI             0
-#define IIC             1
+#define SPI             1
+#define IIC             0
 #define PCF_INTERFACE   SPI
 
 #if PCF_INTERFACE == SPI
 #include <cyg/io/spi.h>
-extern cyg_spi_device cyg_spi_wallclock_pcf2129a;
+extern cyg_spi_device rtc_spi_device;
+#define cyg_spi_wallclock_pcf2129a rtc_spi_device
 #else
 #include <cyg/io/i2c.h>
 extern cyg_i2c_device cyg_i2c_wallclock_pcf2129a;
@@ -107,18 +108,17 @@ DS_GET(cyg_uint8* regs)
     cyg_bool    ok = true;
 
     if (pcf_read_registers(PCF_CONTROL1,10,regs) != 0) 
-	{
+    {
         // The device has not responded to the address byte.
         ok = false;
-		SET_HW_ERRROR(HW_ERROR_RTC_NO_RESPONSE);
+	SET_HW_ERRROR(HW_ERROR_RTC_NO_RESPONSE);
     } 
-	else
-	{
-
+    else
+    {
         // Verify that there are reasonable default settings. The
         // register values can be used as array indices so bogus
         // values can lead to bus errors or similar problems.
-        
+
         // Years: 00 - 99, with 70-99 interpreted as 1970 onwards.
         if ((regs[PCF_YEAR] & 0x0F) > 0x09) {
             ok = false;
@@ -153,9 +153,9 @@ DS_GET(cyg_uint8* regs)
             (regs[PCF_SECONDS] > 0x59)) {
             ok = false;
         }
-		
-		if((0 != (regs[PCF_SECONDS] & PCF_SECONDS_OSF)))
-			ok = false;
+
+        if((0 != (regs[PCF_SECONDS] & PCF_SECONDS_OSF)))
+            ok = false;
     }
     if (! ok) {
         // Any problems, return Jan 1 1970 but do not update the hardware.
@@ -168,14 +168,13 @@ DS_GET(cyg_uint8* regs)
         regs[PCF_DAYS]     = 0x01;                                                         
         regs[PCF_MONTH]    = 0x01;                                                        
         regs[PCF_YEAR]     = 0x13;
-		regs[PCF_CONTROL1] = 0x00;
-		regs[PCF_CONTROL2] = 0x00;
-		regs[PCF_CONTROL3] = 0x00;
+        regs[PCF_CONTROL1] = 0x00;
+        regs[PCF_CONTROL2] = 0x00;
+        regs[PCF_CONTROL3] = 0x00;
+
+        SET_HW_ERRROR(HW_ERROR_RTC_CHECK_TIME);
 		
-		SET_HW_ERRROR(HW_ERROR_RTC_CHECK_TIME);
-		
-		//DS_PUT(regs);
-		
+	//DS_PUT(regs);	
     }
 }
 
@@ -204,9 +203,9 @@ init_pcf_hwclock2(void)
         // register values can be used as array indices so bogus
         // values can lead to bus errors or similar problems.
 
-        // Years: 00 - 99, with 70-99 interpreted as 1970 onwards.
+        
         if ((regs[PCF_YEAR] & 0x0F) > 0x09) {
-                ok = false;
+            ok = false;
         }
         // Month: 1 - 12
         if ((regs[PCF_MONTH] == 0x00) ||
@@ -240,8 +239,9 @@ init_pcf_hwclock2(void)
         }
 
         if((0 != (regs[PCF_SECONDS] & PCF_SECONDS_OSF)))
-                    ok = false;
+            ok = false;
     }
+  
     if (! ok) {
         // Any problems, return Jan 1 2013 but do not update the hardware.
         // Leave it to the user or other code to set the clock to a sensible
@@ -257,9 +257,8 @@ init_pcf_hwclock2(void)
         regs[PCF_CONTROL2] = 0x00;
         regs[PCF_CONTROL3] = 0x00;
 
-            DEBUG("Time int the PCF2129A corrupted\n");
+        DEBUG("Time int the PCF2129A corrupted\n");
         SET_HW_ERRROR(HW_ERROR_RTC_CHECK_TIME);
-	    #include <cyg/io/spi.h>
 
     }
 	

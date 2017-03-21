@@ -30,6 +30,7 @@ extern "C" {
 typedef struct ehci_serial_channel ehci_serial_channel;
 typedef struct ehci_serial_funs ehci_serial_funs;
 
+//#define CYGOPT_IO_EHCI_SERIAL_SUPPORT_LINE_STATUS
     
 // Pointers into upper-level driver which interrupt handlers need
 typedef struct
@@ -95,7 +96,7 @@ struct ehci_serial_funs
 };
 
 #define EHCI_SERIAL_FUNS(_l,_receive,_send,_set_config,_close)  \
-ehc_serial_funs _l = {                                   \
+ehci_serial_funs _l = {                                   \
   _receive,                                              \
   _send,                                                 \
   _set_config,                                           \

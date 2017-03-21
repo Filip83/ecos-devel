@@ -62,7 +62,7 @@ cdl_package CYGPKG_IO_SERIAL_AVR32_UC3C {
            This option enables the serial device drivers for the
            Atmel AVR32UC3C0515."
     
-    implements    CYGINT_IO_SERIAL_BLOCK_TRANSFER
+    #implements    CYGINT_IO_SERIAL_BLOCK_TRANSFER
 
     compile       -library=libextras.a   avr32_serial.c
 
@@ -310,7 +310,7 @@ cdl_component CYGPKG_IO_SERIAL_AVR32_SERIAL3 {
             Atmel AVR32UC3C port 2."
     }
 
-    cdl_option CYGNUM_IO_SERIAL_AVR32_UC3C0_SERIAL3_BUFSIZE {
+    cdl_option CYGNUM_IO_SERIAL_AVR32_SERIAL3_BUFSIZE {
         display       "Buffer size for the Atmel AVR32UC3C serial port 2 driver"
         flavor        data
         legal_values  0 to 8192

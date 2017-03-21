@@ -70,12 +70,13 @@
 #include <cyg/hal/pdca.h>
 #include <cyg/hal/board_config.h>
 
-
+#if 1
 #ifndef CYGPKG_IO_EHCI_SERIAL_AVR32
+#define CYGPKG_IO_EHCI_SERIAL_AVR32
 
 #include "avr32_ehci_serial.h"
 
-#define RCV_TIMEOUT         2000
+#define RCV_TIMEOUT         0
 
 
 typedef struct avr32_ehci_serial_info {
@@ -122,20 +123,24 @@ avr32_ehci_serial_close(ehci_serial_channel *chan);
 static cyg_uint32 avr32_ehci_serial_ISR(cyg_vector_t vector, cyg_addrword_t data);
 static void       avr32_ehci_serial_DSR(cyg_vector_t vector, cyg_ucount32 count, cyg_addrword_t data);
 
+static cyg_uint32 avr32_ehci_serial_rx_dma_ISR(cyg_vector_t vector, cyg_addrword_t data);
+static void       avr32_ehci_serial_rx_dma_DSR(cyg_vector_t vector, cyg_ucount32 count, cyg_addrword_t data);
+
+static cyg_uint32 avr32_ehci_serial_tx_dma_ISR(cyg_vector_t vector, cyg_addrword_t data);
+static void       avr32_ehci_serial_tx_dma_DSR(cyg_vector_t vector, cyg_ucount32 count, cyg_addrword_t data);
 
 
-#if defined(CYGPKG_IO_EHCI_SERIAL_AVR32_SERIAL)
 static EHCI_SERIAL_FUNS(avr32_ehci_serial_funs, 
-                   avr32_serial_start_xmit,
-                   avr32_serial_start_receive,
-                   avr32_serial_set_config,
+                   avr32_ehci_serial_start_recive,
+                   avr32_ehci_serial_start_xmit,
+                   avr32_ehci_serial_set_config,
                    avr32_ehci_serial_close
     );
-#endif
 
-#ifdef CYGPKG_IO_EHCI_SERIAL_AVR32_SERIAL
 
-static avr32_ehci_serial_info avr32_ehci_serial_info = {
+#define CYGPKG_IO_EHCI_SERIAL_AVR32_SERIAL3
+
+static avr32_ehci_serial_info avr32_ehci_serial_info_s = {
 #if defined(CYGPKG_IO_EHCI_SERIAL_AVR32_SERIAL0)
     usart_dev       : (avr32_usart_t*) AVR32_USART0_ADDRESS,
 #elif defined(CYGPKG_IO_EHCI_SERIAL_AVR32_SERIAL1)
@@ -149,35 +154,34 @@ static avr32_ehci_serial_info avr32_ehci_serial_info = {
     usart_dev       : (avr32_usart_t*) AVR32_USART4_ADDRESS,
     #endif
 #endif
-    int_num         : CYGNUM_HAL_VECTOR_USART0,
-    int_num_dma_rx  : CYGNUM_HAL_VECTOR_PDMA_CH4,
-    dma_rx_ch       : 4,
-    dma_pid_rx      : AVR32_PDCA_PID_USART0_RX,
+    int_num         : CYGNUM_HAL_VECTOR_USART3,
+    int_num_dma_rx  : CYGNUM_HAL_VECTOR_PDMA_CH8,
+    dma_rx_ch       : 8,
+    dma_pid_rx      : AVR32_PDCA_PID_USART3_RX,
     int_num_dma_tx  : CYGNUM_HAL_VECTOR_PDMA_CH5,
-    dma_pid_tx      : AVR32_PDCA_PID_USART0_TX,
+    dma_pid_tx      : AVR32_PDCA_PID_USART3_TX,
     dma_tx_ch       : 5
 };
 
 static EHCI_SERIAL_CHANNEL(
                     avr32_ehci_serial_channel,
                     avr32_ehci_serial_funs, 
-                    avr32_ehci_serial_info,
-                    CYG_SERIAL_BAUD_RATE(CYGNUM_EHCI_SERIAL_AVR32_SERIAL_BAUD),
+                    avr32_ehci_serial_info_s,
+                    CYGNUM_SERIAL_BAUD_115200,
                     CYG_SERIAL_STOP_DEFAULT,
                     CYG_SERIAL_PARITY_DEFAULT,
                     CYG_SERIAL_WORD_LENGTH_DEFAULT,
-                    CYG_SERIAL_FLAGS_DEFAULT
+                    (CYGNUM_SERIAL_FLOW_RTSCTS_RX|CYGNUM_SERIAL_FLOW_RTSCTS_TX)
     );
 
-DEVTAB_ENTRY(avr32_ehci_serial_io0, 
-             CYGDAT_IO_EHCI_SERIAL_AVR32_SERIAL_NAME,
+DEVTAB_ENTRY(avr32_ehci_serial_io, 
+             "/dev/ehci3",
              0,                     // Does not depend on a lower level interface
-             &cyg_io_ehci_serial_devio, 
+             NULL, 
              avr32_ehci_serial_init, 
              avr32_ehci_serial_lookup,   // Serial driver may need initializing
-             &avr32_ehci_serial_channel0
+             &avr32_ehci_serial_channel
     );
-#endif //  CYGPKG_IO_EHCI_SERIAL_AVR32_SERIAL
 
 
 // Internal function to actually configure the hardware to desired baud rate, etc.
@@ -261,12 +265,11 @@ avr32_ehci_serial_config_port(ehci_serial_channel *chan,
         gpio_enable_module_pin(CYG_HAL_USART3_RXD_PIN, 
                 CYG_HAL_USART3_RXD_FUNCTION);
 
-    #ifdef CYGNUM_IO_EHCI_SERIAL_AVR32_SERIAL3_FLOW_CONTROL
+
         gpio_enable_module_pin(CYG_HAL_USART3_RTS_PIN, 
                 CYG_HAL_USART3_RTS_FUNCTION);
         gpio_enable_module_pin(CYG_HAL_USART3_CTS_PIN, 
                 CYG_HAL_USART3_CTS_FUNCTION);
-    #endif
 #endif
     }	
 #ifdef AVR32_USART4_ADDRESS
@@ -300,21 +303,27 @@ avr32_ehci_serial_config_port(ehci_serial_channel *chan,
     // Configuration
     if((new_config->flags & CYGNUM_SERIAL_FLOW_RTSCTS_RX) ||
         (new_config->flags & CYGNUM_SERIAL_FLOW_RTSCTS_TX))
-        dev->mr = stop_bits | parity | word_length | 
-                AVR32_USART_MODE_HARDWARE | AVR32_USART_MR_OVER_MASK;
+    {
+        dev->mr = stop_bits | parity | word_length /*| 
+                AVR32_USART_MODE_HARDWARE /*| AVR32_USART_MR_OVER_MASK*/;
+        dev->cr = AVR32_USART_CR_RTSDIS_MASK;
+    }
     else if((new_config->flags & CYGNUM_SERIAL_FLOW_DSRDTR_RX) ||
         (new_config->flags & CYGNUM_SERIAL_FLOW_DSRDTR_TX))
         dev->mr = stop_bits | parity | word_length | 
-                AVR32_USART_MODE_MODEM | AVR32_USART_MR_OVER_MASK;
+                AVR32_USART_MODE_MODEM /*| AVR32_USART_MR_OVER_MASK*/;
     else
     {
         dev->mr = stop_bits | parity | word_length | 
-                AVR32_USART_MODE_NORMAL | AVR32_USART_MR_OVER_MASK;
+                AVR32_USART_MODE_NORMAL /*| AVR32_USART_MR_OVER_MASK*/;
 	dev->cr = AVR32_USART_CR_RTSEN_MASK;
     }
  
     // Baud rate
-    dev->brgr = select_baud[new_config->baud];
+    if(new_config->baud < sizeof(select_baud))
+        dev->brgr = select_baud[new_config->baud];
+    else
+        dev->brgr = DIVISOR(new_config->baud);
     // Disable all interrupts
     dev->idr = 0xFFFFFFFF;
 
@@ -332,16 +341,33 @@ avr32_ehci_serial_config_port(ehci_serial_channel *chan,
                   AVR32_USART_RXBRK_MASK | AVR32_USART_TIMEOUT_MASK;
 #endif
 
-    dev->ier = AVR32_USART_CTSIC_MASK;
+    dev->ier  = /*AVR32_USART_RXRDY_MASK |*/ AVR32_USART_IER_OVRE_MASK |
+                  AVR32_USART_IER_FRAME_MASK | AVR32_USART_IER_PARE_MASK   |
+                  AVR32_USART_IER_RXBRK_MASK ;
+    //dev->ier = AVR32_USART_CTSIC_MASK;
     
     // Enable RX and TX
     dev->cr = AVR32_USART_CR_RXEN_MASK | AVR32_USART_CR_TXEN_MASK |
               AVR32_USART_RTSEN_MASK;
 				  
-          
+     dev->cr = AVR32_USART_CR_RTSDIS_MASK;      
     if (new_config != &chan->config) {
         chan->config = *new_config;
     }
+
+    CYG_PDAM_SET_CHANEL(avr32_chan->pdca_rx_channel,
+                             0, 0,
+                             avr32_chan->dma_pid_rx,
+                             0,
+                             0,
+                             0);
+    
+    CYG_PDAM_SET_CHANEL(avr32_chan->pdca_tx_channel,0,
+                  0,avr32_chan->dma_pid_tx,0,0,0);
+    
+    CYG_PDMA_ENABLE_CHANEL(avr32_chan->pdca_rx_channel);
+    
+    CYG_PDMA_ENABLE_CHANEL(avr32_chan->pdca_tx_channel);
 
     return true;
 }
@@ -364,7 +390,7 @@ avr32_ehci_serial_init(struct cyg_devtab_entry *tab)
 
     //serial interrupt
     cyg_drv_interrupt_create(avr32_chan->int_num,
-                             4,                      // Priority
+                             1,                      // Priority
                              (cyg_addrword_t)chan,   // Data item passed to interrupt handler
                              avr32_ehci_serial_ISR,
                              avr32_ehci_serial_DSR,
@@ -372,28 +398,30 @@ avr32_ehci_serial_init(struct cyg_devtab_entry *tab)
                              &avr32_chan->serial_interrupt);
     cyg_drv_interrupt_attach(avr32_chan->serial_interrupt_handle);
 
+
     //rx pdma interrupt
     cyg_drv_interrupt_create(avr32_chan->int_num_dma_rx,
-                             4,                      // Priority
+                             3,                      // Priority
                              (cyg_addrword_t)chan,   // Data item passed to interrupt handler
-                             avr32_ehci_serial_ISR,
-                             avr32_ehci_serial_DSR,
+                             avr32_ehci_serial_rx_dma_ISR,
+                             avr32_ehci_serial_rx_dma_DSR,
                              &avr32_chan->serial_dma_rx_interrupt_handle,
                              &avr32_chan->serial_dma_rx_interrupt);
     cyg_drv_interrupt_attach(avr32_chan->serial_dma_rx_interrupt_handle);
 
     //tx pdma interrupt
     cyg_drv_interrupt_create(avr32_chan->int_num_dma_tx,
-                             4,                      // Priority
+                             1,                      // Priority
                              (cyg_addrword_t)chan,   // Data item passed to interrupt handler
-                             avr32_ehci_serial_ISR,
-                             avr32_ehci_serial_DSR,
+                             avr32_ehci_serial_tx_dma_ISR,
+                             avr32_ehci_serial_tx_dma_DSR,
                              &avr32_chan->serial_dma_tx_interrupt_handle,
                              &avr32_chan->serial_dma_tx_interrupt);
     cyg_drv_interrupt_attach(avr32_chan->serial_dma_tx_interrupt_handle);
      
 
     res = avr32_ehci_serial_config_port(chan, &chan->config, true);
+    chan->init = true;
     return res;
 }
 
@@ -409,10 +437,11 @@ avr32_ehci_serial_lookup(struct cyg_devtab_entry **tab,
     
     if(!chan->init)
     {
-        avr32_ehci_serial_init(sub_tab);
+        avr32_ehci_serial_init(*tab);
         chan->init = true;
     }
-    (chan->callbacks->ehci_init)(chan);  // Really only required for interrupt driven devices
+    gpio_set_pin_high(BT_NSHUTD_PIN);
+    //(chan->callbacks->ehci_init)(chan);  // Really only required for interrupt driven devices
     return ENOERR;
 }
 
@@ -420,6 +449,7 @@ static void
 avr32_ehci_serial_close(ehci_serial_channel *chan)
 {
     // TODO: Power off Bluetooth module
+    gpio_set_pin_low(BT_NSHUTD_PIN);
     avr32_ehci_serial_info * const avr32_chan = (avr32_ehci_serial_info *) chan->dev_priv;
     volatile avr32_usart_t  *dev = avr32_chan->usart_dev;
     
@@ -484,6 +514,7 @@ avr32_ehci_serial_set_config(ehci_serial_channel *chan, cyg_uint32 key,
     return ENOERR;
 }
 
+char buf[64];
 // Enable the transmitter on the device
 static void
 avr32_ehci_serial_start_xmit(ehci_serial_channel *chan, const cyg_uint8 *buffer,
@@ -492,16 +523,24 @@ avr32_ehci_serial_start_xmit(ehci_serial_channel *chan, const cyg_uint8 *buffer,
     avr32_ehci_serial_info * const avr32_chan = (avr32_ehci_serial_info *) chan->dev_priv;
     volatile avr32_usart_t  *dev = avr32_chan->usart_dev;
 
+    cyg_drv_dsr_lock();
+    //diag_printf("Start transmit\n");
+   /* if(CYG_PDMA_IS_ENABLED(avr32_chan->pdca_tx_channel))
+    {
+        CYG_FAIL("EHCI TX ENABLED\n");
+    }*/
 
     CYG_PDAM_SET_CHANEL(avr32_chan->pdca_tx_channel,buffer,
                   len,avr32_chan->dma_pid_tx,0,0,0);
     CYG_PDMA_ENABLE_INTERRUPT(avr32_chan->pdca_tx_channel,true,
       true, false);
-    CYG_PDMA_ENABLE_CHANEL(avr32_chan->pdca_tx_channel);
-                
-    //cyg_drv_dsr_unlock();
-}
+    //CYG_PDMA_ENABLE_CHANEL(avr32_chan->pdca_tx_channel);
 
+                
+    cyg_drv_dsr_unlock();
+}
+char buf[64];
+int  inaction = 0;
 static void
 avr32_ehci_serial_start_recive(ehci_serial_channel *chan, const cyg_uint8 *buffer,
                                 cyg_uint16 len)
@@ -509,20 +548,44 @@ avr32_ehci_serial_start_recive(ehci_serial_channel *chan, const cyg_uint8 *buffe
     avr32_ehci_serial_info * const avr32_chan = (avr32_ehci_serial_info *) chan->dev_priv;
     volatile avr32_usart_t  *dev = avr32_chan->usart_dev;
 
+    cyg_drv_dsr_lock();
+    //diag_printf("Rec %d\n",len);
+    //dev->cr = AVR32_USART_CR_RXEN_MASK;
+   /* if(CYG_PDMA_IS_ENABLED(avr32_chan->pdca_rx_channel))
+    {*/
+       /* if(dev->csr & AVR32_USART_CSR_RXRDY_MASK)
+        {
+            diag_printf("je, %d, 0x%x\n",len,dev->rhr);
+            //while(1);
+        }*/
 
-   CYG_PDAM_SET_CHANEL(avr32_chan->pdca_rx_channel,
-                        buffer, len,
-                        avr32_chan->dma_pid_rx,
-                        0,
-                        0,
-                        0);
-
-    CYG_PDMA_ENABLE_CHANEL(avr32_chan->pdca_rx_channel);
+        CYG_PDMA_RELOAD(avr32_chan->pdca_rx_channel,
+                             buffer, len);
+        
+        CYG_PDMA_ENABLE_INTERRUPT(avr32_chan->pdca_rx_channel,true,
+                                     true, false);
+        
+        dev->cr = AVR32_USART_CR_RTSEN_MASK;
     
-    CYG_PDMA_ENABLE_INTERRUPT(avr32_chan->pdca_rx_channel,false,
-                                false, true);
+   /* }
+    else
+    {
+        CYG_PDAM_SET_CHANEL(avr32_chan->pdca_rx_channel,
+                             buffer, len,
+                             avr32_chan->dma_pid_rx,
+                             0,
+                             0,
+                             0);
+
+
+         CYG_PDMA_ENABLE_INTERRUPT(avr32_chan->pdca_rx_channel,true,
+                                     true, false);
+
+         CYG_PDMA_ENABLE_CHANEL(avr32_chan->pdca_rx_channel);
+    }*/
+    
                 
-    //cyg_drv_dsr_unlock();
+   cyg_drv_dsr_unlock();
 }
 
 // Serial I/O - low level interrupt handler (ISR)
@@ -535,23 +598,8 @@ avr32_ehci_serial_DSR(cyg_vector_t vector, cyg_ucount32 count, cyg_addrword_t da
     cyg_uint32 _csr, _ier = 0;
 
     _csr = dev->csr;
-
-
-    if (CYG_PDMA_IS_TRANSFER_COMPLETE(avr32_chan->pdca_tx_channel) &&
-	    CYG_PDMA_IS_ENABLED(avr32_chan->pdca_tx_channel)) 
-    {
-        CYG_PDMA_DISABLE_CHANEL(avr32_chan->pdca_tx_channel);
-        (chan->callbacks->block_sent_handler)();
-        
-    }
     
-    if (CYG_PDMA_IS_TRANSFER_COMPLETE(avr32_chan->pdca_rx_channel) &&
-	    CYG_PDMA_IS_ENABLED(avr32_chan->pdca_rx_channel)) 
-    {
-        CYG_PDMA_DISABLE_CHANEL(avr32_chan->pdca_rx_channel);
-        (chan->callbacks->block_received_handler)();
-        
-    }
+    //CYG_FAIL("UART FAIL\n");
 
 #ifdef CYGOPT_IO_EHCI_SERIAL_FLOW_CONTROL_HW
     if(_csr & AVR32_USART_CSR_CTSIC_MASK)
@@ -577,30 +625,137 @@ avr32_ehci_serial_ISR(cyg_vector_t vector, cyg_addrword_t data)
     // is pending of the low bit of the isr is *0*, not 1.
     
     dev->idr = dev->csr & dev->imr;
-    
+    /*diag_printf("Err\n");
+    while(1)
+    {
+        
+    }*/
     if(dev->csr & dev->imr)
         ret |= CYG_ISR_CALL_DSR;
     
-    if(CYG_PDMA_INTERRUPT_STATUS(avr32_chan->pdca_rx_channel))
-    {
-        CYG_PDMA_DISABLE_INTERRUPT(avr32_chan->pdca_rx_channel);
-         avr32_chan->rx_trans_rdy = true;
-         dev->cr =  AVR32_USART_RETTO_MASK;
-         ret |= CYG_ISR_CALL_DSR;
-    }
+    //dev->cr = AVR32_USART_STTTO_MASK | AVR32_USART_RETTO_MASK;
+    return ret;
+}
 
-    if(CYG_PDMA_IS_ENABLED(avr32_chan->pdca_tx_channel))
+// Serial tx dma dsr
+static void       
+avr32_ehci_serial_tx_dma_DSR(cyg_vector_t vector, cyg_ucount32 count, cyg_addrword_t data)
+{
+    ehci_serial_channel *chan = (ehci_serial_channel *)data;
+    avr32_ehci_serial_info * const avr32_chan = (avr32_ehci_serial_info *)chan->dev_priv;
+
+    if (CYG_PDMA_IS_TRANSFER_COMPLETE(avr32_chan->pdca_tx_channel)) 
     {
-      if(CYG_PDMA_INTERRUPT_STATUS(avr32_chan->pdca_tx_channel))
+        //CYG_PDMA_DISABLE_INTERRUPT(avr32_chan->pdca_tx_channel);
+        //diag_printf("tx\n");
+                                               
+        (chan->callbacks->block_sent_handler)();
+    } 
+    else
+    {
+        CYG_FAIL("TX PDMA\n");
+    }
+}
+
+
+// Serial tx dma isr
+static cyg_uint32
+avr32_ehci_serial_tx_dma_ISR(cyg_vector_t vector, cyg_addrword_t data)
+{
+    ehci_serial_channel * const chan = (ehci_serial_channel *) data;
+    avr32_ehci_serial_info * const avr32_chan = (avr32_ehci_serial_info *) chan->dev_priv;
+    
+    cyg_uint32 ret = CYG_ISR_HANDLED;
+
+#if 1
+   // if(CYG_PDMA_IS_ENABLED(avr32_chan->pdca_tx_channel))
+    {
+      if(CYG_PDMA_IS_TRANSFER_COMPLETE(avr32_chan->pdca_tx_channel))
       {
+            
             CYG_PDMA_DISABLE_INTERRUPT(avr32_chan->pdca_tx_channel);
-            avr32_chan->tx_trans_rdy = true;
+            //avr32_chan->tx_trans_rdy = true;
             ret |= CYG_ISR_CALL_DSR;
+             //(chan->callbacks->block_sent_handler)();
       }
     }
+#else
+    if (CYG_PDMA_IS_TRANSFER_COMPLETE(avr32_chan->pdca_tx_channel) &&
+	    CYG_PDMA_IS_ENABLED(avr32_chan->pdca_tx_channel)) 
+    {
+        CYG_PDMA_DISABLE_CHANEL(avr32_chan->pdca_tx_channel);
+        //diag_printf("tx\n");
+ 
+        (chan->callbacks->block_sent_handler)();
+    } 
+    else
+    {
+        CYG_PDMA_DISABLE_CHANEL(avr32_chan->pdca_tx_channel);
+        CYG_FAIL("TX PDMA\n");
+    }
+#endif
 
-    //dev->cr = AVR32_USART_STTTO_MASK | AVR32_USART_RETTO_MASK;
+    return ret;
+}
+
+///
+// Serial rx dma dsr
+static void       
+avr32_ehci_serial_rx_dma_DSR(cyg_vector_t vector, cyg_ucount32 count, cyg_addrword_t data)
+{
+    ehci_serial_channel *chan = (ehci_serial_channel *)data;
+    avr32_ehci_serial_info * const avr32_chan = (avr32_ehci_serial_info *)chan->dev_priv;
+    
+    if (CYG_PDMA_IS_TRANSFER_COMPLETE(avr32_chan->pdca_rx_channel)) 
+    {   
+        (chan->callbacks->block_received_handler)();
+    }
+    else
+    {
+        CYG_FAIL("RX PDMA\n");
+    }
+}
+
+
+// Serial rx dma dsr
+static cyg_uint32
+avr32_ehci_serial_rx_dma_ISR(cyg_vector_t vector, cyg_addrword_t data)
+{
+    ehci_serial_channel * const chan = (ehci_serial_channel *) data;
+    avr32_ehci_serial_info * const avr32_chan = (avr32_ehci_serial_info *) chan->dev_priv;
+    volatile avr32_usart_t  *dev = avr32_chan->usart_dev;
+    
+    cyg_uint32 ret = CYG_ISR_HANDLED;
+    //dev->cr = AVR32_USART_CR_RXDIS_MASK;
+    dev->cr = AVR32_USART_CR_RTSDIS_MASK;
+#if 1
+    if(CYG_PDMA_IS_TRANSFER_COMPLETE(avr32_chan->pdca_rx_channel))
+    {
+        CYG_PDMA_DISABLE_INTERRUPT(avr32_chan->pdca_rx_channel);
+        dev->cr = AVR32_USART_CR_RTSDIS_MASK;
+         avr32_chan->rx_trans_rdy = true;
+         ret |= CYG_ISR_CALL_DSR;
+        //(chan->callbacks->block_received_handler)();
+    }
+#else
+    if (CYG_PDMA_IS_TRANSFER_COMPLETE(avr32_chan->pdca_rx_channel) &&
+	    CYG_PDMA_IS_ENABLED(avr32_chan->pdca_rx_channel)) 
+    {
+        
+        CYG_PDMA_DISABLE_INTERRUPT(avr32_chan->pdca_rx_channel);
+        //
+        
+       // diag_printf("rx\n"); 
+       (chan->callbacks->block_received_handler)(); 
+    }
+    else
+    {
+        CYG_PDMA_DISABLE_CHANEL(avr32_chan->pdca_rx_channel);
+        CYG_FAIL("RX PDMA\n");
+    }
+#endif
     return ret;
 }
 #endif
 
+#endif

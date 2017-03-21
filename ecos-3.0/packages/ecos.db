@@ -6844,7 +6844,7 @@ target KM_8 {
 	packages { 
             CYGPKG_HAL_AVR32
             CYGPKG_HAL_AVR32_KM_8 
-            CYGPKG_IO_EHCI_SERIAL_AVR32_UC3C
+            CYGPKG_IO_SERIAL_AVR32_UC3C
             CYGPKG_IO_FLASH
             CYGPKG_DEVICES_WALLCLOCK_AVR32_AST
             CYGPKG_CRC

@@ -49,7 +49,7 @@
 //####DESCRIPTIONEND####
 //
 //==========================================================================
-
+#if 0
 #include <cyg/hal/gpio.h>
 #include <cyg/hal/avr32/io.h>
 
@@ -59,6 +59,7 @@
 #include <pkgconf/io_serial.h>
 #include <pkgconf/io.h>
 #include <pkgconf/kernel.h>
+#include <pkgconf/io_serial_avr32_uc3c.h>
 
 #include <cyg/io/io.h>
 #include <cyg/hal/hal_io.h>
@@ -71,6 +72,11 @@
 #include <cyg/hal/pdca.h>
 #include <cyg/hal/board_config.h>
 
+
+#if CYGINT_IO_SERIAL_BLOCK_TRANSFER == 0
+#undef CYGINT_IO_SERIAL_BLOCK_TRANSFER
+#endif
+
 externC void * memcpy( void *, const void *, size_t );
 
 #ifndef CYGPKG_IO_SERIAL_AVR32
@@ -79,7 +85,7 @@ externC void * memcpy( void *, const void *, size_t );
 
 
 #define RCVBUF_EXTRA        16
-#define RCV_TIMEOUT         2000
+#define RCV_TIMEOUT         1005
 
 #define SIFLG_NONE          0x00
 #define SIFLG_TX_READY      0x01
@@ -375,11 +381,11 @@ static avr32_serial_info avr32_serial_info3 = {
 };
 
 #if CYGNUM_IO_SERIAL_AVR32_SERIAL3_BUFSIZE > 0
-static unsigned char avr32_serial_out_buf3[CYGNUM_IO_SERIAL_AVR32_SERIAL2_BUFSIZE];
-static unsigned char avr32_serial_in_buf3[CYGNUM_IO_SERIAL_AVR32_SERIAL2_BUFSIZE];
+static unsigned char avr32_serial_out_buf3[CYGNUM_IO_SERIAL_AVR32_SERIAL3_BUFSIZE];
+static unsigned char avr32_serial_in_buf3[CYGNUM_IO_SERIAL_AVR32_SERIAL3_BUFSIZE];
 
 static SERIAL_CHANNEL_USING_INTERRUPTS(
-            avr32_serial_channel3,AVR32_PIN_PC15
+            avr32_serial_channel3,
             avr32_serial_funs_interrupt, 
             avr32_serial_info3,
             CYG_SERIAL_BAUD_RATE(CYGNUM_IO_SERIAL_AVR32_SERIAL3_BAUD),
@@ -505,10 +511,10 @@ avr32_serial_config_port(serial_channel *chan, cyg_serial_info_t *new_config, bo
                 CYG_HAL_USART0_RXD_FUNCTION);
 #endif
     #ifdef CYGNUM_IO_SERIAL_AVR32_SERIAL0_FLOW_CONTROL
-        gpio_enable_module_pin(CYG_DEVS_USART0_RTS_PIN, 
-                CYG_DEVS_USART0_RTS_FUNCTION);
-        gpio_enable_module_pin(CYG_DEVS_USART0_CTS_PIN, 
-                CYG_DEVS_USART0_CTS_FUNCTION);
+        gpio_enable_module_pin(CYG_HAL_USART0_RTS_PIN, 
+                CYG_HAL_USART0_RTS_FUNCTION);
+        gpio_enable_module_pin(CYG_HAL_USART0_CTS_PIN, 
+                CYG_HAL_USART0_CTS_FUNCTION);
     #endif
 #endif
     }else if(usart_addr == AVR32_USART1_ADDRESS)		
@@ -553,10 +559,10 @@ avr32_serial_config_port(serial_channel *chan, cyg_serial_info_t *new_config, bo
                 CYG_HAL_USART2_RXD_FUNCTION);
 #endif
     #ifdef CYGNUM_IO_SERIAL_AVR32_SERIAL2_FLOW_CONTROL
-        gpio_enable_module_pin(CYG_DEVS_USART2_RTS_PIN, 
-                CYG_DEVS_USART2_RTS_FUNCTION);
-        gpio_enable_module_pin(CYG_DEVS_USART2_CTS_PIN, 
-                CYG_DEVS_USART2_CTS_FUNCTION);
+        gpio_enable_module_pin(CYG_HAL_USART2_RTS_PIN, 
+                CYG_HAL_USART2_RTS_FUNCTION);
+        gpio_enable_module_pin(CYG_HAL_USART2_CTS_PIN, 
+                CYG_HAL_USART2_CTS_FUNCTION);
     #endif
 #endif
     }	
@@ -572,10 +578,10 @@ avr32_serial_config_port(serial_channel *chan, cyg_serial_info_t *new_config, bo
                 CYG_HAL_USART3_RXD_FUNCTION);
 #endif
     #ifdef CYGNUM_IO_SERIAL_AVR32_SERIAL3_FLOW_CONTROL
-        gpio_enable_module_pin(CYG_DEVS_USART3_RTS_PIN, 
-                CYG_DEVS_USART3_RTS_FUNCTION);
-        gpio_enable_module_pin(CYG_DEVS_USART3_CTS_PIN, 
-                CYG_DEVS_USART3_CTS_FUNCTION);
+        gpio_enable_module_pin(CYG_HAL_USART3_RTS_PIN, 
+                CYG_HAL_USART3_RTS_FUNCTION);
+        gpio_enable_module_pin(CYG_HAL_USART3_CTS_PIN, 
+                CYG_HAL_USART3_CTS_FUNCTION);
     #endif
 #endif
     }	
@@ -593,9 +599,9 @@ avr32_serial_config_port(serial_channel *chan, cyg_serial_info_t *new_config, bo
 #endif
     #ifdef CYGNUM_IO_SERIAL_AVR32_SERIAL4_FLOW_CONTROL
         gpio_enable_module_pin(CYG_DEVS_USART4_RTS_PIN, 
-                CYG_DEVS_USART4_RTS_FUNCTION);
+                CYG_HAL_USART4_RTS_FUNCTION);
         gpio_enable_module_pin(CYG_DEVS_USART4_CTS_PIN, 
-                CYG_DEVS_USART4_CTS_FUNCTION);
+                CYG_HAL_USART4_CTS_FUNCTION);
     #endif
 #endif
     }
@@ -612,21 +618,24 @@ avr32_serial_config_port(serial_channel *chan, cyg_serial_info_t *new_config, bo
     // Configuration
     if((new_config->flags & CYGNUM_SERIAL_FLOW_RTSCTS_RX) ||
         (new_config->flags & CYGNUM_SERIAL_FLOW_RTSCTS_TX))
-        dev->mr = stop_bits | parity | word_length | 
-                AVR32_USART_MODE_HARDWARE | AVR32_USART_MR_OVER_MASK;
+        dev->mr = stop_bits | parity | word_length /*| 
+                AVR32_USART_MODE_HARDWARE /*| AVR32_USART_MR_OVER_MASK*/;
     else if((new_config->flags & CYGNUM_SERIAL_FLOW_DSRDTR_RX) ||
         (new_config->flags & CYGNUM_SERIAL_FLOW_DSRDTR_TX))
         dev->mr = stop_bits | parity | word_length | 
-                AVR32_USART_MODE_MODEM | AVR32_USART_MR_OVER_MASK;
+                AVR32_USART_MODE_MODEM /*| AVR32_USART_MR_OVER_MASK*/;
     else
     {
         dev->mr = stop_bits | parity | word_length | 
-                AVR32_USART_MODE_NORMAL | AVR32_USART_MR_OVER_MASK;
+                AVR32_USART_MODE_NORMAL /*| AVR32_USART_MR_OVER_MASK*/;
 	dev->cr = AVR32_USART_CR_RTSEN_MASK;
     }
  
     // Baud rate
-    dev->brgr = select_baud[new_config->baud];
+    if(new_config->baud < sizeof(select_baud))
+        dev->brgr = select_baud[new_config->baud];
+    else
+        dev->brgr = DIVISOR(new_config->baud);
     // Disable all interrupts
     dev->idr = 0xFFFFFFFF;
 
@@ -639,53 +648,53 @@ avr32_serial_config_port(serial_channel *chan, cyg_serial_info_t *new_config, bo
 
     CYG_PDAM_SET_CHANEL(avr32_chan->pdca_rx_channel,
                         avr32_chan->rcv_buffer[0],
-                        avr32_chan->ping_pong_size - 1,
+                        avr32_chan->ping_pong_size,
                         avr32_chan->dma_pid_rx,
-                        avr32_chan->rcv_buffer[1],
-                        avr32_chan->ping_pong_size - 1,
+                        0/*avr32_chan->rcv_buffer[1]*/,
+                        0/*avr32_chan->ping_pong_size*/,
                         0);
 
-
+    avr32_chan->end = avr32_chan->rcv_buffer[0];
     dev->rtor = RCV_TIMEOUT;
 #ifdef CYGINT_IO_SERIAL_LINE_STATUS_HW
-    dev->ier  = /*AVR32_USART_RXRDY_MASK |*/ AVR32_USART_OVER_MASK |
-                  AVR32_USART_FRAME_MASK | AVR32_USART_PARE_MASK   |
-                  AVR32_USART_RXBRK_MASK | AVR32_USART_TIMEOUT_MASK;
+    dev->ier  = /*AVR32_USART_IER_RXRDY_MASK |*/ AVR32_USART_IER_OVRE_MASK |
+                  AVR32_USART_IER_FRAME_MASK | AVR32_USART_IER_PARE_MASK   |
+                  AVR32_USART_IER_RXBRK_MASK | AVR32_USART_IER_TIMEOUT_MASK;
    #ifdef CYGOPT_IO_SERIAL_FLOW_CONTROL_HW
-      dev->ier = AVR32_USART_CTSIC_MASK | AVR32_USART_DCDIC_MASK |
-                 AVR32_USART_DSRIC_MASK | AVR32_USART_RIIC_MASK  |
-                 AVR32_USART_TIMEOUT_MASK;
+      dev->ier = AVR32_USART_CTSIC_MASK /*| AVR32_USART_IER_DCDIC_MASK*/ |
+                 /*AVR32_USART_DSRIC_MASK | AVR32_USART_IER_RIIC_MASK  |*/
+                 AVR32_USART_IER_TIMEOUT_MASK;
    #endif
 #else
-    dev->ier  = /*AVR32_USART_RXRDY_MASK |*/ AVR32_USART_TIMEOUT_MASK;
+    dev->ier  = /*AVR32_USART_IER_RXRDY_MASK |*/ AVR32_USART_IER_TIMEOUT_MASK;
 #endif
 
     CYG_PDMA_ENABLE_CHANEL(avr32_chan->pdca_rx_channel);
     
     // Enable RX and TX
-    dev->cr = AVR32_USART_CR_RXEN_MASK | AVR32_USART_CR_TXEN_MASK |
-              AVR32_USART_RTSEN_MASK   | AVR32_USART_STTTO_MASK;
+    dev->cr = AVR32_USART_CR_RXEN_MASK  | AVR32_USART_CR_TXEN_MASK |
+              AVR32_USART_CR_RTSEN_MASK | AVR32_USART_CR_STTTO_MASK;
 				  
     CYG_PDMA_ENABLE_INTERRUPT(avr32_chan->pdca_rx_channel,false,
-                                false, true);
+                                true, false);
 #else
-    dev->rtor = RCV_TIMEOUT;
+    dev->rtor = 0;//RCV_TIMEOUT;
     #ifdef CYGINT_IO_SERIAL_LINE_STATUS_HW
-        dev->ier  =   AVR32_USART_RXRDY_MASK | AVR32_USART_OVER_MASK |
-                      AVR32_USART_FRAME_MASK | AVR32_USART_PARE_MASK |
-                      AVR32_USART_RXBRK_MASK | AVR32_USART_TIMEOUT_MASK;
+        dev->ier  =   AVR32_USART_IER_RXRDY_MASK | AVR32_USART_IER_OVRE_MASK |
+                      AVR32_USART_IER_FRAME_MASK | AVR32_USART_IER_PARE_MASK |
+                      AVR32_USART_IER_RXBRK_MASK /*| AVR32_USART_IER_TIMEOUT_MASK*/;
        #ifdef CYGOPT_IO_SERIAL_FLOW_CONTROL_HW
-           dev->ier = AVR32_USART_CTSIC_MASK | AVR32_USART_DCDIC_MASK |
-                      AVR32_USART_DSRIC_MASK | AVR32_USART_RIIC_MASK  |
-                      AVR32_USART_TIMEOUT_MASK;
+           dev->ier = AVR32_USART_IER_CTSIC_MASK /*| AVR32_USART_IER_DCDIC_MASK |
+                      AVR32_USART_IER_DSRIC_MASK | AVR32_USART_IER_RIIC_MASK  |
+                      AVR32_USART_IER_TIMEOUT_MASK*/;
        #endif
     #else
-        dev->ier  = AVR32_USART_RXRDY_MASK | AVR32_USART_TIMEOUT_MASK;
+        dev->ier  = AVR32_USART_IER_RXRDY_MASK | AVR32_USART_IER_TIMEOUT_MASK;
     #endif
 
     // Enable RX and TX
-    dev->cr = AVR32_USART_CR_RXEN_MASK | AVR32_USART_CR_TXEN_MASK |
-              AVR32_USART_RTSEN_MASK   | AVR32_USART_STTTO_MASK;
+    dev->cr = AVR32_USART_CR_RXEN_MASK /*| AVR32_USART_CR_TXEN_MASK*/ |
+              AVR32_USART_CR_RTSEN_MASK   | AVR32_USART_CR_STTTO_MASK;
 
 #endif           
     if (new_config != &chan->config) {
@@ -713,7 +722,7 @@ avr32_serial_init(struct cyg_devtab_entry *tab)
     if (chan->out_cbuf.len != 0) {
         //serial interrupt
         cyg_drv_interrupt_create(avr32_chan->int_num,
-                                 4,                      // Priority
+                                 1,                      // Priority
                                  (cyg_addrword_t)chan,   // Data item passed to interrupt handler
                                  avr32_serial_ISR,
                                  avr32_serial_DSR,
@@ -723,7 +732,7 @@ avr32_serial_init(struct cyg_devtab_entry *tab)
  #ifdef CYGINT_IO_SERIAL_BLOCK_TRANSFER   
         //rx pdma interrupt
         cyg_drv_interrupt_create(avr32_chan->int_num_dma_rx,
-                                 4,                      // Priority
+                                 1,                      // Priority
                                  (cyg_addrword_t)chan,   // Data item passed to interrupt handler
                                  avr32_serial_ISR,
                                  avr32_serial_DSR,
@@ -733,7 +742,7 @@ avr32_serial_init(struct cyg_devtab_entry *tab)
 
         //tx pdma interrupt
         cyg_drv_interrupt_create(avr32_chan->int_num_dma_tx,
-                                 4,                      // Priority
+                                 1,                      // Priority
                                  (cyg_addrword_t)chan,   // Data item passed to interrupt handler
                                  avr32_serial_ISR,
                                  avr32_serial_DSR,
@@ -874,11 +883,12 @@ avr32_serial_set_config(serial_channel *chan, cyg_uint32 key,
             mask = AVR32_USART_RTSDIS_MASK;
         else
             mask = AVR32_USART_RTSEN_MASK;
+#if 0
         if ( chan->config.flags & CYGNUM_SERIAL_FLOW_DSRDTR_RX )
             mask |= AVR32_USART_DTRDIS_MASK;
         else
             mask |= AVR32_USART_DTREN_MASK;
-
+#endif
         dev->cr = mask; 
     }
         break;
@@ -903,10 +913,10 @@ avr32_serial_start_xmit(serial_channel *chan)
     xmt_req_reply_t res;
     //cyg_drv_dsr_lock();
     // wait until CTS is inactive 
-    while(dev->csr & AVR32_USART_CSR_CTS_MASK)
+   /* while(dev->csr & AVR32_USART_CSR_CTS_MASK)
     {
       hal_delay_us(10);
-    }
+    }*/
     if ((avr32_chan->flags & SIFLG_XMIT_CONTINUE) == 0) {
         res = (chan->callbacks->data_xmt_req)(chan, 0xffff, &avr32_chan->transmit_size, &chars);
         switch (res)
@@ -935,6 +945,7 @@ avr32_serial_start_xmit(serial_channel *chan)
 #else
 	//cyg_drv_dsr_lock();
 	avr32_chan->flags |= SIFLG_XMIT_CONTINUE;
+        dev->cr = AVR32_USART_CR_TXEN_MASK;
 	dev->ier           = AVR32_USART_CSR_TXRDY_MASK;
 	//cyg_drv_dsr_unlock();
 #endif
@@ -946,8 +957,12 @@ avr32_serial_stop_xmit(serial_channel *chan)
 {
     avr32_serial_info * const avr32_chan = (avr32_serial_info *) chan->dev_priv;
     volatile avr32_usart_t  *dev = avr32_chan->usart_dev;
+#ifdef CYGINT_IO_SERIAL_BLOCK_TRANSFER
     CYG_PDMA_DISABLE_CHANEL(avr32_chan->pdca_tx_channel);
+#else
     dev->idr = AVR32_USART_CSR_TXRDY_MASK;
+    dev->cr = AVR32_USART_CR_TXDIS_MASK;
+#endif
     avr32_chan->flags &= ~SIFLG_XMIT_CONTINUE;	
 }
 
@@ -969,7 +984,39 @@ avr32_serial_DSR(cyg_vector_t vector, cyg_ucount32 count, cyg_addrword_t data)
     if(avr32_chan->trans_rdy)
     {
         const cyg_uint8 cb = avr32_chan->curbuf, nb = cb ^ 0x01;
-        cyg_uint8 * p = avr32_chan->rcv_buffer[cb], * end = avr32_chan->end;
+        cyg_uint8 * p = avr32_chan->rcv_buffer[cb], * end, * start;
+        
+        /*CYG_ASSERT((end - p) <= avr32_chan->ping_pong_size ,
+                "Transfer is longer than buffer dma end\n");*/
+        if(CYG_PDMA_IS_TRANSFER_COMPLETE(avr32_chan->pdca_rx_channel))
+        {
+            end   = avr32_chan->rcv_buffer[cb] + avr32_chan->ping_pong_size;
+            if(avr32_chan->end == avr32_chan->rcv_buffer[cb])
+            {
+                start = avr32_chan->rcv_buffer[cb];
+            }
+            else
+            {
+                start = avr32_chan->end;
+            }
+            avr32_chan->end = avr32_chan->rcv_buffer[nb];
+            CYG_PDMA_RELOAD(avr32_chan->pdca_rx_channel,avr32_chan->rcv_buffer[cb],
+				avr32_chan->ping_pong_size);
+            diag_printf("SW\n");
+        }
+        else if(_csr & AVR32_USART_CSR_TIMEOUT_MASK)
+        {
+            end = avr32_chan->pdca_rx_channel->mar;
+            if(avr32_chan->end == avr32_chan->rcv_buffer[cb])
+                start = avr32_chan->rcv_buffer[cb];
+            else
+                start = avr32_chan->end;
+            
+            avr32_chan->end = end;
+        }
+        
+        diag_printf("%p, %p, %p\n",start, end,avr32_chan->end);
+        p = start;
         
         CYG_ASSERT((end - p) <= avr32_chan->ping_pong_size ,
                 "Transfer is longer than buffer dma end\n");
@@ -982,7 +1029,7 @@ avr32_serial_DSR(cyg_vector_t vector, cyg_ucount32 count, cyg_addrword_t data)
 
             res = (chan->callbacks->data_rcv_req)(
               chan,
-              end - avr32_chan->rcv_buffer[cb],
+              end - start,
               &space_avail,
               &space
             );
@@ -1004,9 +1051,15 @@ avr32_serial_DSR(cyg_vector_t vector, cyg_ucount32 count, cyg_addrword_t data)
                     break;
             }      
         }
-
+        
         avr32_chan->trans_rdy = false;
         avr32_chan->curbuf = nb;
+       
+            
+        CYG_PDMA_ENABLE_INTERRUPT(avr32_chan->pdca_rx_channel,true,
+                      true, false);
+        
+        
     }
 	
 #else
@@ -1050,16 +1103,18 @@ avr32_serial_DSR(cyg_vector_t vector, cyg_ucount32 count, cyg_addrword_t data)
         }
     }
 #else
-    if(_csr & AVR32_USART_CSR_TXRDY_MASK)  
+    if((_csr & AVR32_USART_CSR_TXRDY_MASK) && (avr32_chan->flags & SIFLG_XMIT_CONTINUE))
     {
         avr32_chan->flags &= ~SIFLG_XMIT_BUSY;  
         (chan->callbacks->xmt_char)(chan);
-        _ier |= AVR32_USART_IER_TXRDY_MASK;
+        if(avr32_chan->flags & SIFLG_XMIT_CONTINUE)
+            _ier |= AVR32_USART_IER_TXRDY_MASK;
     }
 #endif
 #ifdef CYGINT_IO_SERIAL_LINE_STATUS_HW
     if(_csr & AVR32_USART_CSR_OVRE_MASK)
     {
+        diag_printf("err\n");
         cyg_serial_line_status_t stat;
         stat.which = CYGNUM_SERIAL_STATUS_OVERRUNERR;
         (chan->callbacks->indicate_status)(chan, &stat );
@@ -1067,6 +1122,7 @@ avr32_serial_DSR(cyg_vector_t vector, cyg_ucount32 count, cyg_addrword_t data)
     }
     if(_csr & AVR32_USART_CSR_FRAME_MASK)
     {
+        //diag_printf("err\n");
         cyg_serial_line_status_t stat;
         stat.which = CYGNUM_SERIAL_STATUS_FRAMEERR;
         (chan->callbacks->indicate_status)(chan, &stat );
@@ -1096,6 +1152,7 @@ avr32_serial_DSR(cyg_vector_t vector, cyg_ucount32 count, cyg_addrword_t data)
         (chan->callbacks->indicate_status)(chan, &stat );
         _ier |= AVR32_USART_IER_CTSIC_MASK;
     }
+#if 0
     if(_csr & AVR32_USART_CSR_DCDIC_MASK)
     {
         cyg_serial_line_status_t stat;
@@ -1119,11 +1176,13 @@ avr32_serial_DSR(cyg_vector_t vector, cyg_ucount32 count, cyg_addrword_t data)
         stat.value = (0 != (dev->CSR.usart_mode.ri));
         _ier |= AVR32_USART_IER_RIIC_MASK;
     }
+#endif
     
 #endif
 #endif
+    //dev->cr = AVR32_USART_STTTO_MASK | AVR32_USART_RETTO_MASK;
     dev->cr = AVR32_USART_CR_RSTSTA_MASK;
-    dev->ier = _ier;   
+    dev->ier = _ier;// | AVR32_USART_IER_TIMEOUT_MASK;   
 }
 
 
@@ -1134,53 +1193,101 @@ avr32_serial_ISR(cyg_vector_t vector, cyg_addrword_t data)
     serial_channel * const chan = (serial_channel *) data;
     avr32_serial_info * const avr32_chan = (avr32_serial_info *) chan->dev_priv;
     volatile avr32_usart_t  *dev = avr32_chan->usart_dev;
-    cyg_uint32 ret = CYG_ISR_HANDLED;
+    cyg_uint32 ret = CYG_ISR_HANDLED | CYG_ISR_CALL_DSR;
     // Check if we have an interrupt pending - note that the interrupt
     // is pending of the low bit of the isr is *0*, not 1.
     
+   /* if((dev->csr & 0x1) && dev->csr & AVR32_USART_CSR_TIMEOUT_MASK)
+    {
+        dev->cr = AVR32_USART_STTTO_MASK | AVR32_USART_RETTO_MASK;
+        dev->ier = AVR32_USART_IER_TIMEOUT_MASK;
+        return CYG_ISR_HANDLED;
+    }*/
+    
     dev->idr = dev->csr & dev->imr;
     
+#ifdef CYGINT_IO_SERIAL_BLOCK_TRANSFER
     if(dev->csr & AVR32_USART_CSR_TIMEOUT_MASK)
     {
-       // set data buffer length
-       const cyg_uint8 cb = avr32_chan->curbuf;
-       if(avr32_chan->rcv_buffer[cb] != avr32_chan->pdca_rx_channel->mar)
-       {
-            avr32_chan->end = avr32_chan->pdca_rx_channel->mar;
-            CYG_PDMA_FORCE_RELOAD(avr32_chan->pdca_rx_channel);
-            CYG_PDMA_RELOAD(avr32_chan->pdca_rx_channel,avr32_chan->rcv_buffer[cb],
-				avr32_chan->ping_pong_size - 1);
-            avr32_chan->trans_rdy = true;
-            ret |= CYG_ISR_CALL_DSR;
-       }
+        if(CYG_PDMA_IS_TRANSFER_COMPLETE(avr32_chan->pdca_rx_channel))
+        {
+            //diag_printf("A1\n");
+            CYG_PDMA_DISABLE_INTERRUPT(avr32_chan->pdca_rx_channel);
+           /* const cyg_uint8 cb = avr32_chan->curbuf;
+            avr32_chan->end = avr32_chan->rcv_buffer[cb] + avr32_chan->ping_pong_size;
+           /* CYG_PDMA_RELOAD(avr32_chan->pdca_rx_channel,avr32_chan->rcv_buffer[cb],
+                                 0 );*/
+             avr32_chan->trans_rdy = true;
+             /*dev->cr = AVR32_USART_STTTO_MASK | AVR32_USART_RETTO_MASK;
+             dev->ier = AVR32_USART_IER_TIMEOUT_MASK;*/
+             ret |= CYG_ISR_CALL_DSR;
+        }
+        else
+        {
+            
+            // set data buffer length
+            const cyg_uint8 cb = avr32_chan->curbuf;
+           // diag_printf("A2\n");
+            if(avr32_chan->end != avr32_chan->pdca_rx_channel->mar)
+            {
+                //CYG_PDMA_DISABLE_INTERRUPT(avr32_chan->pdca_rx_channel);
+                /*register cyg_uint32 end;
+                CYG_PDMA_DISABLE_CHANEL(avr32_chan->pdca_rx_channel);
+
+                end = avr32_chan->pdca_rx_channel->mar;
+                avr32_chan->pdca_rx_channel->tcr = 0;
+                //CYG_PDMA_FORCE_RELOAD(avr32_chan->pdca_rx_channel);
+                CYG_PDMA_ENABLE_CHANEL(avr32_chan->pdca_rx_channel);
+                avr32_chan->end = end;
+                 /*CYG_PDMA_RELOAD(avr32_chan->pdca_rx_channel,avr32_chan->rcv_buffer[cb],
+                                     0);*/
+                 //diag_printf("A2\n");
+                 avr32_chan->trans_rdy = true;
+                 ret |= CYG_ISR_CALL_DSR;
+            }
+            else
+            {
+                dev->cr = AVR32_USART_STTTO_MASK | AVR32_USART_RETTO_MASK;
+                dev->ier = AVR32_USART_IER_TIMEOUT_MASK;
+                ret &= ~CYG_ISR_CALL_DSR;
+            }
+                
+        }
     }
-    
-    
-    if(CYG_PDMA_INTERRUPT_STATUS(avr32_chan->pdca_rx_channel))
+    else
     {
-        // CYG_PDMA_DISABLE_INTERRUPT(avr32_chan->pdca_rx_channel);
-        const cyg_uint8 cb = avr32_chan->curbuf;
-        avr32_chan->end = avr32_chan->rcv_buffer[cb] + avr32_chan->ping_pong_size;
-        CYG_PDMA_RELOAD(avr32_chan->pdca_rx_channel,avr32_chan->rcv_buffer[cb],
-                             avr32_chan->ping_pong_size - 1);
-         avr32_chan->trans_rdy = true;
-         dev->cr = AVR32_USART_STTTO_MASK | AVR32_USART_RETTO_MASK;
-         dev->ier = AVR32_USART_IER_TIMEOUT_MASK;
-         ret |= CYG_ISR_CALL_DSR;
+        if(CYG_PDMA_IS_TRANSFER_COMPLETE(avr32_chan->pdca_rx_channel))
+        {
+            CYG_PDMA_DISABLE_INTERRUPT(avr32_chan->pdca_rx_channel);
+            //diag_printf("A3\n");
+           /* CYG_PDMA_DISABLE_INTERRUPT(avr32_chan->pdca_rx_channel);
+            const cyg_uint8 cb = avr32_chan->curbuf;
+            avr32_chan->end = avr32_chan->rcv_buffer[cb] + avr32_chan->ping_pong_size;
+            /*CYG_PDMA_RELOAD(avr32_chan->pdca_rx_channel,avr32_chan->rcv_buffer[cb],
+                                 0 );*/
+             avr32_chan->trans_rdy = true;
+             /*dev->cr = AVR32_USART_STTTO_MASK | AVR32_USART_RETTO_MASK;
+             dev->ier = AVR32_USART_IER_TIMEOUT_MASK;*/
+             ret |= CYG_ISR_CALL_DSR;
+        }
     }
+    
+    
 
     if(CYG_PDMA_IS_ENABLED(avr32_chan->pdca_tx_channel))
     {
-      if(CYG_PDMA_INTERRUPT_STATUS(avr32_chan->pdca_tx_channel))
+      if(CYG_PDMA_IS_TRANSFER_COMPLETE(avr32_chan->pdca_tx_channel))
       {
             CYG_PDMA_DISABLE_INTERRUPT(avr32_chan->pdca_tx_channel);
             ret |= CYG_ISR_CALL_DSR;
       }
     }
+#endif
+    /*dev->cr = AVR32_USART_STTTO_MASK | AVR32_USART_RETTO_MASK;
+    dev->ier = AVR32_USART_IER_TIMEOUT_MASK;  */
 
-    dev->cr = AVR32_USART_STTTO_MASK | AVR32_USART_RETTO_MASK;
-    dev->ier = AVR32_USART_IER_TIMEOUT_MASK;  
     return ret;
 }
 #endif
 
+#endif

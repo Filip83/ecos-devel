@@ -75,7 +75,7 @@
 #define RTC_SPI_DEV_BITS_NUM                            0 //0 -> 8
 #define RTC_SPI_DEV_CPOL                                0
 #define RTC_SPI_DEV_NCPHA                               1
-#define RTC_SPI_DEV_BUD_RATE                            16000000
+#define RTC_SPI_DEV_BUD_RATE                            1000000
 #define RTC_SPI_DEV_CSUP_DLY                            0
 #define RTC_SPI_DEV_BYTE_DLY                            0
 
@@ -94,7 +94,7 @@
 #define DAC_SPI_DEV_CS_NUM                              0
 #define DAC_SPI_DEV_BITS_NUM                            8 // USART SPI
 #define DAC_SPI_DEV_CPOL                                0
-#define DAC_SPI_DEV_NCPHA                               1
+#define DAC_SPI_DEV_NCPHA                               0
 #define DAC_SPI_DEV_BUD_RATE                            2000000
 #define DAC_SPI_DEV_CSUP_DLY                            0
 #define DAC_SPI_DEV_BYTE_DLY                            0
@@ -102,8 +102,8 @@
 // Analog board ADC config SPI on USART1
 #define ADC_SPI_DEV_CS_NUM                              1
 #define ADC_SPI_DEV_BITS_NUM                            8 // USART SPI
-#define ADC_SPI_DEV_CPOL                                0
-#define ADC_SPI_DEV_NCPHA                               1
+#define ADC_SPI_DEV_CPOL                                1
+#define ADC_SPI_DEV_NCPHA                               0
 #define ADC_SPI_DEV_BUD_RATE                            2000000
 #define ADC_SPI_DEV_CSUP_DLY                            0
 #define ADC_SPI_DEV_BYTE_DLY                            0
@@ -353,8 +353,8 @@ void hal_board_init(void);
 #define CYG_HAL_USART3_NPCS_3_GPIO              AVR32_PIN_PC10
 
 // handshace signals
-#define CYG_HAL_USART3_CTS_PIN                  AVR32_USART3_CLK_0_2_PIN
-#define CYG_HAL_USART3_CTS_FUNCTION             AVR32_USART3_CLK_0_2_FUNCTION
+#define CYG_HAL_USART3_CTS_PIN                  AVR32_USART3_CTS_0_1_PIN
+#define CYG_HAL_USART3_CTS_FUNCTION             AVR32_USART3_CTS_0_1_FUNCTION
 
 #define CYG_HAL_USART3_RTS_PIN                  AVR32_USART3_RTS_0_1_PIN
 #define CYG_HAL_USART3_RTS_FUNCTION             AVR32_USART3_RTS_0_1_FUNCTION

@@ -473,6 +473,7 @@ _int\priority:
 #endif
     // Nested interrupts are not enabled appropriate code
     // would be wise to add heare
+    csrf    AVR32_SR_GM_OFFSET
     mov     r12, \priority
     call    hal_cal_interrupt_handler
 

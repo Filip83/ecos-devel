@@ -80,7 +80,7 @@ static const cyg_uint32 select_parity[] = {
 // Assume the UART is driven 1/16 CPU frequency
 #define UART_CLOCK    ((CYGHWR_HAL_AVR32_CPU_FREQ)*1.0e6)
 
-#define DIVISOR(baud) ((int)((UART_CLOCK)/(8*baud)))
+#define DIVISOR(baud) ((int)((UART_CLOCK)/(16.*baud)+0.5))
 
 static const cyg_int32 select_baud[] = {
     0,      // Unused
