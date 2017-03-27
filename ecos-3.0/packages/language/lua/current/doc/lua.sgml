@@ -1,0 +1,73 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!-- =============================================================== --><!--                                                                 --><!--     httpd.sgml                                                  --><!--                                                                 --><!--     eCos HTTP Server                                            --><!--                                                                 --><!-- =============================================================== --><!-- ####ECOSDOCCOPYRIGHTBEGIN####                                   --><!-- =============================================================== --><!-- Copyright (C) 2002, 2010 Free Software Foundation, Inc.         --><!-- This material may be distributed only subject to the terms      --><!-- and conditions set forth in the Open Publication License, v1.0  --><!-- or later (the latest version is presently available at          --><!-- http://www.opencontent.org/openpub/)                            --><!-- Distribution of the work or derivative of the work in any       --><!-- standard (paper) book form is prohibited unless prior           --><!-- permission obtained from the copyright holder                   --><!-- =============================================================== --><!-- ####ECOSDOCCOPYRIGHTEND####                                     --><!-- =============================================================== --><!-- #####DESCRIPTIONBEGIN####                                       --><!--                                                                 --><!-- ####DESCRIPTIONEND####                                          --><!-- =============================================================== --><!-- This document was created with Syntext Serna Free. --><part id="net-httpd">
+  <title>Embedded Lua</title>
+  <chapter id="net-httpd-chapter">
+    <title>Embedded Lua</title>
+    <sect1 id="net-httpd-intro">
+      <title>Introduction</title>
+      <para>
+The Lua package consists of a Lua 5.2.3 port that can be called from code, but is integrated with TELNETD as a command.
+</para>
+    </sect1>
+    <sect1 id="net-httpd-organization">
+      <title>Lua Organization</title>
+      <para>
+Lua consists of a package with little configuration. TELNETD has a configuration item to enable Lua via a telnet client. From the telnet client the user can use Lua just as if it was run from a shell on a laptop. For example, one could issue the following command from the telnet prompt: <literal>lua -v</literal>, which will print the version information. If Lua is put into interactive mode, leaving interactive mode closes the telnet client.</para>
+      <para>
+Lua was modified for eCos. The main change was to support input/output to/from any stream, rather than stdin/stdout. The <literal>lua_State</literal> structure has three streams added to it:</para>
+      <programlisting>
+
+struct lua_State {
+  CommonHeader;
+  lu_byte status;
+  
+...
+
+  FILE *io_output;
+  FILE *io_input;
+  FILE *io_error;
+};
+
+
+</programlisting>
+      <para>
+The main call <literal>lua_main</literal> takes the same three parameters:</para>
+      <programlisting>
+int lua_main (
+    FILE *output, 
+    FILE *input, 
+    FILE *error, 
+    int argc, char **argv) {
+
+</programlisting>
+      <para>
+</para>
+      <para>
+The TELNETD command calls this main function with the command line parameters. The three streams are created by calling <literal>fdopen(...)</literal> on the TELNETD socket.
+</para>
+      <para>
+To use Lua from another context, such as for RS232, you can call this main function with stdin/stdout, etc.</para>
+    </sect1>
+<!-- =============================================================== -->    <sect1 id="net-httpd-configuration">
+      <title>Lua Configuration</title>
+      <para>
+There is only one Lua configuration item.</para>
+      <sect2>
+        <title>
+          <literal>CYGPKG_LUA_CFLAGS_ADD</literal>
+        </title>
+        <para>
+This option configures Lua by controller defines just as if it was compiled as a desktop application. In general, there should be no need to change this.
+</para>
+      </sect2>
+      <sect2>
+        <title>
+          <literal>CYGPKG_LUA_ROOT</literal>
+        </title>
+        <para>
+This is the root dir of Lua. The root dir is used when Lua searches for packages on the file system.
+</para>
+      </sect2>
+    </sect1>
+  </chapter>
+</part>

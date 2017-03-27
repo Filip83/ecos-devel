@@ -95,7 +95,28 @@ fseek( FILE * stream , long int offset , int whence  ) __THROW
     Cyg_ErrNo err;
     int ret = 0;
     
-    CYG_REPORT_FUNCNAME( "fgetpos" );
+    CYG_REPORT_FUNCNAME( "fseek" );
+
+    err = real_stream->set_position( (fpos_t)offset, whence );
+    
+    if( err != ENOERR )
+    {
+        errno = err;
+        ret = -1;
+    }
+    
+    CYG_REPORT_RETVAL( ret );
+    return ret;
+}
+
+externC int
+fseeko( FILE * stream , off_t offset , int whence  ) __THROW
+{
+    Cyg_StdioStream *real_stream = (Cyg_StdioStream *)stream;
+    Cyg_ErrNo err;
+    int ret = 0;
+    
+    CYG_REPORT_FUNCNAME( "fseek" );
 
     err = real_stream->set_position( (fpos_t)offset, whence );
     
@@ -116,7 +137,7 @@ fsetpos( FILE * stream , const fpos_t * pos ) __THROW
     Cyg_ErrNo err;
     int ret = 0;
     
-    CYG_REPORT_FUNCNAME( "fgetpos" );
+    CYG_REPORT_FUNCNAME( "fsetpos" );
 
     err = real_stream->set_position( *pos, SEEK_SET );
     
@@ -151,6 +172,29 @@ ftell( FILE * stream  ) __THROW
     
     CYG_REPORT_RETVAL( ret );
     return ret;
+}
+
+externC off_t
+ftello( FILE * stream  ) __THROW
+{
+    Cyg_StdioStream *real_stream = (Cyg_StdioStream *)stream;
+    Cyg_ErrNo err;
+    long int ret = 0;
+    fpos_t pos;
+    
+    CYG_REPORT_FUNCNAME( "ftell" );
+
+    err = real_stream->get_position( &pos );
+    
+    if( err != ENOERR )
+    {
+        errno = err;
+        ret = -1;
+    }
+    else ret = pos;
+    
+    CYG_REPORT_RETVAL( ret );
+    return (off_t)ret;
 }
 
 externC void

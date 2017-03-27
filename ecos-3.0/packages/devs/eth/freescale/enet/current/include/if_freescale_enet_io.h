@@ -364,6 +364,8 @@
 #define FREESCALE_ENET_ECR_SLEEP_S                     3
 #define FREESCALE_ENET_ECR_EN1588_M                    0x10
 #define FREESCALE_ENET_ECR_EN1588_S                    4
+#define FREESCALE_ENET_ECR_SPEED_M                     0x20
+#define FREESCALE_ENET_ECR_SPEED_S                     5
 #define FREESCALE_ENET_ECR_DBGEN_M                     0x40
 #define FREESCALE_ENET_ECR_DBGEN_S                     6
 #define FREESCALE_ENET_ECR_STOPEN_M                    0x80
@@ -424,6 +426,8 @@
 #define FREESCALE_ENET_RCR_BC_REJ_S                    4
 #define FREESCALE_ENET_RCR_FCE_M                       0x20
 #define FREESCALE_ENET_RCR_FCE_S                       5
+#define FREESCALE_ENET_RCR_RGMII_MODE_M                0x40
+#define FREESCALE_ENET_RCR_RGMII_MODE_S                6
 #define FREESCALE_ENET_RCR_RMII_MODE_M                 0x100
 #define FREESCALE_ENET_RCR_RMII_MODE_S                 8
 #define FREESCALE_ENET_RCR_RMII_10T_M                  0x200

@@ -1095,6 +1095,10 @@ sogetopt(so, level, optname, mp)
 			so->so_error = 0;
 			break;
 
+		case SO_CANTRCVMORE:
+			*mtod(m, int *) = so->so_state & SS_CANTRCVMORE;
+			break;
+
 		case SO_SNDBUF:
 			*mtod(m, int *) = so->so_snd.sb_hiwat;
 			break;

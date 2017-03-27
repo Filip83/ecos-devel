@@ -190,7 +190,6 @@ cdl_package CYGPKG_DEVS_ETH_FREESCALE_ENET {
                 CYGNUM_DEVS_ETH_FREESCALE_ENET_TXBUF_ALIGN
             }
         }
-
     }
 
     # END of ENET0 specific configuration options. ---------------------------
@@ -242,10 +241,10 @@ cdl_package CYGPKG_DEVS_ETH_FREESCALE_ENET {
     }
 
     cdl_component CYGSEM_DEVS_ETH_FREESCALE_ENET_PHY {
-        display "RMII or MII Phy"
+        display "RGMII, RMII, or MII Phy"
         flavor data
         default_value { "RMII" }
-        legal_values { "RMII" "MII" }
+        legal_values { "RGMII" "RMII" "MII" }
 
         cdl_option CYGOPT_DEVS_ETH_FREESCALE_ENET_PHY_RXER_USE {
             display "Enable PHY Rx Error signal"
@@ -426,7 +425,7 @@ cdl_package CYGPKG_DEVS_ETH_FREESCALE_ENET {
             }
         }
     }
-    
+
     cdl_option CYGPKG_DEVS_ETH_FREESCALE_ENET_DEBUG_LEVEL {
          display "Driver debug output level"
          flavor  data

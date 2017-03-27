@@ -1,0 +1,9 @@
+The sabre tree has code unique to the SabreSD board. It is not clear if the code
+in this tree could be moved to the var tree. This is simply a matter of taking 
+the time.
+
+Note:
+
+- Interrupts are taken from the var by include.
+- MMU code is in this tree because other boards may have different memory stuctures.
+

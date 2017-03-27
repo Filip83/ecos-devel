@@ -66,9 +66,27 @@
 //==========================================================================
 // Configuration information structure
 
+typedef enum adc_mode {
+    ADC_MODE_DIFF     = 0x00,
+    ADC_MODE_SINGLE   = 0x01
+} adc_mode;
+
+typedef enum adc_polarity {
+    ADC_POL_BIPOLAR   = 0x00,
+    ADC_POL_UNIPOLAR  = 0x01
+} adc_polarity;
+
+typedef enum adc_gain {
+    ADC_GAIN_HIGH    = 0x00,
+    ADC_GAIN_LOW     = 0x01
+} adc_gain;
+
 typedef struct
 {
-    cyg_uint32          rate;           // Sample rate
+    cyg_uint32          rate;           // Sample rate         
+    adc_gain            gain;           // Part specific gain
+    adc_polarity        polarity;       // Part specific polarity
+    adc_mode            mode;           // Part specific mode
 } cyg_adc_info_t;
 
 //==========================================================================
@@ -142,10 +160,7 @@ cyg_adc_device __name =                                         \
 struct  cyg_adc_channel
 {
     int                 channel;        // Channel number
-#if 1
-    int                 nchannel;       // Negative chanell
-    int                 gain;           // Chanel gain
-#endif
+    
     cyg_adc_sample_t    *buf;           // Sample data buffer
     int                 len;            // Buffer length in samples
     volatile int        put;            // Sample insert index
@@ -193,14 +208,20 @@ struct cyg_adc_functions
     void (*disable)( cyg_adc_channel *chan );
 
     void (*set_rate)( cyg_adc_channel *chan, cyg_uint32 rate );
+    void (*set_gain)( cyg_adc_channel *chan, cyg_uint32 gain );
+    void (*set_polarity)( cyg_adc_channel *chan, cyg_uint32 polarity );
+    void (*set_mode)( cyg_adc_channel *chan, cyg_uint32 mode );
 };
 
-#define CYG_ADC_FUNCTIONS( __name, __enable, __disable, __set_rate )    \
+#define CYG_ADC_FUNCTIONS( __name, __enable, __disable, __set_rate, __set_gain, __set_polarity, __set_mode )    \
 cyg_adc_functions __name =                                              \
 {                                                                       \
     .enable             = __enable,                                     \
     .disable            = __disable,                                    \
-    .set_rate           = __set_rate                                    \
+    .set_rate           = __set_rate,                                   \
+    .set_gain           = __set_gain,                                   \
+    .set_polarity       = __set_polarity,                               \
+    .set_mode           = __set_mode                                    \
 };
 
 //==========================================================================

@@ -59,6 +59,12 @@ cdl_package CYGPKG_HAL_OPENRISC {
         for this processor architecture. It is also necessary to
         select a specific target platform HAL package."
 
+# For now, there are no defined variants of the OpenRISC
+#    cdl_interface CYGINT_HAL_OPENRISC_VARIANT {
+#        display  "Number of variant implementations in this configuration"
+#        requires 1 == CYGINT_HAL_OPENRISC_VARIANT
+#    }
+
     compile       context.S vectors.S hal_misc.c openrisc_stub.c
 
     make {
@@ -90,6 +96,17 @@ cdl_package CYGPKG_HAL_OPENRISC {
         @rm target.tmp
     }
 
+    cdl_option CYGHWR_HAL_OPENRISC_CPU_FREQ {
+        display "CPU frequency"
+        flavor  data
+        legal_values 0 to 1000000
+        default_value 104
+        description "
+           This option contains the frequency of the CPU in MegaHertz.
+           Choose the frequency to match the processor you have. This
+           may affect thing like serial device, interval clock and
+           memory access speed settings."
+    }
 }
 
 # EOF hal_openrisc.cdl

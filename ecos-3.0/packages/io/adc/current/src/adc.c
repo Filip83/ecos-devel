@@ -252,6 +252,18 @@ static Cyg_ErrNo adc_get_config(cyg_io_handle_t handle, cyg_uint32 key, void *xb
         *buf = chan->device->config;
         break;
 
+    case CYG_IO_GET_CONFIG_ADC_GAIN:
+        *buf = chan->device->config;
+        break;
+
+    case CYG_IO_GET_CONFIG_ADC_POLARITY:
+        *buf = chan->device->config;
+        break;
+
+    case CYG_IO_GET_CONFIG_ADC_MODE:
+        *buf = chan->device->config;
+        break;
+
     case CYG_IO_GET_CONFIG_READ_BLOCKING:
         if (*len < sizeof(cyg_uint32))
             return -EINVAL;
@@ -286,6 +298,21 @@ static Cyg_ErrNo adc_set_config(cyg_io_handle_t handle, cyg_uint32 key, const vo
     case CYG_IO_SET_CONFIG_ADC_RATE:
         chan->device->config = *buf;
         chan->device->funs->set_rate( chan, buf->rate );
+        break;
+
+    case CYG_IO_SET_CONFIG_ADC_GAIN:
+        chan->device->config = *buf;
+        chan->device->funs->set_gain( chan, buf->gain );
+        break;
+
+    case CYG_IO_SET_CONFIG_ADC_POLARITY:
+        chan->device->config = *buf;
+        chan->device->funs->set_polarity( chan, buf->polarity );
+        break;
+
+    case CYG_IO_SET_CONFIG_ADC_MODE:
+        chan->device->config = *buf;
+        chan->device->funs->set_mode( chan, buf->mode );
         break;
 
     case CYG_IO_SET_CONFIG_ADC_ENABLE:

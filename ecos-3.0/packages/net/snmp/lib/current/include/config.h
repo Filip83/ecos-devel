@@ -1246,7 +1246,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <sys/types.h>
 
 
-#include <system.h>
+#include <ucd-snmp/system.h>
 
 #include <network.h>
 

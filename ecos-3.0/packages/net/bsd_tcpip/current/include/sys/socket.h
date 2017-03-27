@@ -102,6 +102,7 @@
 #define	SO_ERROR	0x1007		/* get error status and clear */
 #define	SO_TYPE		0x1008		/* get socket type */
 /*efine	SO_PRIVSTATE	0x1009		   get/deny privileged state */
+#define	SO_CANTRCVMORE	0x1800		/* get SS_CANTRCVMORE state */
 
 /*
  * Structure used for manipulating linger option.

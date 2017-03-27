@@ -1,0 +1,42 @@
+// eCos memory layout - Wed Jun 27 18:44:55 2012
+//
+// =============================================================================
+#include <cyg/infra/cyg_type.inc>
+
+MEMORY
+{
+    rom (rx) : ORIGIN = 0x00000000, LENGTH = 96K
+    ocram (rwx) : ORIGIN = 0x00900000, LENGTH = 128K
+    ddr (rwx) : ORIGIN = 0x10000000, LENGTH = 1024M
+}
+
+// Missing sections for boot from SD
+// OCRAM L1 Page table
+// OCRAM Heap
+// DDR  Ram vectors
+// DDR  IVT
+// DDR  Boot data
+// DDR  DCD
+
+SECTIONS
+{
+    SECTIONS_BEGIN
+// DDR Boot definitions here
+    SECTION_rom_vectors (ddr, 0x10000000, LMA_EQ_VMA)
+
+    SECTION_RELOCS (ddr, ALIGN (0x1), LMA_EQ_VMA)
+    SECTION_text (ddr, ALIGN (0x4), LMA_EQ_VMA)
+    SECTION_fini (ddr, ALIGN (0x4), LMA_EQ_VMA)
+    SECTION_rodata (ddr, ALIGN (0x4), LMA_EQ_VMA)
+    SECTION_rodata1 (ddr, ALIGN (0x4), LMA_EQ_VMA)
+    SECTION_got (ddr, ALIGN (0x4), LMA_EQ_VMA)
+    SECTION_fixup (ddr, ALIGN (0x4), LMA_EQ_VMA)
+    SECTION_gcc_except_table (ddr, ALIGN (0x4), LMA_EQ_VMA)
+    SECTION_data (ddr, ALIGN (0x4), FOLLOWING (.gcc_except_table))
+    SECTION_mmu_tables (ddr, ALIGN (0x4000), LMA_EQ_VMA)
+    SECTION_bss (ddr, ALIGN (0x4), LMA_EQ_VMA)
+    CYG_LABEL_DEFN(__heap1) = ALIGN (0x8);
+// OCRAM definitions here
+    SECTION_fixed_vectors (ocram, 0x0091FFB8, LMA_EQ_VMA)
+    SECTIONS_END
+}

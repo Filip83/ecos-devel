@@ -1,0 +1,252 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!-- =============================================================== --><!--                                                                 --><!--     httpd.sgml                                                  --><!--                                                                 --><!--     eCos HTTP Server                                            --><!--                                                                 --><!-- =============================================================== --><!-- ####ECOSDOCCOPYRIGHTBEGIN####                                   --><!-- =============================================================== --><!-- Copyright (C) 2002, 2010 Free Software Foundation, Inc.         --><!-- This material may be distributed only subject to the terms      --><!-- and conditions set forth in the Open Publication License, v1.0  --><!-- or later (the latest version is presently available at          --><!-- http://www.opencontent.org/openpub/)                            --><!-- Distribution of the work or derivative of the work in any       --><!-- standard (paper) book form is prohibited unless prior           --><!-- permission obtained from the copyright holder                   --><!-- =============================================================== --><!-- ####ECOSDOCCOPYRIGHTEND####                                     --><!-- =============================================================== --><!-- #####DESCRIPTIONBEGIN####                                       --><!--                                                                 --><!-- ####DESCRIPTIONEND####                                          --><!-- =============================================================== --><!-- This document was created with Syntext Serna Free. --><part id="net-httpd">
+  <title>Embedded TELNET Server</title>
+  <chapter id="net-httpd-chapter">
+    <title>Embedded TELNET Server</title>
+    <sect1 id="net-httpd-intro">
+      <title>Introduction</title>
+      <para>
+The <emphasis>eCos</emphasis> TELNETD package provides a simple TELNET
+server for use with applications in eCos. This server is specifically
+aimed at the remote control and monitoring requirements of embedded
+applications. For this reason the emphasis is on application added commands. It is
+<emphasis>not</emphasis> intended to be a general purpose shell.
+</para>
+    </sect1>
+    <sect1 id="net-httpd-organization">
+      <title>Server Organization</title>
+      <para>
+The server consists of one or more threads running in parallel to any
+application threads and which support telnet sessions to clients. Apart from
+supporting commands, the application does not need to do anything to
+start the TELNET server.
+</para>
+      <para>
+The TELNET server is, by default, started by a static constructor. This
+simply creates an initial thread and sets it running. Since this is
+called before the scheduler is started, nothing will happen until the
+application calls <function>cyg_scheduler_start()</function>. The
+server thread can also be started explicitly by the application, see
+the <literal>CYGNUM_TELNETD_SERVER_AUTO_START</literal> option for
+details.
+</para>
+      <para>
+When the thread gets to run it first optionally delays for some period
+of time. This is to allow the application to perform any
+initialization free of any interference from the TELNET server. When the
+thread does finally run it creates a socket, binds it to the TELNET
+server port, and puts it into listen mode. It will then create any
+additional TELNETD server threads that have been configured before
+becoming a server thread itself.
+</para>
+      <para>
+Each TELNETD server thread simply waits for a connection to be made to
+the server port. When the connection is made it opens a socket, negotiates operation parameters, and enters a state machine for processing commands. The server will ask the client to use LINEMODE if supported by the client,  will process SLC and MODE commands, but will ignore their contents.</para>
+      <para>The TELNETD server also starts one monitor thread per server thread. Each monitor thread watches for a client abort and cleans up. Clean up includes killing the command thread and recreating it. To prevent side effects, the TELNETD server supports using one instance of dlmalloc per thread and passing the object to the command. In addition, to prevent deadlocks, the monitor thread will unlock the stream associated with the FILE *, attempting to minimiz the  side effects on other threads that may be accessing the lock.</para>
+      <para>
+Commands are stored in tables. Each table entry contains a command pattern string, a
+pointer to a handler function, and a user defined argument for the
+function. Table entries are defined using the same link-time table
+building mechanism used to generate device tables. This is all handled
+by the <literal>CYG_TELNETD_TABLE_ENTRY()</literal> macro which has the
+following format:
+</para>
+      <programlisting>
+
+#include &lt;cyg/telnetd/telnetd.h&gt;
+
+CYG_TELNETD_TABLE_ENTRY( __name, __pattern, __handler, __arg )
+
+</programlisting>
+      <para>
+The <parameter>__name</parameter> argument is a variable name for the
+table entry since C does not allow us to define anonymous data
+structures. This name should be chosen so that it is unique and does
+not pollute the name space. The <parameter>__pattern</parameter>
+argument is the match pattern. The <parameter>__handler</parameter>
+argument is a pointer to the handler function and
+<parameter>__arg</parameter> the user defined value.
+</para>
+      <para>
+The link-time table building means that several different pieces of
+code can define server table entries, and so long as the patterns do
+not clash they can be totally oblivious of each other. However, note
+also that this mechanism does not guarantee the order in which entries
+appear, this depends on the order of object files in the link, which
+could vary from one build to the next. So any tricky pattern matching
+that relies on this may not always work.
+</para>
+      <para>
+A request command matches an entry in the table if either it exactly
+matches the pattern string, or if the pattern ends in an asterisk, and
+it matches everything up to that point. So for example the pattern
+&quot;echo&quot; will only match that exact command,
+but the pattern &quot;echo*&quot; will match
+&quot;echo-1&quot;,
+&quot;echo-2&quot; and any other command starting
+with &quot;echo&quot;.
+</para>
+      <para>
+When a pattern is matched, the hander function is called. It has the
+following prototype:
+</para>
+      <programlisting>
+cyg_bool cyg_telnetd_handler(FILE *client,
+                           char *command,
+                           int argc,
+                           int *argv[],
+                           void *arg,
+                           void *user_data);
+</programlisting>
+      <para>
+The <parameter>client</parameter> argument is the TCP connection to
+the client: anything output through this stream will be returned to
+the client. The <parameter>command</parameter> argument is the
+command from the TELNET request and the <parameter>argc/argv</parameter>
+arguments are the parsed arguments from the command. The
+<parameter>arg</parameter> argument is the user defined value from the
+table entry. The <literal>user_data</literal> argument is passed a NULL or a pointer to a <literal>Cyg_Mempool_dlmalloc</literal>.
+</para>
+      <para>
+The handler is entirely responsible for generating the response to the
+client, both command response and &lt;CR&gt;/&lt;NL&gt;. If the handler decides that it
+does not want to generate a response it can return
+<literal>false</literal>, in which case the table scan is resumed for
+another match. If no match is found, or no handler returns true, then
+a default response is generated indicating that the requested
+command was not found.
+</para>
+      <programlisting>
+cyg_bool cyg_telnetd_send_response(FILE *client,
+                           char *response);
+</programlisting>
+      <para>
+A send response command
+aids the return of command data. Application code calling this function must be aware of whether the underlying network stack copies the response or holds a pointer to the response to ensure memory is not freed before the network stack is done sending the data. The send response function is responsible for appending any &lt;CR&gt;&lt;NL&gt; so that maintainers can ensure proper behavior for the negotiated settings.</para>
+      <para>
+Finally, the server thread closes the connection when the client sends a quit command or closes the session.
+</para>
+    </sect1>
+<!-- =============================================================== -->    <sect1 id="net-httpd-configuration">
+      <title>Server Configuration</title>
+      <para>
+The TELNET server has a number of configuration options:
+</para>
+      <sect2>
+        <title>
+          <literal>CYGNUM_TELNETD_SERVER_PORT</literal>
+        </title>
+        <para>
+This option defines the TCP port that the server will listen on. It
+defaults to the standard TELNET port number 23. It may be changed to a
+different number if, for example, another TELNET server is using the
+main TELNET port.
+</para>
+      </sect2>
+      <sect2>
+        <title>
+          <literal>CYGNUM_TELNETD_THREAD_COUNT</literal>
+        </title>
+        <para>
+The TELNET server can be configured to use more than one thread to
+service TELNET sessions. If you expect to serve multiple clients, then it may be useful to increase
+the number of server threads.</para>
+      </sect2>
+      <sect2>
+        <title>
+          <literal>CYGNUM_TELNETD_THREAD_PRIORITY</literal>
+        </title>
+        <para>
+The TELNET server threads can be run at any priority. The exact priority
+depends on the importance of the server relative to the rest of the
+system. The default is to put them in the middle of the priority range
+to provide reasonable response without impacting genuine high priority
+threads.
+</para>
+      </sect2>
+      <sect2>
+        <title>
+          <literal>CYGNUM_TELNETD_THREAD_STACK_SIZE</literal>
+        </title>
+        <para>
+This is the amount of stack to be allocated for each of the TELNETD
+threads. The actual stack size allocated will be this value plus the
+values of <literal>CYGNUM_HAL_STACK_SIZE_MINIMUM</literal> and
+<literal>CYGNUM_TELNETD_SERVER_BUFFER_SIZE</literal>.
+</para>
+      </sect2>
+      <sect2>
+        <title>
+          <literal>CYGNUM_TELNETD_SERVER_BUFFER_SIZE</literal>
+        </title>
+        <para>
+This defines the size of the buffer used to receive the  TELNET request. If you expect to use particularly long commands or have
+a lot of command parameters, this should be increased.
+</para>
+      </sect2>
+      <sect2>
+        <title>
+          <literal>CYGNUM_TELNETD_SERVER_AUTO_START</literal>
+        </title>
+        <para>
+This option causes the TELNET Daemon to be started automatically during
+system initialization. If this option is not set then the application
+must start the daemon explicitly by calling
+<function>cyg_telnetd_startup()</function>. This option is set by
+default.
+</para>
+      </sect2>
+      <sect2>
+        <title>
+          <literal>CYGNUM_TELNETD_SERVER_DELAY</literal>
+        </title>
+        <para>
+This defines the number of system clock ticks that the TELNET server
+will wait before initializing itself and spawning any extra server
+threads. This is to give the application a chance to initialize
+properly without any interference from the TELNETD.
+</para>
+      </sect2>
+      <sect2>
+        <title>
+          <literal>CYGNUM_TELNETD_COMMAND_ECHO</literal>
+        </title>
+        <para>
+This enables an ECHO command for debugging.
+</para>
+      </sect2>
+      <sect2>
+        <title>
+          <literal>CYGNUM_TELNETD_COMMAND_SH</literal>
+        </title>
+        <para>
+This enables Shell commands.
+</para>
+      </sect2>
+      <sect2>
+        <title>
+          <literal>CYGNUM_TELNETD_COMMAND_LUA</literal>
+        </title>
+        <para>
+This enables the Lua command.
+</para>
+      </sect2>
+      <sect2>
+        <title>
+          <literal>CYGPKG_TELNETD_COMMAND_DLMALLOC</literal>
+        </title>
+        <para>
+This enables dlmalloc.
+</para>
+      </sect2>
+      <sect2>
+        <title>
+          <literal>CYGPKG_TELNETD_COMMAND_DLMALLOC_SIZE</literal>
+        </title>
+        <para>
+This sets the size of the memory pool for dlmalloc. There is on pool per thread, so the total memory is the number of threads times this value
+</para>
+      </sect2>
+    </sect1>
+  </chapter>
+</part>

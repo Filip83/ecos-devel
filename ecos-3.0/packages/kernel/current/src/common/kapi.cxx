@@ -120,6 +120,11 @@ externC void cyg_scheduler_lock(void) __THROW
                 "Scheduler overlocked" );
 }
 
+externC void cyg_scheduler_trylock(void) __THROW
+{
+    Cyg_Scheduler::trylock();
+}
+
 /* Lock the scheduler, but never more than level=1. */
 externC void cyg_scheduler_safe_lock(void) __THROW
 {
@@ -148,6 +153,14 @@ externC cyg_ucount32 cyg_scheduler_read_lock(void) __THROW
     cyg_ucount32 slock = Cyg_Scheduler::get_sched_lock();
     return slock;
 }
+
+/* Read the scheduler lock holder. */
+externC cyg_uint32 cyg_scheduler_read_lock_holder(void)
+{
+	cyg_uint32 holder = Cyg_Scheduler::get_sched_lock_holder();
+	return holder;
+}
+
 
 /*---------------------------------------------------------------------------*/
 /* Thread operations */
@@ -1245,8 +1258,10 @@ Cyg_Check_Structure_Sizes::Cyg_Check_Structure_Sizes(int x) __THROW
     CYG_CHECK_SIZES( cyg_flag_t, Cyg_Flag );
     CYG_CHECK_SIZES( cyg_mutex_t, Cyg_Mutex );
     CYG_CHECK_SIZES( cyg_cond_t, Cyg_Condition_Variable );
+#if !defined(CYGINT_HAL_ARM_ARCH_ARM_MULTICORE)
+    // The ARM spinlock is not a simple value that this can handle.
     CYG_CHECK_SIZES( cyg_spinlock_t, Cyg_SpinLock );
-    
+#endif
     CYG_ASSERT( !fail, "Size checks failed");
 }
 

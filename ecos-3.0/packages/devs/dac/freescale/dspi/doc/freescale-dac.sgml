@@ -1,0 +1,170 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!-- DOCTYPE part  PUBLIC "-//OASIS//DTD DocBook V4.5//EN" --><!-- {{{ Banner                         --><!-- =============================================================== --><!--                                                                 --><!--     adc.sgml                                                    --><!--                                                                 --><!--     Generic ADC documentation.                                  --><!--                                                                 --><!-- =============================================================== --><!-- ####ECOSDOCCOPYRIGHTBEGIN####                                   --><!-- =============================================================== --><!-- Copyright (C) 2008 Free Software Foundation, Inc.               --><!-- This material may be distributed only subject to the terms      --><!-- and conditions set forth in the Open Publication License, v1.0  --><!-- or later (the latest version is presently available at          --><!-- http://www.opencontent.org/openpub/)                            --><!-- Distribution of the work or derivative of the work in any       --><!-- standard (paper) book form is prohibited unless prior           --><!-- permission obtained from the copyright holder                   --><!-- =============================================================== --><!-- ####ECOSDOCCOPYRIGHTEND####                                     --><!-- =============================================================== --><!-- #####DESCRIPTIONBEGIN####                                       --><!--                                                                 --><!-- Author(s):   nickg                                              --><!-- Date:        2008/05/12                                         --><!--                                                                 --><!-- ####DESCRIPTIONEND####                                          --><!-- =============================================================== --><!-- }}} --><!-- This document was created with Syntext Serna Free. --><part id="io-adc">
+  <title>TWR-ADCDAC-LTC DAC Support</title>
+  <refentry id="adc">
+    <refmeta>
+      <refentrytitle>Overview</refentrytitle>
+    </refmeta>
+    <refnamediv>
+      <refname>Overview</refname>
+      <refpurpose>eCos Support for Freescale TWR-ADCDAC-LTC Digital to Analog Converters.</refpurpose>
+    </refnamediv>
+    <refsect1 id="adc-intro">
+      <title>Introduction</title>
+      <para>DAC support for the TWR-ADCDAC-LTC Freescale Tower module is based on the standard eCos DAC support IO device. The eCos DAC support enables outputting of data on multiple channels at a constant clock rate. The eCos driver buffers data, so that an application can deliver the data asynchronously from output.</para>
+      <para>TWR-ADCDAC-LTC DAC is supported for the TWR-K70F120M platform. The driver uses the (Programmable Delay Block) PDB and Flexibile Timing Module (FTM) of the K70 to control the output rate. Both peripherals issue an interrupt on a regular interval, whereupon the ISR/DSR function reads data from the buffer and sends output via the SPI bus. No attempt was made to ensure other drivers using the PDB or FTM don&apos;t interfere with operation.</para>
+      <para>The TWR-ADCDAC-LTC module contains two DACs: LTC2600 and LTC2704. The LTC2600 is a 16 bit DAC with 8 channels of output. The LTC2704 is a 16 bit DAC with 4 channels of output, bipolar/unipolar support, and 4 ranges.</para>
+      <para>The Chip Select (CS) of the SPI bus cannot directly control the two DACs. The CS operates through a GPIO controlled MUX. Therefore, the driver must make a MUX selection using GPIO7-GPIO9 before sampling the data. The GPIO lines are set inside the SPI transaction to prevent interactions between ISR/DSR SPI transactions.</para>
+    </refsect1>
+    <refsect1>
+      <title>Configuration</title>
+      <para>The default configuration of the TWR-K70F20M will not work with this driver. Proper jumper settings are shown in Table 1.</para>
+      <table>
+        <title>Jumper Settings</title>
+        <tgroup cols="jumpers">
+          <colspec/>
+          <colspec/>
+          <colspec/>
+          <thead>
+            <row>
+              <entry>Jumper</entry>
+              <entry>Setting</entry>
+              <entry>Note</entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry>J14</entry>
+              <entry>1-2</entry>
+              <entry>HIGH</entry>
+            </row>
+            <row>
+              <entry>J15, J16</entry>
+              <entry>OPEN</entry>
+              <entry>GPIO7, GPIO8</entry>
+            </row>
+            <row>
+              <entry>J9</entry>
+              <entry>1-2</entry>
+              <entry>SPI0_CLK</entry>
+            </row>
+            <row>
+              <entry>J10</entry>
+              <entry>2-3</entry>
+              <entry>SPI0_CS1</entry>
+            </row>
+            <row>
+              <entry>J11</entry>
+              <entry>OPEN</entry>
+              <entry>N/A</entry>
+            </row>
+            <row>
+              <entry>J12</entry>
+              <entry>1-2</entry>
+              <entry>SPI0_MOSI</entry>
+            </row>
+            <row>
+              <entry>J13</entry>
+              <entry>1-2</entry>
+              <entry>SPI0_MISO</entry>
+            </row>
+            <row>
+              <entry>J25</entry>
+              <entry>1-2</entry>
+              <entry>SPI_CS0</entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </table>
+    </refsect1>
+    <refsect1 id="adc-config">
+      <title>Configuration</title>
+      <para>
+The TWR-ADCDAC-LTC driver defines a number of generic configuration options:
+</para>
+      <variablelist>
+        <varlistentry>
+          <term>cdl_component CYGPKG_DEVS_DAC_SPI_LTCxxxx</term>
+          <listitem>
+            <para>
+This option enables the hardware device driver. DAC devices will only be enabled if this option is itself
+enabled.
+</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>cdl_option CYGHWR_DEVS_DAC_SPI_LTCxxxx_DEVICE</term>
+          <listitem>
+            <para>
+This option defines the number of DAC devices.
+</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>cdl_option CYGPKG_DEVS_DAC_LTCxxxx_TRACE</term>
+          <listitem>
+            <para>
+
+This option enables code tracing.
+</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>cdl_option CYGHWR_DEVS_DAC_LTCxxxx_DACn</term>
+          <listitem>
+            <para>This option enables an DAC of this type.</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>cdl_option CYGINT_DEVS_DAC_LTCxxxx_DACn_CHANNELS</term>
+          <listitem>
+            <para>This option defines the number of channels</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>cdl_option CYGNUM_DEVS_DAC_LTCxxxx_DACn_DEFAULT_RATE</term>
+          <listitem>
+            <para>This option defines the default sample rate.</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>cdl_option CYGNUM_DEVS_DAC_LTCxxxx_DACn_TMR</term>
+          <listitem>
+            <para>This option sets the timer choice. Valid options are 0-2. 0 and 1 are FTM modules. 2 is the PDB module. Settings among DAC must be unique, otherwise settings may interact. If settings are always the same for both DAC, they may share the timer.</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>cdl_option CYGNUM_DEVS_DAC_LTCxxxx_DACn_TMR_INT_PRI</term>
+          <listitem>
+            <para>This option sets the interrupt priority of the timer.</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>cdl_option CYGHWR_DEVS_DAC_LTCxxxx_DACn_CHANNEL[n]</term>
+          <listitem>
+            <para>This option enables a channel.</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>cdl_option CYGDAT_DEVS_DAC_LTCxxxx_DACn_CHANNEL[n]_NAME</term>
+          <listitem>
+            <para>This option defines the name of the device for a channel.</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>cdl_option CYGDAT_DEVS_DAC_LTCxxxx_DACn_CHANNEL[n]_BUFSIZE</term>
+          <listitem>
+            <para>This option defines the size of the data buffer.</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>cdl_option CYGPKG_DEVS_DAC_SPI_LTCxxxx_TESTS</term>
+          <listitem>
+            <para>This option enables compilation of built in tests. (Not implemented)</para>
+          </listitem>
+        </varlistentry>
+      </variablelist>
+      <para>There are various settings for the SPI device which are similar to other drivers. These settings control the clock rate and delays. Note that due to an RC time constant on the MISO line on the TWR-ADCDAC-LTC board the default SPI clock rate is 2Mhz. To reliably clock fast with this Tower Board requires removing the capacitor.</para>
+    </refsect1>
+  </refentry>
+</part>

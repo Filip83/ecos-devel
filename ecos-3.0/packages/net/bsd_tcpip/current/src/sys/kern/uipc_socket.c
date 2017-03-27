@@ -1330,6 +1330,10 @@ integer:
 			so->so_error = 0;
 			goto integer;
 
+		case SO_CANTRCVMORE:
+			optval = so->so_state & SS_CANTRCVMORE;
+			goto integer;
+
 		case SO_SNDBUF:
 			optval = so->so_snd.sb_hiwat;
 			goto integer;

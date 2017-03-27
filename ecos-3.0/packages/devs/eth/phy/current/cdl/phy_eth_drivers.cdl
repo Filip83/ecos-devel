@@ -195,4 +195,13 @@ cdl_package CYGPKG_DEVS_ETH_PHY {
           Include support for Vitesse VSC8244"
     }
 
+    cdl_option CYGHWR_DEVS_ETH_PHY_AR8031 {
+        display       "Qualcomm AR8031"
+        flavor        bool
+        default_value 0
+        compile       -library=libextras.a AR8031.c
+        description "
+          Include support for the Qualcomm AR8031 PHY"
+    }
+
 }

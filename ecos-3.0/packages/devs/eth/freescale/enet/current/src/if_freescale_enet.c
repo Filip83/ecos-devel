@@ -6,7 +6,7 @@
 // ####ECOSGPLCOPYRIGHTBEGIN####                                            
 // -------------------------------------------                              
 // This file is part of eCos, the Embedded Configurable Operating System.   
-// Copyright (C) 2011 Free Software Foundation, Inc.                        
+// Copyright (C) 2011, 2013 Free Software Foundation, Inc.                        
 //
 // eCos is free software; you can redistribute it and/or modify it under    
 // the terms of the GNU General Public License as published by the Free     
@@ -38,7 +38,7 @@
 //#####DESCRIPTIONBEGIN####
 //
 // Author(s):    Ilija Kocho <ilijak@siva.com.mk>
-// Contributors:
+// Contributors: Mike Jones <mike@proclivis.com>
 // Date:         2011-06-04
 // Description:  Hardware driver for Freescale ENET peripheral
 //
@@ -84,6 +84,13 @@
 #include <cyg/io/eth/if_freescale_enet_bd.h>
 #include <cyg/io/eth/if_freescale_enet_io.h>
 
+#ifdef CYGSEM_DEVS_ETH_FREESCALE_ENET_INCLUDE
+#include CYGSEM_DEVS_ETH_FREESCALE_ENET_INCLUDE
+#endif
+
+#if defined CYGHWR_HAL_ENET_TCD_SECTION || defined CYGHWR_HAL_ENET_BUF_SECTION
+# include <cyg/infra/cyg_type.h>
+#endif
 // Some debugging helpers ---------------------------------------------------
 
 #define DEBUG_ENET CYGPKG_DEVS_ETH_FREESCALE_ENET_DEBUG_LEVEL
@@ -142,13 +149,27 @@
 // Resources provided by HAL ==============================================
 // Ethernet RAM and DMA configuration --------------------------------------
 
-#ifdef CYGHWR_HAL_ENET_MEM_SECTION
-# include <cyg/infra/cyg_type.h>
-# define ENET_RAM_MEM_SECTION CYGBLD_ATTRIB_SECTION(CYGHWR_HAL_ENET_MEM_SECTION)
+// Buffer descriptor memory section
+#ifdef CYGHWR_HAL_ENET_TCD_SECTION
+# define ENET_RAM_TCD_SECTION CYGBLD_ATTRIB_SECTION(CYGHWR_HAL_ENET_TCD_SECTION)
 #else
-# define ENET_RAM_MEM_SECTION
-#endif // CYGHWR_HAL_ENET_MEM_SECTION
+# define ENET_RAM_TCD_SECTION
+#endif // CYGHWR_HAL_ENET_TCD_SECTION
 
+// Buffer memory section
+#ifdef CYGHWR_HAL_ENET_BUF_SECTION
+# define ENET_RAM_BUF_SECTION CYGBLD_ATTRIB_SECTION(CYGHWR_HAL_ENET_BUF_SECTION)
+#else
+# define ENET_RAM_BUF_SECTION
+#endif // CYGHWR_HAL_ENET_BUF_SECTION
+
+#ifndef CYGHWR_IO_PHY_RESET
+#define CYGHWR_IO_PHY_RESET(x)
+#endif
+
+#ifndef CYGHWR_IO_PHY_INIT
+#define CYGHWR_IO_PHY_INIT(x)
+#endif
 
 // IRQ masking --------------------------------------------------------------
 //
@@ -310,6 +331,7 @@ typedef struct freescale_enet_priv_t {
     cyg_uint32 *txkey_head_p;             // Last Txkey entry
     cyg_uint32 *txkey_tail_p;             // Last Txkey released
 #endif // CYGOPT_ETH_FREESCALE_ENET_TX_NOCOPY
+    cyg_uint32 clock;                     // Clock gating
     const cyg_uint32 *pins_p;             // (R)MII pin configuration data
     cyg_uint8 *enaddr;                    // Default ethernet (MAC) address
     cyg_uint32 rx_intr_vector;
@@ -371,9 +393,18 @@ static const cyg_uint32 const enet0_pins[] = {
     CYGHWR_IO_FREESCALE_ENET0_PIN_MII0_TXD2,
     CYGHWR_IO_FREESCALE_ENET0_PIN_MII0_TXCLK,
     CYGHWR_IO_FREESCALE_ENET0_PIN_MII0_TXD3,
+#ifdef CYGSEM_DEVS_ETH_FREESCALE_ENET_PHY_RGMII
+    CYGHWR_IO_FREESCALE_ENET0_PIN_RX_CTL,
+    CYGHWR_IO_FREESCALE_ENET0_PIN_TX_CTL,
+    CYGHWR_IO_FREESCALE_ENET0_PIN_RGMII_NRST,
+    CYGHWR_IO_FREESCALE_ENET0_PIN_RGMII_INT,
+    CYGHWR_IO_FREESCALE_ENET0_PIN_WOL_INT,
+    CYGHWR_IO_FREESCALE_ENET0_PIN_REF_CLK,
+#else
     CYGHWR_IO_FREESCALE_ENET0_PIN_MII0_CRS,
-    CYGHWR_IO_FREESCALE_ENET0_PIN_MIIO_TXER,
+    CYGHWR_IO_FREESCALE_ENET0_PIN_MII0_TXER,
     CYGHWR_IO_FREESCALE_ENET0_PIN_MII0_COL
+#endif
 #endif
 #ifdef CYGSEM_DEVS_ETH_FREESCALE_ENET_1588
     ,
@@ -396,24 +427,24 @@ static const cyg_uint32 const enet0_pins[] = {
 
 // Buffer descriptors
 enet_bd_t enet0_rxbd_pool[CYGNUM_DEVS_ETH_FREESCALE_ENET0_RX_BUFS]
-ENET_RAM_MEM_SECTION ENET_RXBD_ALIGN;
+ENET_RAM_TCD_SECTION ENET_RXBD_ALIGN;
 enet_bd_t enet0_txbd_pool[CYGNUM_DEVS_ETH_FREESCALE_ENET0_TX_BUFS]
-                         ENET_RAM_MEM_SECTION ENET_TXBD_ALIGN;
+                         ENET_RAM_TCD_SECTION ENET_TXBD_ALIGN;
 
 #ifdef CYGOPT_ETH_FREESCALE_ENET_TX_NOCOPY
 // Tx key queue
 cyg_uint32 enet0_txkey_pool[CYGNUM_DEVS_ETH_FREESCALE_ENET0_TX_BUFS]
-                         ENET_RAM_MEM_SECTION;
+                         ENET_RAM_TCD_SECTION;
 #endif // CYGOPT_ETH_FREESCALE_ENET_TX_NOCOPY
 
 // Buffers
 cyg_uint8 enet0_rxbuf[CYGNUM_DEVS_ETH_FREESCALE_ENET0_RX_BUFS *
                       CYGNUM_DEVS_ETH_FREESCALE_ENET0_RXBUF_SIZE]
-                      ENET_RAM_MEM_SECTION ENET_RXBUF_ALIGN;
+                      ENET_RXBUF_ALIGN ENET_RAM_BUF_SECTION;
 #ifndef CYGOPT_ETH_FREESCALE_ENET_TX_NOCOPY
 cyg_uint8 enet0_txbuf[CYGNUM_DEVS_ETH_FREESCALE_ENET0_TX_BUFS *
                       CYGNUM_DEVS_ETH_FREESCALE_ENET0_TXBUF_SIZE]
-                      ENET_RAM_MEM_SECTION ENET_TXBUF_ALIGN;
+                      ENET_TXBUF_ALIGN ENET_RAM_BUF_SECTION;
 #endif //  CYGOPT_ETH_FREESCALE_ENET_TX_NOCOPY
 
 #ifdef  CYGOPT_ETH_FREESCALE_ENET_TX_NOCOPY
@@ -465,6 +496,7 @@ freescale_enet_priv_t enet0_eth0_priv = {
     .txbuf_size   = CYGNUM_DEVS_ETH_FREESCALE_ENET0_TXBUF_SIZE,
     .txbuf_p      = enet0_txbuf,
 #endif //  CYGOPT_ETH_FREESCALE_ENET_TX_NOCOPY
+    .clock       = CYGHWR_IO_FREESCALE_ENET0_CLOCK,
     .pins_p      = enet0_pins,
     .pins_n      = sizeof(enet0_pins)/sizeof(enet0_pins[0]),
     .enaddr   = enet0_macaddr,
@@ -734,7 +766,12 @@ enet_eth_init(struct cyg_netdevtab_entry *tab)
 #ifdef CYGHWR_DEVS_ETH_FREESCALE_ENET_GET_ESA
     bool esa_ok = false;
 #endif
+    // Bring clock to the sevice
+    CYGHWR_IO_CLOCK_ENABLE(enet_priv_p->clock);
+    // Assign pins
     enet_cfg_pins(enet_priv_p);
+    // Reset PHY
+    CYGHWR_IO_PHY_RESET(enet_priv_p->phy_p);
 
     HAL_WRITE_UINT32(enet_base + FREESCALE_ENET_REG_EIMR, 0);
     HAL_WRITE_UINT32(enet_base + FREESCALE_ENET_REG_EIR, 0xFFFFFFFF);
@@ -790,8 +827,110 @@ enet_eth_init(struct cyg_netdevtab_entry *tab)
     HAL_WRITE_UINT32(enet_base + FREESCALE_ENET_REG_GAUR, 0x00000000);
 
     if(eth_phy_init_wait(enet_priv_p->phy_p, FREESCALE_ENET_PHY_INIT_TOUT)) {
+        CYGHWR_IO_PHY_INIT(enet_priv_p->phy_p);
         //   Initialize upper level driver.
         (sc->funs->eth_drv->init)(sc, (cyg_uint8 *)enet_priv_p->enaddr);
+#if 0
+        unsigned short phy_state;
+        cyg_uint32 enet_reg;
+        phy_state=_eth_phy_state(enet_priv_p->phy_p);
+        HAL_READ_UINT32(enet_base + FREESCALE_ENET_REG_EIR, enet_reg);
+        debug1_printf("EIR 0x%08x.\n", enet_reg);
+        HAL_READ_UINT32(enet_base + FREESCALE_ENET_REG_EIMR, enet_reg);
+        debug1_printf("EMIR 0x%08x.\n", enet_reg);
+        HAL_READ_UINT32(enet_base + FREESCALE_ENET_REG_RDAR, enet_reg);
+        debug1_printf("RDAR 0x%08x.\n", enet_reg);
+        HAL_READ_UINT32(enet_base + FREESCALE_ENET_REG_TDAR, enet_reg);
+        debug1_printf("TDAR 0x%08x.\n", enet_reg);
+        HAL_READ_UINT32(enet_base + FREESCALE_ENET_REG_ECR, enet_reg);
+        debug1_printf("ECR 0x%08x.\n", enet_reg);
+        HAL_READ_UINT32(enet_base + FREESCALE_ENET_REG_MMFR, enet_reg);
+        debug1_printf("MMFR 0x%08x.\n", enet_reg);
+        HAL_READ_UINT32(enet_base + FREESCALE_ENET_REG_MSCR, enet_reg);
+        debug1_printf("MSCR 0x%08x.\n", enet_reg);
+        HAL_READ_UINT32(enet_base + FREESCALE_ENET_REG_MIBC, enet_reg);
+        debug1_printf("MIBC 0x%08x.\n", enet_reg);
+        HAL_READ_UINT32(enet_base + FREESCALE_ENET_REG_RCR, enet_reg);
+        debug1_printf("RCR 0x%08x.\n", enet_reg);
+        HAL_READ_UINT32(enet_base + FREESCALE_ENET_REG_TCR, enet_reg);
+        debug1_printf("TCR 0x%08x.\n", enet_reg);
+        HAL_READ_UINT32(enet_base + FREESCALE_ENET_REG_PALR, enet_reg);
+        debug1_printf("PALR 0x%08x.\n", enet_reg);
+        HAL_READ_UINT32(enet_base + FREESCALE_ENET_REG_PAUR, enet_reg);
+        debug1_printf("PAUR 0x%08x.\n", enet_reg);
+        HAL_READ_UINT32(enet_base + FREESCALE_ENET_REG_OPD, enet_reg);
+        debug1_printf("OPD 0x%08x.\n", enet_reg);
+        HAL_READ_UINT32(enet_base + FREESCALE_ENET_REG_IAUR, enet_reg);
+        debug1_printf("IAUR 0x%08x.\n", enet_reg);
+        HAL_READ_UINT32(enet_base + FREESCALE_ENET_REG_IALR, enet_reg);
+        debug1_printf("IALR 0x%08x.\n", enet_reg);
+        HAL_READ_UINT32(enet_base + FREESCALE_ENET_REG_GAUR, enet_reg);
+        debug1_printf("GAUR 0x%08x.\n", enet_reg);
+        HAL_READ_UINT32(enet_base + FREESCALE_ENET_REG_GALR, enet_reg);
+        debug1_printf("GALR 0x%08x.\n", enet_reg);
+        HAL_READ_UINT32(enet_base + FREESCALE_ENET_REG_TFWR, enet_reg);
+        debug1_printf("TFWR 0x%08x.\n", enet_reg);
+        HAL_READ_UINT32(enet_base + FREESCALE_ENET_REG_RDSR, enet_reg);
+        debug1_printf("RDSR 0x%08x.\n", enet_reg);
+        HAL_READ_UINT32(enet_base + FREESCALE_ENET_REG_TDSR, enet_reg);
+        debug1_printf("TDSR 0x%08x.\n", enet_reg);
+        HAL_READ_UINT32(enet_base + FREESCALE_ENET_REG_MRBR, enet_reg);
+        debug1_printf("TDSR 0x%08x.\n", enet_reg);
+        HAL_READ_UINT32(enet_base + FREESCALE_ENET_REG_RSFL, enet_reg);
+        debug1_printf("RSFL 0x%08x.\n", enet_reg);
+        HAL_READ_UINT32(enet_base + FREESCALE_ENET_REG_RSEM, enet_reg);
+        debug1_printf("RSEM 0x%08x.\n", enet_reg);
+        HAL_READ_UINT32(enet_base + FREESCALE_ENET_REG_RAEM, enet_reg);
+        debug1_printf("RAEM 0x%08x.\n", enet_reg);
+        HAL_READ_UINT32(enet_base + FREESCALE_ENET_REG_RAFL, enet_reg);
+        debug1_printf("RAFL 0x%08x.\n", enet_reg);
+        HAL_READ_UINT32(enet_base + FREESCALE_ENET_REG_TSEM, enet_reg);
+        debug1_printf("TSEM 0x%08x.\n", enet_reg);
+        HAL_READ_UINT32(enet_base + FREESCALE_ENET_REG_TAEM, enet_reg);
+        debug1_printf("TAEM 0x%08x.\n", enet_reg);
+        HAL_READ_UINT32(enet_base + FREESCALE_ENET_REG_TAFL, enet_reg);
+        debug1_printf("TAFL 0x%08x.\n", enet_reg);
+        HAL_READ_UINT32(enet_base + FREESCALE_ENET_REG_TIPG, enet_reg);
+        debug1_printf("TIPG 0x%08x.\n", enet_reg);
+        HAL_READ_UINT32(enet_base + FREESCALE_ENET_REG_FTRL, enet_reg);
+        debug1_printf("FTRL 0x%08x.\n", enet_reg);
+        HAL_READ_UINT32(enet_base + FREESCALE_ENET_REG_TACC, enet_reg);
+        debug1_printf("TACC 0x%08x.\n", enet_reg);
+        HAL_READ_UINT32(enet_base + FREESCALE_ENET_REG_RACC, enet_reg);
+        debug1_printf("RACC 0x%08x.\n", enet_reg);
+        HAL_READ_UINT32(enet_base + FREESCALE_ENET_REG_ATCR, enet_reg);
+        debug1_printf("ATCR 0x%08x.\n", enet_reg);
+        HAL_READ_UINT32(enet_base + FREESCALE_ENET_REG_ATVR, enet_reg);
+        debug1_printf("ATVR 0x%08x.\n", enet_reg);
+        HAL_READ_UINT32(enet_base + FREESCALE_ENET_REG_ATOFF, enet_reg);
+        debug1_printf("ATOFF 0x%08x.\n", enet_reg);
+        HAL_READ_UINT32(enet_base + FREESCALE_ENET_REG_ATPER, enet_reg);
+        debug1_printf("ATPER 0x%08x.\n", enet_reg);
+        HAL_READ_UINT32(enet_base + FREESCALE_ENET_REG_ATCOR, enet_reg);
+        debug1_printf("ATCOR 0x%08x.\n", enet_reg);
+        HAL_READ_UINT32(enet_base + FREESCALE_ENET_REG_ATINC, enet_reg);
+        debug1_printf("ATINC 0x%08x.\n", enet_reg);
+        HAL_READ_UINT32(enet_base + FREESCALE_ENET_REG_ATSTMP, enet_reg);
+        debug1_printf("ATSTMP 0x%08x.\n", enet_reg);
+        HAL_READ_UINT32(enet_base + FREESCALE_ENET_REG_TGSR, enet_reg);
+        debug1_printf("TGSR 0x%08x.\n", enet_reg);
+        HAL_READ_UINT32(enet_base + FREESCALE_ENET_REG_TCSR0, enet_reg);
+        debug1_printf("TCSR0 0x%08x.\n", enet_reg);
+        HAL_READ_UINT32(enet_base + FREESCALE_ENET_REG_TCCR0, enet_reg);
+        debug1_printf("TCCR0 0x%08x.\n", enet_reg);
+        HAL_READ_UINT32(enet_base + FREESCALE_ENET_REG_TCSR1, enet_reg);
+        debug1_printf("TCSR1 0x%08x.\n", enet_reg);
+        HAL_READ_UINT32(enet_base + FREESCALE_ENET_REG_TCCR1, enet_reg);
+        debug1_printf("TCCR1 0x%08x.\n", enet_reg);
+        HAL_READ_UINT32(enet_base + FREESCALE_ENET_REG_TCSR2, enet_reg);
+        debug1_printf("TCSR2 0x%08x.\n", enet_reg);
+        HAL_READ_UINT32(enet_base + FREESCALE_ENET_REG_TCCR2, enet_reg);
+        debug1_printf("TCCR2 0x%08x.\n", enet_reg);
+        HAL_READ_UINT32(enet_base + FREESCALE_ENET_REG_TCSR3, enet_reg);
+        debug1_printf("TCSR3 0x%08x.\n", enet_reg);
+        HAL_READ_UINT32(enet_base + FREESCALE_ENET_REG_TCCR3, enet_reg);
+        debug1_printf("TCCR3 0x%08x.\n", enet_reg);
+#endif
         return true;
     } else {
         return false;
@@ -822,6 +961,9 @@ enet_eth_start(struct eth_drv_sc *sc, unsigned char *enaddr_p, int flags)
         HAL_WRITE_UINT32(enet_base + FREESCALE_ENET_REG_EIR,
                          FREESCALE_ENET_EIR_MASK_M);
 #ifdef CYGINT_IO_ETH_INT_SUPPORT_REQUIRED
+#ifdef CYGPKG_KERNEL_SMP_SUPPORT
+        cyg_drv_interrupt_set_cpu(enet_priv_p->rx_intr_vector, 0);
+#endif
         cyg_drv_interrupt_unmask(enet_priv_p->rx_intr_vector);
 # ifdef CYGOPT_ETH_FREESCALE_ENET_TX_NOCOPY
         cyg_drv_interrupt_unmask(enet_priv_p->tx_intr_vector);
@@ -1545,7 +1687,11 @@ enet_init_phy(void)
     CYG_ADDRWORD enet_base = enet0_eth0_priv.enet_base;
     cyg_uint32 mii_speed;
 
+#ifdef CYGSEM_DEVS_ETH_FREESCALE_ENET_PHY_RGMII
+    mii_speed = ((CYGHWR_FREESCALE_ENET_MII_MDC_HAL_CLOCK / 2500000)/2 - 1);
+#else
     mii_speed = (2 * CYGHWR_FREESCALE_ENET_MII_MDC_HAL_CLOCK / 5000000 + 1);
+#endif
     HAL_WRITE_UINT32(enet_base + FREESCALE_ENET_REG_MSCR,
                      FREESCALE_ENET_MSCR_MII_SPEED(mii_speed) |
                      FREESCALE_ENET_MSCR_HOLDTIME(0)
@@ -1562,6 +1708,16 @@ enet_eth_phy_set(freescale_enet_priv_t *enet_priv_p)
     cyg_uint32 regval;
 
     phy_state=_eth_phy_state(enet_priv_p->phy_p);
+#ifdef CYGSEM_DEVS_ETH_FREESCALE_ENET_PHY_RGMII
+    // TODO: This should check for 1000MB mode and then set SPEED.
+    regval = FREESCALE_ENET_RCR_MAX_FL(enet_priv_p->max_frame_len)
+          | FREESCALE_ENET_RCR_RGMII_MODE_M | FREESCALE_ENET_RCR_MII_MODE_M;
+    if((phy_state & ETH_PHY_STAT_LINK) && !(phy_state & ETH_PHY_STAT_100MB)) {
+        // Operate in 10MB mode
+        regval |= FREESCALE_ENET_RCR_RMII_10T_M;
+    }
+    HAL_WRITE_UINT32(enet_base + FREESCALE_ENET_REG_RCR, regval);
+#else
 #ifdef CYGSEM_DEVS_ETH_FREESCALE_ENET_PHY_RMII
     regval = FREESCALE_ENET_RCR_MAX_FL(enet_priv_p->max_frame_len)
           | FREESCALE_ENET_RCR_RMII_MODE_M | FREESCALE_ENET_RCR_MII_MODE_M;
@@ -1575,6 +1731,7 @@ enet_eth_phy_set(freescale_enet_priv_t *enet_priv_p)
                      FREESCALE_ENET_RCR_MAX_FL(enet_priv_p->max_frame_len) |
                      FREESCALE_ENET_RCR_MII_MODE_M);
 #endif // CYGSEM_DEVS_ETH_FREESCALE_ENET_PHY_RMII
+#endif // CYGSEM_DEVS_ETH_FREESCALE_ENET_PHY_RGMII
     if(phy_state & ETH_PHY_STAT_FDX) { // Operate in full-duplex mode
         HAL_WRITE_UINT32(enet_base + FREESCALE_ENET_REG_TCR,
                          FREESCALE_ENET_TCR_FDEN_M);

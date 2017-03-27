@@ -140,6 +140,7 @@
 #define CYG_IO_GET_CONFIG_CAN_TIMEOUT               0x0804
 #define CYG_IO_GET_CONFIG_CAN_HDI                   0x0805
 #define CYG_IO_GET_CONFIG_CAN_STATE                 0x0806
+#define CYG_IO_GET_CONFIG_CAN_ERR_COUNTERS          0x0807
 
 #define CYG_IO_SET_CONFIG_CAN_INFO                  0x0881
 #define CYG_IO_SET_CONFIG_CAN_OUTPUT_DRAIN          0x0882
@@ -157,11 +158,37 @@
 // Get/Set configuration 'key' values for ADC I/O
 
 #define CYG_IO_GET_CONFIG_ADC_RATE                  0x0901
+#define CYG_IO_GET_CONFIG_ADC_GAIN                  0x0902
+#define CYG_IO_GET_CONFIG_ADC_POLARITY              0x0903
+#define CYG_IO_GET_CONFIG_ADC_MODE                  0x0904
 
-#define CYG_IO_SET_CONFIG_ADC_RATE                  0x0981
-#define CYG_IO_SET_CONFIG_ADC_ENABLE                0x0982
-#define CYG_IO_SET_CONFIG_ADC_DISABLE               0x0983
-#define CYG_IO_SET_CONFIG_ADC_DATA_FLUSH            0x0984
+#define CYG_IO_SET_CONFIG_ADC_RATE                  0x0921
+#define CYG_IO_SET_CONFIG_ADC_GAIN                  0x0922
+#define CYG_IO_SET_CONFIG_ADC_POLARITY              0x0923
+#define CYG_IO_SET_CONFIG_ADC_MODE                  0x0924
+#define CYG_IO_SET_CONFIG_ADC_ENABLE                0x0925
+#define CYG_IO_SET_CONFIG_ADC_DISABLE               0x0926
+#define CYG_IO_SET_CONFIG_ADC_DATA_FLUSH            0x0927
+
+#define CYG_IO_SET_CONFIG_ADC_RATE                  0x0931
+#define CYG_IO_SET_CONFIG_ADC_ENABLE                0x0932
+#define CYG_IO_SET_CONFIG_ADC_DISABLE               0x0933
+#define CYG_IO_SET_CONFIG_ADC_DATA_FLUSH            0x0934
+
+// ======== 0x900 DAC ========================================================
+// Get/Set configuration 'key' values for DAC I/O
+
+#define CYG_IO_GET_CONFIG_DAC_RATE                  0x0951
+#define CYG_IO_GET_CONFIG_DAC_GAIN                  0x0952
+#define CYG_IO_GET_CONFIG_DAC_POLARITY              0x0953
+
+#define CYG_IO_SET_CONFIG_DAC_RATE                  0x0971
+#define CYG_IO_SET_CONFIG_DAC_GAIN                  0x0972
+#define CYG_IO_SET_CONFIG_DAC_POLARITY              0x0973
+#define CYG_IO_SET_CONFIG_DAC_ENABLE                0x0974
+#define CYG_IO_SET_CONFIG_DAC_DISABLE               0x0975
+#define CYG_IO_SET_CONFIG_DAC_DATA_FLUSH            0x0976
+
 
 // ======== 0x1000 Generic ===================================================
 // Get/Set configuration 'key' values that can apply to more than one

@@ -1,0 +1,598 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!-- DOCTYPE part  PUBLIC "-//OASIS//DTD DocBook V4.5//EN" --><!-- {{{ Banner                         --><!-- =============================================================== --><!--                                                                 --><!--     adc.sgml                                                    --><!--                                                                 --><!--     Generic ADC documentation.                                  --><!--                                                                 --><!-- =============================================================== --><!-- ####ECOSDOCCOPYRIGHTBEGIN####                                   --><!-- =============================================================== --><!-- Copyright (C) 2008 Free Software Foundation, Inc.               --><!-- This material may be distributed only subject to the terms      --><!-- and conditions set forth in the Open Publication License, v1.0  --><!-- or later (the latest version is presently available at          --><!-- http://www.opencontent.org/openpub/)                            --><!-- Distribution of the work or derivative of the work in any       --><!-- standard (paper) book form is prohibited unless prior           --><!-- permission obtained from the copyright holder                   --><!-- =============================================================== --><!-- ####ECOSDOCCOPYRIGHTEND####                                     --><!-- =============================================================== --><!-- #####DESCRIPTIONBEGIN####                                       --><!--                                                                 --><!-- Author(s):   nickg                                              --><!-- Date:        2008/05/12                                         --><!--                                                                 --><!-- ####DESCRIPTIONEND####                                          --><!-- =============================================================== --><!-- }}} --><!-- This document was created with Syntext Serna Free. --><part id="io-adc">
+  <title>DAC Support</title>
+  <refentry id="adc">
+    <refmeta>
+      <refentrytitle>Overview</refentrytitle>
+    </refmeta>
+    <refnamediv>
+      <refname>Overview</refname>
+      <refpurpose>eCos Support for Digital/Analog Converters</refpurpose>
+    </refnamediv>
+    <refsect1 id="adc-intro">
+      <title>Introduction</title>
+      <para>
+DAC support in eCos is based around the standard character device
+interface. Hence all device IO function, or file IO functions may be
+used to access DAC devices.
+</para>
+      <para>
+DAC devices are presented as write-only serial channels that convert
+output data at a given rate. The size of each output data is hardware specific
+and is defined by the <type>cyg_dac_output_t</type> type. The data
+rate may be set at runtime by the application. Most DAC devices
+support several channels which all output at the same
+rate. Therefore setting the rate for one channel will usually change
+the rate for all channels on that device.
+</para>
+    </refsect1>
+    <refsect1 id="adc-examples">
+      <title>Examples</title>
+      <para>
+The use of the DAC devices is best shown by example.  The following is
+a simple example of using the eCos device interface to access the DAC:
+</para>
+      <programlisting width="72">
+
+        int res;
+        cyg_io_handle_t handle;
+
+        // Get a handle for DAC device 0 channel 0
+        res = cyg_io_lookup( &quot;/dev/dac00&quot;, &amp;handle );
+
+        if( res != ENOERR )
+            handle_error(err);
+
+        for(;;)
+        {
+            cyg_dac_output_t output;
+             cyg_uint32 len = sizeof(output);
+
+            set_dac_output(&amp;output);
+
+            // write an output to the channel
+            res = cyg_io_write( handle, &amp;output, &amp;len );
+
+            if( res != ENOERR )
+                handle_error(err);
+
+        }
+
+</programlisting>
+      <para>
+In this example, the required channel is looked up and a handle on it
+acquired. Conventionally DAC devices are named &quot;/dev/dacXY&quot; where X is
+the device number and Y the channel within that device. Following
+this, data is written to the device sequentially.
+</para>
+    </refsect1>
+    <refsect1 id="adc-details">
+      <title>Details</title>
+      <para>
+As indicated, the main interface to DAC devices is via the standard
+character device interface. However, there are a number of aspects
+that are DAC specific.
+</para>
+      <refsect2 id="adc-details-sample-t">
+        <title>Data Type</title>
+        <para>
+Data can vary in size depending on the underlying hardware and is
+often a non-standard number of bits. The actual number of bits is
+defined by the hardware driver package, and the generic DAC package
+uses this to define a type <type>cyg_dac_output_t</type> which can
+contain at least the required number of bits. All writes to a DAC
+channel should be expressed in multiples of this type, and actual
+bytes written will also always be a multiple.
+</para>
+      </refsect2>
+      <refsect2 id="adc-details-rate">
+        <title>Data Rate</title>
+        <para>
+The output rate of a DAC device can be varied by calling a
+<function>set_config</function> function, either at the device IO API
+level or at the FILEIO level. The following two functions show how
+this is done at each:
+</para>
+        <programlisting width="72">
+
+int set_rate_io( cyg_io_handle_t handle, int rate )
+{
+    cyg_dac_info_t info;
+    cyg_uint32 len = sizeof(info);
+
+    info.rate = rate;
+
+    return cyg_io_set_config( handle,
+                              CYG_IO_SET_CONFIG_DAC_RATE,
+                              &amp;info,
+                              &amp;len);
+}
+
+int set_rate_fileio( int fd, int rate )
+{
+    cyg_dac_info_t info;
+
+    info.rate = rate;
+
+    return cyg_fs_fsetinfo( fd,
+                            CYG_IO_SET_CONFIG_DAC_RATE,
+                            &amp;info,
+                            sizeof(info) );
+}
+</programlisting>
+      </refsect2>
+      <refsect2 id="adc-details-enable">
+        <title>Enabling a Channel</title>
+        <para>Channels are initialized in a disabled state and output no
+data. When a channel is first looked up or opened, then it is
+automatically enabled and data start to output data. A channel may
+then be disable or re-enabled via a <function>set_config</function>
+function:
+</para>
+        <programlisting width="72">
+int disable_io( cyg_io_handle_t handle )
+{
+    return cyg_io_set_config( handle,
+                              CYG_IO_SET_CONFIG_DAC_DISABLE,
+                              NULL,
+                              NULL);
+}
+
+int enable_io( cyg_io_handle_t handle )
+{
+    return cyg_io_set_config( handle,
+                              CYG_IO_SET_CONFIG_DAC_ENABLE,
+                              NULL,
+                              NULL);
+}
+</programlisting>
+      </refsect2>
+      <refsect2 id="adc-details-flush">
+        <title>Setting DAC Range</title>
+        <para>
+The gain of some DAC devices can be varied by calling a
+<function>set_config</function> function, either at the device IO API
+level or at the FILEIO level. Available gain settings are DAC_GAIN1 to DAC_GAIN6. The following two functions show how
+this is done at each:</para>
+        <programlisting width="72">
+int set_gain_io( cyg_io_handle_t handle, int gain )
+{
+    cyg_dac_info_t info;
+    cyg_uint32 len = sizeof(info);
+
+    info.gain = gain;
+
+    return cyg_io_set_config( handle,
+                              CYG_IO_SET_CONFIG_DAC_GAIN,
+                              &amp;info,
+                              &amp;len);
+}
+
+int set_gain_fileio( int fd, int gain )
+{
+    cyg_dac_info_t info;
+
+    info.gain = gain;
+
+    return cyg_fs_fsetinfo( fd,
+                            CYG_IO_SET_CONFIG_DAC_GAIN,
+                            &amp;info,
+                            sizeof(info) );
+} 
+
+</programlisting>
+      </refsect2>
+      <refsect2 id="adc-details-flush_2">
+        <title>Setting DAC Polarity</title>
+        <para>
+The polarity of some DAC devices can be varied by calling a
+<function>set_config</function> function, either at the device IO API
+level or at the FILEIO level. Available polarity settings are DAC_POL_UNIPOLAR and DAC_POL_BIPOLAR. The following two functions show how
+this is done at each:</para>
+        <programlisting width="72">
+int set_polarity_io( cyg_io_handle_t handle, int polarity )
+{
+    cyg_dac_info_t info;
+    cyg_uint32 len = sizeof(info);
+
+    info.polarity = polarity;
+
+    return cyg_io_set_config( handle,
+                              
+        CYG_IO_SET_CONFIG_DAC_POLARITY,
+        &amp;info,
+        &amp;len);
+}
+
+int set_polarity_fileio( int fd, int polarity )
+{
+    cyg_dac_info_t info;
+
+    info.polarity = polarity;
+
+    return cyg_fs_fsetinfo( fd,
+                            
+        CYG_IO_SET_CONFIG_DAC_POLARITY,
+        &amp;info,
+        sizeof(info) );
+} 
+
+</programlisting>
+      </refsect2>
+    </refsect1>
+    <refsect1 id="adc-config">
+      <title>Configuration</title>
+      <para>
+The DAC package defines a number of generic configuration options that
+apply to all DAC implementations:
+</para>
+      <variablelist>
+        <varlistentry>
+          <term>cdl_component CYGPKG_IO_DAC_DEVICES</term>
+          <listitem>
+            <para>
+This option enables the hardware device drivers for the current
+platform. DAC devices will only be enabled if this option is itself
+enabled.
+</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>cdl_option CYGNUM_IO_DAC_OUTPUT_SIZE</term>
+          <listitem>
+            <para>
+This option defines the output size for the DAC devices.  Given in
+bits, it will be rounded up to 8, 16 or 32 to define the
+<type>cyg_dac_output_t</type> type. This option is usually set by the
+hardware device driver.
+</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>cdl_option CYGPKG_IO_DAC_SELECT_SUPPORT</term>
+          <listitem>
+            <para>
+
+This option enables support for the <function>select()</function> API
+function on all DAC devices. This option can be disabled if the
+<function>select()</function> is not used, saving some code and data
+space.
+</para>
+          </listitem>
+        </varlistentry>
+      </variablelist>
+      <para>
+In addition to the generic options, each hardware device driver
+defines some parameters for each device and channel. The exact names
+of the following option depends on the hardware device driver, but
+options of this form should be available in all drivers.
+</para>
+      <variablelist>
+        <varlistentry>
+          <term>cdl_option CYGDAT_IO_DAC_EXAMPLE_CHANNELN_NAME</term>
+          <listitem>
+            <para>
+This option specifies the name of the device for an DAC
+channel. Channel names should be of the form &quot;/dev/dacXY&quot; where X is
+the device number and Y the channel within that device.
+</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>cdl_option CYGNUM_IO_DAC_EXAMPLE_CHANNELN_BUFSIZE</term>
+          <listitem>
+            <para>
+This option specifies the buffer size for an DAC channel. The value is
+expressed in multiples of <type>cyg_dac_data_t</type> rather than
+bytes. The default value is 128.
+</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>cdl_option CYGNUM_IO_DAC_EXAMPLE_DEFAULT_RATE</term>
+          <listitem>
+            <para>
+This option defines the initial default data rate for all
+channels. The hardware driver may place constraints on the range of
+values this option may take.
+</para>
+          </listitem>
+        </varlistentry>
+      </variablelist>
+    </refsect1>
+  </refentry>
+  <refentry id="adcdev">
+    <refmeta>
+      <refentrytitle>DAC Device Drivers</refentrytitle>
+    </refmeta>
+    <refnamediv>
+      <refname>Overview</refname>
+      <refpurpose>DAC Device Drivers</refpurpose>
+    </refnamediv>
+    <refsect1 id="adcdev-intro">
+      <title>Introduction</title>
+      <para>
+This section describes how to write an DAC hardware device. While
+users of DAC devices do not need to read it, it may provide added
+insight into how the devices work.
+</para>
+    </refsect1>
+    <refsect1 id="adcdev-data">
+      <title>Data Structures</title>
+      <para>
+An DAC hardware driver is represented by a number of data
+structures. These are generic <literal>device</literal> and
+<literal>channel</literal> data structures, a driver private device
+data structure, a generic character device table entry and a driver
+function table. Most of these structures are instantiated using
+macros, which will be described here.
+</para>
+      <para>
+The data structure instantiation for a typical single device, four
+channel DAC would look like this:
+</para>
+      <programlisting width="72">
+//==========================================================================
+// Instantiate data structures
+
+// -------------------------------------------------------------------------
+// Driver functions:
+
+CYG_DAC_FUNCTIONS( example_dac_funs,
+                   example_dac_enable,
+                   example_dac_disable,
+                   example_dac_set_rate );
+
+// -------------------------------------------------------------------------
+// Device instance:
+
+static example_dac_info example_dac_info0 =
+{
+    .base               = CYGARC_HAL_EXAMPLE_DAC_BASE,
+    .vector             = CYGNUM_HAL_INTERRUPT_DAC
+};
+
+CYG_DAC_DEVICE( example_dac_device,
+                &amp;example_dac_funs,
+                &amp;example_dac_info0,
+                CYGNUM_IO_DAC_EXAMPLE_DEFAULT_RATE );
+
+// -------------------------------------------------------------------------
+// Channel instances:
+
+#define EXAMPLE_DAC_CHANNEL( __chan )                                    \
+CYG_DAC_CHANNEL( example_dac_channel##__chan,                            \
+                 __chan,                                                 \
+                 CYGNUM_IO_DAC_EXAMPLE_CHANNEL##__chan##_BUFSIZE,        \
+                 &amp;example_dac_device );                                  \
+                                                                         \
+DEVTAB_ENTRY( example_dac_channel##__chan##_device,                      \
+              CYGDAT_IO_DAC_EXAMPLE_CHANNEL##__chan##_NAME,              \
+              0,                                                         \
+              &amp;cyg_io_dac_devio,                                         \
+              example_dac_init,                                          \
+              example_dac_lookup,                                        \
+              &amp;example_dac_channel##__chan );
+
+EXAMPLE_DAC_CHANNEL( 0 );
+EXAMPLE_DAC_CHANNEL( 1 );
+EXAMPLE_DAC_CHANNEL( 2 );
+EXAMPLE_DAC_CHANNEL( 3 );
+</programlisting>
+      <para>
+The macro <literal>CYG_DAC_FUNCTIONS()</literal> instantiates a
+function table called <varname>example_dac_funs</varname> and
+populates it with the DAC driver functions (see later for details).
+</para>
+      <para>
+Then an instance of the driver private device data structure is
+instantiated. In addition to the device base address and interrupt
+vector shown here, this structure should contain the interrupt object
+and handle for attaching to the vector. It may also contain any other
+variables needed to manage the device.
+</para>
+      <para>
+The macro <literal>CYG_DAC_DEVICE()</literal> instantiates a
+<structname>cyg_dac_device</structname> structure, named
+<varname>example_dac_device</varname> which will contain pointers to
+the function table and private data structure. The initial sample rate
+is also supplied here.
+</para>
+      <para>
+For each channel, an DAC channel structure and a device table entry
+must be created. The macro <literal>EXAMPLE_DAC_CHANNEL()</literal> is
+defined to simplify this process. The macro
+<literal>CYG_DAC_CHANNEL</literal> defines a
+<structname>cyg_dac_channel</structname> structure, which contains the
+channel number, the buffer size, and a pointer to the device object
+defined earlier. The call to <literal>DEVTAB_ENTRY()</literal>
+generates a device table entry containing the configured channel name,
+a pointer to a device function table defined in the generic DAC
+driver, pointers to init and lookup functions implemented here, and a
+pointer to the channel data structure just defined.
+</para>
+      <para>
+Finally, four channels, numbered 0 to 3 are created.
+</para>
+    </refsect1>
+    <refsect1 id="adcdev-functions">
+      <title>Functions</title>
+      <para>
+There are several classes of function that need to be defined in an
+DAC driver. These are those function that go into the channel&apos;s device
+table, those that go into the DAC device&apos;s function table, calls that
+the driver makes into the generic DAC package, and interrupt handling
+functions.
+</para>
+      <refsect2 id="adcdev-functions-devtab">
+        <title>Device Table Functions</title>
+        <para>
+These functions are placed in the standard device table entry for each
+channel and handle initialization and location of the device within
+the generic driver infrastructure.
+</para>
+        <para>
+<function>static bool example_dac_init(struct cyg_devtab_entry *tab)</function>
+
+This function is called from the device IO infrastructure to
+initialize the device. It should perform any work needed to start up
+the device, short of actually starting the generation of output. This
+function will be called for each channel, so if there is
+initialization that only needs to be done once, such as creating an
+interrupt object, then care should be taken to do this. This function
+should also call <function>cyg_dac_device_init()</function> to
+initialize the generic parts of the driver.
+</para>
+        <para>
+<function>static Cyg_ErrNo example_dac_lookup(struct cyg_devtab_entry **tab, struct cyg_devtab_entry *sub_tab, const char *name)</function>
+
+This function is called when a client looks up or opens a channel. It
+should call <function>cyg_dac_channel_init()</function> to initialize
+the generic part of the channel. It should also perform any operations
+needed to start the channel generating samples.
+</para>
+      </refsect2>
+      <refsect2 id="adcdev-functions-driver">
+        <title>Driver Functions</title>
+        <para>
+These are the functions installed into the driver function table by
+the <literal>CYG_DAC_FUNCTIONS()</literal> macro.
+</para>
+        <para>
+<function>static void example_dac_enable( cyg_dac_channel *chan )</function>
+
+This function is called from the generic DAC package to enable the
+channel in response to a
+<literal>CYG_IO_SET_CONFIG_DAC_ENABLE</literal> config operation. It
+should take any steps needed to start the channel sending data.
+</para>
+        <para>
+<function>static void example_dac_disable( cyg_dac_channel *chan )</function>
+
+This function is called from the generic DAC package to enable the
+channel in response to a
+<literal>CYG_IO_SET_CONFIG_DAC_DISABLE</literal> config operation. It
+should take any steps needed to stop the channel sending data.
+</para>
+        <para>
+<function>static void example_dac_set_rate( cyg_dac_channel *chan, cyg_uint32 rate )</function>
+
+This function is called from the generic DAC package to enable the
+channel in response to a <literal>CYG_IO_SET_CONFIG_DAC_RATE</literal>
+config operation. It should take any steps needed to change the output
+rate of the channel, or of the entire device.
+</para>
+      </refsect2>
+      <refsect2 id="adcdev-functions-generic">
+        <title>Generic Package Functions</title>
+        <para>
+These functions are called by a hardware DAC device driver to perform
+operations in the generic DAC package.
+</para>
+        <para>
+<function>__externC void cyg_dac_device_init( cyg_dac_device *device )</function>
+
+This function is called from the driver&apos;s init function and is used to
+initialize the <type>cyg_dac_device</type> object.
+</para>
+        <para>
+<function>__externC void cyg_dac_channel_init(cyg_dac_channel *chan)</function>
+
+This function is called from the driver&apos;s lookup function and is used
+to initialize the <type>cyg_dac_channel</type> object.
+</para>
+        <para>
+<function>__externC cyg_uint32 cyg_dac_take_output(cyg_dac_channel *chan, cyg_dac_output_t data)</function>
+
+This function is called from the driver&apos;s ISR to add get data from
+the buffer. The return value will be either zero, or
+<literal>CYG_ISR_CALL_DSR</literal> and should be ORed with the return
+value of the ISR.
+</para>
+        <para>
+<function>__externC void cyg_dac_wakeup(cyg_dac_channel *chan )</function>
+
+This function is called from the driver&apos;s DSR to cause any threads
+waiting for data to wake up when a new sample is available. It should
+only be called if the <structfield>wakeup</structfield> field of the
+channel object is <literal>true</literal>.
+</para>
+      </refsect2>
+      <refsect2 id="adcdev-functions-interrupt">
+        <title>Interrupt Functions</title>
+        <para>
+These functions are internal to the driver, but make calls on generic
+package functions. Typically an DAC device will have a single
+interrupt vector with which it signals desire for data for the
+channels and any error conditions such as overruns.
+</para>
+        <para>
+<function>static cyg_uint32 example_dac_isr(cyg_vector_t vector, cyg_addrword_t data)</function>
+
+This function is the ISR attached to the DAC device&apos;s interrupt
+vector. It is responsible for getting data from the generic layer and sending data to the channels. It needs to check each channel
+for data, and call <function>cyg_dac_take_output()</function> for
+each new data available, and then ready the device for the next
+interrupt.  It&apos;s activities are best explained by example:
+</para>
+        <programlisting width="72">
+static cyg_uint32 example_dac_isr(cyg_vector_t vector, cyg_addrword_t data)
+{
+    cyg_dac_device *example_device = (cyg_dac_device *) data;
+    example_dac_info *example_info = example_device-&gt;dev_priv;
+    cyg_uint32 res = 0;
+    int i;
+
+    // Deal with errors if necessary
+    DEVICE_CHECK_ERRORS( example_info );
+
+    // Look for all channels with data available
+    for( i = 0; i &lt; CHANNEL_COUNT; i++ )
+    {
+        // Fetch data from this channel and pass up to the
+        // DAC.
+
+        res |= CYG_ISR_HANDLED |  = cyg_take_output(example_info-&gt;channel[i], &amp;data);
+        if (!(res &amp; CYG_ISR_HANDLED))
+            SEND_DATA_TO_DAC(data);
+        }
+    }
+
+   // Clear any interrupt conditions
+    DEVICE_CLEAR_INTERRUPTS( example_info );
+
+    cyg_drv_interrupt_acknowledge(example_info-&gt;vector);
+    
+    return res;
+}
+</programlisting>
+        <para>
+<function>static void example_dac_dsr(cyg_vector_t vector, cyg_ucount32 count, cyg_addrword_t data)</function>
+
+This function is the DSR attached to the DAC device&apos;s interrupt
+vector. It is called by the kernel if the ISR return value contains
+the <literal>CYG_ISR_HANDLED</literal> bit. It needs to call
+<function>cyg_dac_wakeup()</function> for each channel that has its
+<structfield>wakeup</structfield> field set. Again, and example should
+make it all clear:
+</para>
+        <programlisting width="72">
+static void example_dac_dsr(cyg_vector_t vector, cyg_ucount32 count, cyg_addrword_t data)
+{
+    cyg_dac_device *example_device = (cyg_dac_device *) data;
+    example_dac_info *example_info = example_device-&gt;dev_priv;
+    int i;
+
+    // Look for all channels with pending wakeups
+    for( i = 0; i &lt; CHANNEL_COUNT; i++ )
+    {
+        if( example_info-&gt;channel[i]-&gt;wakeup )
+            cyg_dac_wakeup( example_info-&gt;channel[i] );
+    }
+}
+
+</programlisting>
+      </refsect2>
+    </refsect1>
+  </refentry>
+</part>

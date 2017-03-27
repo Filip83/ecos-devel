@@ -71,6 +71,13 @@
 #include <cyg/hal/plf_io.h>
 #endif
 
+//==========================================================================
+// Handy macros for defining register bits and fields:
+//
+
+#define BIT_(__n)       (1<<(__n))
+#define MASK_(__n,__s)  (((1<<(__s))-1)<<(__n))
+#define VALUE_(__n,__v) ((__v)<<(__n))
 
 //-----------------------------------------------------------------------------
 // IO Register address.

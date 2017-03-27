@@ -631,6 +631,11 @@ bsd_ioctl(struct CYG_FILE_TAG *fp, CYG_ADDRWORD cmd, CYG_ADDRWORD data)
     case SIOCATMARK:
         *(int *)data = (so->so_state&SS_RCVATMARK) != 0;
         return (0);
+
+    case SIOCANTRCVMORE:
+        *(int *)data = (so->so_state&SS_CANTRCVMORE) != 0;
+        return (0);
+
     }
     /*
      * Interface/routing/protocol specific ioctls:

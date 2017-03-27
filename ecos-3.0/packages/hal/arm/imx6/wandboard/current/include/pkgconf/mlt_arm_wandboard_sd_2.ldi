@@ -1,0 +1,45 @@
+// eCos memory layout - Wed Jun 27 18:44:55 2012
+//
+// =============================================================================
+#include <cyg/infra/cyg_type.inc>
+
+MEMORY
+{
+    rom (rx) : ORIGIN = 0x00000000, LENGTH = 96K
+    ocram (rwx) : ORIGIN = 0x00900000, LENGTH = 128K
+    ddr (rwx) : ORIGIN = 0x10000000, LENGTH = 1024M
+}
+
+SECTIONS
+{
+    SECTIONS_BEGIN
+// DDR Boot definitions here
+// FIXME: Probably want to put back and test.
+//    SECTION_rom_vectors (ddr, 0x10000000, LMA_EQ_VMA)
+// DDR definitions here
+// Replaced by ORIGIN
+//    SECTION_RELOCS (ddr, ALIGN (0x1), LMA_EQ_VMA)
+    _start_image_add = ORIGIN(ddr);
+    SECTION_ivt(ddr, 0x10000000, LMA_EQ_VMA)
+    SECTION_boot_data(ddr, ALIGN (0x4), LMA_EQ_VMA)
+    SECTION_dcd_hdr(ddr, ALIGN (0x10), LMA_EQ_VMA)
+    SECTION_dcd_wrt_cmd(ddr, ALIGN (0x04), LMA_EQ_VMA)
+    SECTION_dcd_data(ddr, ALIGN (0x04), LMA_EQ_VMA)
+    SECTION_text (ddr, ALIGN (0x4), LMA_EQ_VMA)
+    SECTION_fini (ddr, ALIGN (0x4), LMA_EQ_VMA)
+    SECTION_rodata (ddr, ALIGN (0x4), LMA_EQ_VMA)
+    SECTION_rodata1 (ddr, ALIGN (0x4), LMA_EQ_VMA)
+    SECTION_got (ddr, ALIGN (0x4), LMA_EQ_VMA)
+    SECTION_fixup (ddr, ALIGN (0x4), LMA_EQ_VMA)
+    SECTION_gcc_except_table (ddr, ALIGN (0x4), LMA_EQ_VMA)
+    SECTION_data (ddr, ALIGN (0x4), FOLLOWING (.gcc_except_table))
+    SECTION_hab_data(ddr, _start_image_add + 4M, ALIGN (0x4))
+    _image_size = . - _start_image_add;
+    SECTION_bss (ddr, ALIGN (0x4), LMA_EQ_VMA)
+    CYG_LABEL_DEFN(__heap1) = ALIGN (0x8);
+// OCRAM definitions here
+    USER_SECTION (noncache, ocram, 0x00907000, LMA_EQ_VMA)
+    SECTION_mmu_tables (ocram, 0x00918000, LMA_EQ_VMA)
+    SECTION_fixed_vectors (ocram, 0x0091FFB8, LMA_EQ_VMA)
+    SECTIONS_END
+}

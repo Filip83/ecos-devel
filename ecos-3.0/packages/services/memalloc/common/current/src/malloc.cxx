@@ -147,7 +147,7 @@ malloc( size_t size )
     } // if
 
     CYG_REPORT_RETVAL( data_ptr );
-    //diag_printf("Allocing %d bytes at 0x%p\n",(int)size,data_ptr);
+
     return data_ptr;
 } // malloc()
 
@@ -171,7 +171,7 @@ free( void *ptr )
     freeret = POOL.free( (cyg_uint8 *) ptr );
 
     CYG_ASSERT( freeret , "Couldn't free!" );
-    //diag_printf("freeing 0x%p\n",ptr);
+
     CYG_REPORT_RETURN();
 
 } // free()

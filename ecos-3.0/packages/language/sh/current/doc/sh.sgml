@@ -1,0 +1,94 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!-- =============================================================== --><!--                                                                 --><!--     httpd.sgml                                                  --><!--                                                                 --><!--     eCos HTTP Server                                            --><!--                                                                 --><!-- =============================================================== --><!-- ####ECOSDOCCOPYRIGHTBEGIN####                                   --><!-- =============================================================== --><!-- Copyright (C) 2002, 2010 Free Software Foundation, Inc.         --><!-- This material may be distributed only subject to the terms      --><!-- and conditions set forth in the Open Publication License, v1.0  --><!-- or later (the latest version is presently available at          --><!-- http://www.opencontent.org/openpub/)                            --><!-- Distribution of the work or derivative of the work in any       --><!-- standard (paper) book form is prohibited unless prior           --><!-- permission obtained from the copyright holder                   --><!-- =============================================================== --><!-- ####ECOSDOCCOPYRIGHTEND####                                     --><!-- =============================================================== --><!-- #####DESCRIPTIONBEGIN####                                       --><!--                                                                 --><!-- ####DESCRIPTIONEND####                                          --><!-- =============================================================== --><!-- This document was created with Syntext Serna Free. --><part id="net-httpd">
+  <title>Embedded Shell Support</title>
+  <chapter id="net-httpd-chapter">
+    <title>Embedded Shell Support</title>
+    <sect1 id="net-httpd-intro">
+      <title>Introduction</title>
+      <para>
+The <emphasis>eCos</emphasis> Shell package provides commands that can be called from the TELNET package. It is not a true shell like bash, but simply  performs various functions such as changing directories and deleting files. It is not coupled with TELNET, but offers functions with the same calling parameters that TELNET expects. The TELNET package makes references to the Shell functions, but any package could do so as long as it uses the same function prototype.
+</para>
+    </sect1>
+    <sect1 id="net-httpd-organization">
+      <title>Shell Organization</title>
+      <para>
+The shell consists of functions for the following features:</para>
+      <orderedlist>
+        <listitem>
+          <para>ls</para>
+        </listitem>
+        <listitem>
+          <para>rm</para>
+        </listitem>
+        <listitem>
+          <para>cd</para>
+        </listitem>
+        <listitem>
+          <para>mkdir</para>
+        </listitem>
+        <listitem>
+          <para>rmdir</para>
+        </listitem>
+        <listitem>
+          <para>heap</para>
+        </listitem>
+      </orderedlist>
+      <para>
+Each feature is implemented as a function with the following prototype:
+<programlisting>
+cyg_bool cyg_sh_command_handler(
+    FILE *output, 
+    FILE *input, 
+    FILE *error, 
+    char *command,                    
+    int argc, char *argv[], void *arg, void *user_data);
+
+</programlisting></para>
+      <para>
+The first three parameters, <literal>output</literal>, <literal>input</literal>, and <literal>error</literal>, are used by the implementation
+for input/output. When used by TELNETD, these are connected to the socket. The <literal>command</literal> parameter is the command typed in the telnet client, and the <literal>argv/argc</literal> arguments are the command line parameters. The <literal>user_data</literal> parameter is a user supplied parameter. When called from TELNETD, it is <literal>Cyg_Mempool_dlmalloc</literal> when enabled, or NULL when disabled. If enabled, the command can use the dlmalloc instead of the local allocation functions so that when the command thread is killed memory is freed.</para>
+      <para>The implementation should examine the command and determine if it is willing to handle the request. If the implementation handles the request, it must return true. The implementation returns false if not handled. The caller must search for another command if it is not handled.</para>
+      <para>The purpose of command testing is to enable pattern matching. For TELNETD, the commands are filters with <literal>&quot;command*&quot;</literal>, for example <literal>&quot;ls*&quot;</literal>. However, other patterns are possible in the future.</para>
+      <para>
+An function is provided for sending data back to the telnet client:
+</para>
+      <programlisting>
+cyg_bool cyg_telnetd_send_response(
+    FILE *fp, 
+    char *response );
+</programlisting>
+      <para>
+This function is implemented as:</para>
+      <programlisting>
+cyg_bool cyg_telnetd_send_response( 
+    FILE *fp, 
+    char *response )
+{
+    if (strlen(response) &gt; 0)
+    {
+        fwrite( response, 1, strlen(response), fp );
+        fwrite( &quot;\r\n&quot;, 1, 2, fp );
+        fflush( fp );
+    }
+
+    return true;
+}
+</programlisting>
+      <para>
+If a command will be called from some other service than TELNETD, it would not be able to use this function, and the handler would have to be defined in a shared include file. A future implementation will make the shell more general so it can be used with RS232.</para>
+    </sect1>
+<!-- =============================================================== -->    <sect1 id="net-httpd-configuration">
+      <title>Shell Configuration</title>
+      <para>
+There is one configuration item.</para>
+      <sect2>
+        <title>
+          <literal>CYGPKG_SH_COMMAND_LUA</literal>
+        </title>
+        <para>
+This option enables the Lua command. Setting this option off allows compiling Shell without the Lua package.
+</para>
+      </sect2>
+    </sect1>
+  </chapter>
+</part>

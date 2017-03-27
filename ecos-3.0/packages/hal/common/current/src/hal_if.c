@@ -260,8 +260,6 @@ flash_fis_op2( int op, unsigned int index, struct fis_table_entry *entry)
 
 #endif
 
-
-
 //----------------------------
 // Delay uS
 #ifdef CYGSEM_HAL_VIRTUAL_VECTOR_CLAIM_DELAY_US
@@ -377,7 +375,7 @@ reset(void)
     // be defined an address we can jump to - and effectively
     // reinitialize the system. Not quite as good as a reset, but it
     // is often enough.
-    //goto *HAL_PLATFORM_RESET_ENTRY;
+    goto *HAL_PLATFORM_RESET_ENTRY;
 
 #else
 #error " no RESET_ENTRY"

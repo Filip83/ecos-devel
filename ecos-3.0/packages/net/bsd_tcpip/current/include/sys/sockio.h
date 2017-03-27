@@ -133,4 +133,6 @@
 #define SIOCGIFSTATSUD  _IOWR('i',102, struct ifreq)    /* get uptodate if stats */
 #define SIOCGIFSTATS    _IOWR('i',103, struct ifreq)    /* get interface stats */
 
+#define SIOCANTRCVMORE  _IOR('s',104, int)              /* get can receive more data */
+
 #endif /* !_SYS_SOCKIO_H_ */

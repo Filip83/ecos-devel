@@ -1,0 +1,246 @@
+# ====================================================================
+#
+#      hal_arm_imxq.cdl
+#
+#      Freescale i.MXQ HAL package configuration data
+#
+# ====================================================================
+## ####ECOSGPLCOPYRIGHTBEGIN####                                            
+## -------------------------------------------                              
+## This file is part of eCos, the Embedded Configurable Operating System.   
+## Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003 Free Software Foundation, Inc.
+##
+## eCos is free software; you can redistribute it and/or modify it under    
+## the terms of the GNU General Public License as published by the Free     
+## Software Foundation; either version 2 or (at your option) any later      
+## version.                                                                 
+##
+## eCos is distributed in the hope that it will be useful, but WITHOUT      
+## ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or    
+## FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License    
+## for more details.                                                        
+##
+## You should have received a copy of the GNU General Public License        
+## along with eCos; if not, write to the Free Software Foundation, Inc.,    
+## 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.            
+##
+## As a special exception, if other files instantiate templates or use      
+## macros or inline functions from this file, or you compile this file      
+## and link it with other works to produce a work based on this file,       
+## this file does not by itself cause the resulting work to be covered by   
+## the GNU General Public License. However the source code for this file    
+## must still be made available in accordance with section (3) of the GNU   
+## General Public License v2.                                               
+##
+## This exception does not invalidate any other reasons why a work based    
+## on this file might be covered by the GNU General Public License.         
+## -------------------------------------------                              
+## ####ECOSGPLCOPYRIGHTEND####                                              
+# ====================================================================
+######DESCRIPTIONBEGIN####
+#
+# Author(s):      Mike Jones
+# Contributors:   
+# Date:           2013-08-08
+#
+#####DESCRIPTIONEND####
+#
+# ====================================================================
+
+cdl_package CYGPKG_HAL_ARM_IMX6 {
+    display       "Freescale IMX6 variant HAL"
+    parent        CYGPKG_HAL_ARM
+    define_header hal_arm_imx6.h
+    include_dir   cyg/hal
+    hardware
+    description   "
+        The iMX6 HAL package provides the support needed to run
+        eCos on Freescale iMX6 based targets."
+
+    compile       imx6_misc.c imx6_ostimer.c imx6_clocking.c imx6_spinlock.S imx6_ivt.c imx6_dcd.c hal_diag.c
+
+    requires      CYGPKG_HAL_SMP_SUPPORT
+
+    implements    CYGINT_HAL_DEBUG_GDB_STUBS
+    implements    CYGINT_HAL_DEBUG_GDB_STUBS_BREAK
+    implements    CYGINT_HAL_VIRTUAL_VECTOR_SUPPORT
+    implements    CYGINT_HAL_VIRTUAL_VECTOR_COMM_BAUD_SUPPORT
+    implements    CYGINT_HAL_ARM_ARCH_ARM_CORTEXA9
+    implements    CYGINT_HAL_ARM_THUMB_ARCH
+
+    cdl_option CYGINT_HAL_ARM_ARCH_ARM_MULTICORE {
+        display    "Variant multicore support"
+        calculated 1
+        description    "The iMX6 supports multicore."
+    }
+    
+    cdl_option CYGHWR_HAL_ARM_FPU {
+        display    "Variant FPU support"
+        calculated 1
+        description    "The iMX6 supports VFPv3 instructions."
+    }
+
+    cdl_option CYGHWR_HAL_ARM_NEON {
+        display    "Variant NEON support"
+        calculated 1
+        description    "The iMX6 supports NEON instructions."
+    }
+
+    # Let the architectural HAL see this variant's files
+    define_proc {
+        puts $::cdl_system_header "#define CYGBLD_HAL_ARM_VAR_IO_H"
+        puts $::cdl_system_header "#define CYGBLD_HAL_ARM_VAR_ARCH_H"
+    }
+
+    cdl_option CYGHWR_HAL_ARM_IMX6 {
+        display        "iMX6 variant used"
+        flavor         data
+        default_value  {"IMX6Q"}
+        legal_values   {"IMX6Q"}
+        description    "The iMX6 microcontroller family has several variants,
+                        the main differences being the number of cores.
+			This option allows the platform HALs to select the 
+                        specific microcontroller being used."
+    }
+
+    cdl_component CYG_HAL_STARTUP {
+        display       "Startup type"
+        flavor        data
+        default_value {"RAM"}
+        legal_values  {"RAM" "SD" }
+        no_define
+        define -file system.h CYG_HAL_STARTUP
+        description   "
+            When targeting the iMX6 eval boards it is only possible to build
+            the system for RAM bootstrap."
+    }
+
+    cdl_option CYGHWR_HAL_ARM_SOC_PROCESSOR_CLOCK {
+        display       "Processor clock rate"
+        flavor        data
+        default_value 1000000000
+        description   "
+           The processor can run at various frequencies.
+           These values are expressed in Hz. It's the CPU frequency."
+    }
+    
+    cdl_component CYGHWR_HAL_CORTEXM_KINETIS_CLK_PER_BUS {
+        display "Peripheral bus"
+        flavor data
+        default_value 100000
+        description "The peripheral bus clock"
+    }
+
+    cdl_component CYGNUM_HAL_RTC_CONSTANTS {
+        display       "Real-time clock constants"
+        flavor        none
+
+        cdl_option CYGNUM_HAL_RTC_NUMERATOR {
+            display       "Real-time clock numerator"
+            flavor        data
+            default_value 1000000000
+        }
+        cdl_option CYGNUM_HAL_RTC_DENOMINATOR {
+            display       "Real-time clock denominator"
+            flavor        data
+            default_value 1000000
+        }
+        cdl_option CYGNUM_HAL_RTC_CPU_CLOCK_DIVIDER {
+            display        "Divider of CPU frequency distributed to RTC"
+            flavor         data
+            default_value  1
+        }
+        
+        cdl_option CYGNUM_HAL_RTC_PERIOD {
+            display       "Real-time clock period"
+            flavor        data
+            calculated    ((CYGHWR_HAL_ARM_SOC_PROCESSOR_CLOCK/CYGNUM_HAL_RTC_CPU_CLOCK_DIVIDER)/CYGNUM_HAL_RTC_DENOMINATOR)
+            description   "Value to program into the RTC clock generator. OS timer must be 1 ms."
+        }
+    }
+
+    for { set ::channel 0 } { $::channel < 5 } { incr ::channel } {
+
+        cdl_interface CYGINT_HAL_FREESCALE_UART[set ::channel] {
+            display     "Platform provides UART [set ::channel] HAL"
+            flavor      bool
+            description "
+                This interface will be implemented if the specific
+                controller being used has on-chip UART [set ::channel],
+                and if that UART is accessible on the target hardware."
+        }
+
+        cdl_interface CYGINT_HAL_FREESCALE_UART[set ::channel]_RTSCTS {
+            display     "Platform provides HAL for UART[set ::channel] hardware flow control."
+            flavor      bool
+            description "
+                This interface will be implemented if the specific
+                on-chip UART [set ::channel] has RTS/CTS flow control
+                that is accessible on the target hardware."
+        }
+    }
+
+    cdl_option CYGHWR_HAL_ENET_TCD_SECTION {
+        display       "Ethernet buffer descriptor memory section"
+        flavor data
+        legal_values  { "\".noncache\"" }
+        default_value { "\".noncache\"" }
+
+        description "Ethernet is a bus master so buffers/buffer
+	    descriptos must reside in non-cached memory"
+    }
+
+    cdl_option CYGHWR_HAL_ENET_BUF_SECTION {
+        display       "Ethernet buffer memory section"
+        flavor        data
+        legal_values  { "\".noncache\"" }
+        default_value { "\".noncache\"" }
+
+        description "Ethernet is a bus master so buffers/buffer
+	    descriptos must reside in non-cached memory"
+    }
+
+    cdl_component CYGHWR_HAL_DEVS_IRQ_PRIO_SCHEME_VAR {
+        display     "Variant IRQ priority defaults"
+        no_define
+        flavor      none
+        parent      CYGHWR_HAL_DEVS_IRQ_PRIO_SCHEME
+        description "
+            Interrupt priorities defined by iMX6 variant"
+        script imx6_irq_scheme.cdl
+    }
+
+    cdl_component CYGHWR_HAL_VECTOR_TABLE_BASE {
+        display        "Memory location of vector table"
+        flavor         data
+        default_value  0x0093FFB8
+        description "
+            This is the position in memory that the iMX6 ROM code
+            looks for the vector table."
+        }
+
+    cdl_component CYGNUM_HAL_STARTUP_STACK_SIZE {
+        display        "Starutp stack size"
+        flavor         data
+        default_value  2048
+        description "
+            Size of the startup stack used during initialization
+             of the system."
+    }
+
+
+    cdl_component CYGPKG_HAL_IMX6_ARM_SMP_SUPPORT {
+        display     "iMX6 SMP Support"
+	active_if { CYGPKG_HAL_SMP_SUPPORT }
+	calculated { CYGPKG_HAL_SMP_SUPPORT }
+	compile imx6_smp.c
+
+	define_proc {
+	    puts $::cdl_header "#undef HAL_PLATFORM_EXTRA"
+	    puts $::cdl_header "#define HAL_PLATFORM_EXTRA  \"\[SMP\]\""
+	    puts $::cdl_header ""
+	}
+    }
+
+
+}

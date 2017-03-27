@@ -90,7 +90,6 @@
 // standard chap 7.9.1
 typedef cyg_count32 fpos_t;
 
-
 // FILE is just cast to an address here. It is uncast internally to the
 // C library in stream.hxx  as the C++ Cyg_StdioStream class.
 // Optional run-time checking can be enabled to ensure that the cast is
@@ -263,10 +262,16 @@ __externC int
 fseek( FILE * /* stream */, long int /* offset */, int /* whence */ ) __THROW;
 
 __externC int
+fseeko( FILE * /* stream */, long /* offset */, int /* whence */ ) __THROW;
+
+__externC int
 fsetpos( FILE * /* stream */, const fpos_t * /* pos */ ) __THROW;
 
 __externC long int
 ftell( FILE * /* stream */ ) __THROW;
+
+__externC long
+ftello( FILE * /* stream */ ) __THROW;
 
 __externC void
 rewind( FILE * /* stream */ ) __THROW;

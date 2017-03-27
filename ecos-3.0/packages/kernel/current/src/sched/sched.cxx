@@ -322,8 +322,15 @@ void Cyg_Scheduler::thread_entry( Cyg_Thread *thread )
     // lock this allows any pending DSRs to execute. The new thread
     // must start with a lock of zero, so we keep unlocking until the
     // lock reaches zero.
+    
+#if defined(CYGPKG_HAL_SMP_SUPPORT) && defined(CYGINT_HAL_ARM_ARCH_ARM_MULTICORE)
+    // This removes dependencies on start order of multiple cores. It also
+    // addressed other startup problems on the Cortex A9 hal.
+    while( get_smp_sched_lock() != 0 )
+#else
     while( get_sched_lock() != 0 )
-        unlock();    
+#endif
+        unlock();
 }
 
 // -------------------------------------------------------------------------

@@ -94,11 +94,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #ifndef _MIBGROUP_UTIL_FUNCS_H
 #define _MIBGROUP_UTIL_FUNCS_H
 
-#ifdef IN_UCD_SNMP_SOURCE
-#include "mibgroup/struct.h"
-#else
-#include <ucd-snmp/struct.h>
-#endif
+#include <ucd-snmp/mibgroup/struct.h>
 
 void Exit (int);
 int shell_command (struct extensible *);

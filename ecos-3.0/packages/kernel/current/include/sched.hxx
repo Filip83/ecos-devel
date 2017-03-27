@@ -117,6 +117,9 @@ public:
     // Return current value of lock
     static cyg_ucount32 get_sched_lock();
 
+//    // Return current holder of lock
+    static cyg_ucount32 get_sched_lock_holder();
+
     // Clear need_reschedule flag
     static void clear_need_reschedule();
     
@@ -162,6 +165,9 @@ public:
 
     // claim the preemption lock
     static void             lock();         
+
+    // claim the preemption lock
+    static void		         trylock();
 
     // release the preemption lock and possibly reschedule
     static void             unlock();
@@ -395,6 +401,11 @@ inline void Cyg_Scheduler_Base::clear_need_reschedule()
 inline cyg_ucount32 Cyg_Scheduler_Base::get_sched_lock()
 {
     return Cyg_Scheduler_SchedLock::get_sched_lock();
+}
+
+inline cyg_ucount32 Cyg_Scheduler_Base::get_sched_lock_holder()
+{
+    return Cyg_Scheduler_SchedLock::get_sched_lock_holder();
 }
 
 // Return current number of thread switches

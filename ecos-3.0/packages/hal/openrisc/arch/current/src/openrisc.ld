@@ -158,10 +158,10 @@ GROUP(libtarget.a libgcc.a)
 // Code that might be executed out of either RAM or ROM
 #define SECTION_text(_region_, _vma_, _lma_)                   \
   .text _vma_ : _lma_                                          \
-  { _stext = .;                                               \
+  { __stext = .;                                               \
     *(.text*) *(.gnu.warning) *(.gnu.linkonce.t.*) }           \
   > _region_                                                   \
-  _etext = .;  PROVIDE (etext = .);
+  __etext = .;  PROVIDE (etext = .);
 
 // The .text.ram section is for performance-sensitive code that is
 // always executed from RAM.  (If the code is loaded into ROM, it will
@@ -175,13 +175,13 @@ GROUP(libtarget.a libgcc.a)
 
 #define SECTION_text_ram(_region_, _vma_, _lma_)           \
   .text.ram _vma_ : _lma_                                  \
-  { _stext_ram = .;                                       \
+  { __stext_ram = .;                                       \
     __ram_text_start = ABSOLUTE(.);                        \
     *(.text.ram*)                                          \
   } > _region_                                             \
   __load_addr_text_ram = LOADADDR(.text.ram);              \
   __ram_text_end = .; PROVIDE(__ram_text_end = .);         \
-  _etext_ram = .;  PROVIDE (etext_ram = .);
+  __etext_ram = .;  PROVIDE (etext_ram = .);
 
 #define SECTION_rodata1(_region_, _vma_, _lma_)        \
     .rodata1 _vma_ : _lma_                             \
@@ -201,7 +201,6 @@ GROUP(libtarget.a libgcc.a)
 #define SECTION_gcc_except_table(_region_, _vma_, _lma_)       \
     .gcc_except_table _vma_ : _lma_                                           \
     { __EXCEPT_START__ = ABSOLUTE(.); *(.gcc_except_table)              \
-        KEEP(*(.gcc_except_table)) *(.gcc_except_table.*)               \
       __EXCEPT_END__ = ABSOLUTE(.);}                                    \
     > _region_
 
@@ -309,7 +308,7 @@ GROUP(libtarget.a libgcc.a)
 
 // Define VSR and virtual tables to reside at fixed addresses.
 #include CYGBLD_HAL_TARGET_H
-hal_vsr_table = CYGHWR_HAL_VSR_TABLE;
-hal_virtual_vector_table = CYGHWR_HAL_VIRTUAL_VECTOR_TABLE;
+_hal_vsr_table = CYGHWR_HAL_VSR_TABLE;
+_hal_virtual_vector_table = CYGHWR_HAL_VIRTUAL_VECTOR_TABLE;
 
 // EOF openrisc.ld

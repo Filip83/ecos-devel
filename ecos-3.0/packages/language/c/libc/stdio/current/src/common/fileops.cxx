@@ -249,5 +249,83 @@ __externC FILE *tmpfile( void ) __THROW
     STDIO_RETURN_VALUE( f );
 } // tmpfile()
 
+__externC char *uniquenam( char *tmplate, char **s ) __THROW
+{
+    STDIO_ENTRY();
+    char *buf = (char*)malloc(strlen(tmplate) + L_tmpnam);
+
+    typedef cyg_uint8 counttype;
+
+    static counttype count;
+    counttype totaliters=0;
+    int i;
+
+    if ( NULL != s )
+        CYG_CHECK_DATA_PTR( s, "supplied string pointer invalid" );
+    else
+        *s = buf;
+
+    // start off by making it "tmplate + 000000" etc. so we can fill backwards
+    // from end without spaces
+    strcpy(*s, tmplate);
+ 
+    while (totaliters < 6)
+    {
+        for (i=strlen(tmplate); i < (L_tmpnam-1); i++)
+        {
+            *s[i] = '0';
+        }
+        *s[i] = '\0';
+
+        counttype counttmp = count;
+        for (i=(L_tmpnam-1); i>2; i--)
+        {
+            const char tohex[] = "0123456789abcdef";
+            *s[i] = tohex[counttmp & 0xf];
+            counttmp = counttmp >> 4;
+        }
+        count++;
+        count %= TMP_MAX; // cycle round
+        totaliters++;
+
+        // s now points to a name candidate
+#ifdef CYGPKG_LIBC_STDIO_FILEIO
+        int fd = open( *s, O_RDONLY );
+        if (fd >= 0)
+            close(fd);
+        else if ( ENOENT == errno ) // we have a winner
+            break;
+#else
+        break; // no real filesystem, so just go with what we've come up with
+#endif
+    }
+
+    if ( totaliters == TMP_MAX ) // oops, looped right the way round
+        s = NULL;
+
+    STDIO_RETURN_VALUE( *s );
+} // uniquenam()
+
+// TODO: change behavior to use template
+__externC int mkstemp(char *tmplate) __THROW
+{
+    int fd;
+    char *s;
+
+    STDIO_ENTRY();
+
+    uniquenam( tmplate, &s );
+    if ( s == NULL)
+        fd = NULL;
+    else
+    {
+#ifdef CYGPKG_LIBC_STDIO_FILEIO
+        fd = open( s, O_RDWR );
+#endif
+    }    
+
+    STDIO_RETURN_VALUE( fd );
+} // mkstemp()
+
 ///////////////////////////////////////////////////////////////////////////
 // EOF fileops.cxx

@@ -107,6 +107,7 @@
 #define	SO_ERROR	0x1007		/* get error status and clear */
 #define	SO_TYPE		0x1008		/* get socket type */
 #define	SO_NETPROC	0x1020		/* multiplex; network processing */
+#define	SO_CANTRCVMORE	0x1800		/* get SS_CANTRCVMORE state */
 
 /*
  * Structure used for manipulating linger option.

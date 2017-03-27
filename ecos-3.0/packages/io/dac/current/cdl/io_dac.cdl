@@ -1,0 +1,114 @@
+##==========================================================================
+##
+##      io_dac.cdl
+##
+##      Generic DAC driver layer
+##
+##==========================================================================
+## ####ECOSGPLCOPYRIGHTBEGIN####                                            
+## -------------------------------------------                              
+## This file is part of eCos, the Embedded Configurable Operating System.   
+## Copyright (C) 2008 Free Software Foundation, Inc.                        
+##
+## eCos is free software; you can redistribute it and/or modify it under    
+## the terms of the GNU General Public License as published by the Free     
+## Software Foundation; either version 2 or (at your option) any later      
+## version.                                                                 
+##
+## eCos is distributed in the hope that it will be useful, but WITHOUT      
+## ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or    
+## FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License    
+## for more details.                                                        
+##
+## You should have received a copy of the GNU General Public License        
+## along with eCos; if not, write to the Free Software Foundation, Inc.,    
+## 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.            
+##
+## As a special exception, if other files instantiate templates or use      
+## macros or inline functions from this file, or you compile this file      
+## and link it with other works to produce a work based on this file,       
+## this file does not by itself cause the resulting work to be covered by   
+## the GNU General Public License. However the source code for this file    
+## must still be made available in accordance with section (3) of the GNU   
+## General Public License v2.                                               
+##
+## This exception does not invalidate any other reasons why a work based    
+## on this file might be covered by the GNU General Public License.         
+## -------------------------------------------                              
+## ####ECOSGPLCOPYRIGHTEND####                                              
+##==========================================================================
+#######DESCRIPTIONBEGIN####
+##
+## Author(s):    Mike Jones
+## Date:         2013-06-25
+## Description:  Implements generic layer of DAC drivers.
+##
+######DESCRIPTIONEND####
+##
+##========================================================================*/
+
+
+cdl_package CYGPKG_IO_DAC {
+    display       "DAC device drivers"
+    doc           ref/io-dac.html
+    parent        CYGPKG_IO
+    active_if     CYGPKG_IO
+    requires      CYGPKG_ERROR
+    include_dir   cyg/io
+    description   "
+        This option enables drivers for basic I/O services on
+        DAC devices."
+
+    compile       -library=libextras.a dac.c
+
+    cdl_component CYGPKG_IO_DAC_DEVICES {
+        display       "Hardware DAC device drivers"
+        flavor        bool
+        default_value 0
+        description   "
+            This option enables the hardware device drivers
+	    for the current platform."
+    }
+
+    cdl_option CYGNUM_IO_DAC_OUTPUT_SIZE {
+        display       "Output data size"
+        flavor        data
+        default_value 16
+        legal_values  0 to 32
+
+        description   "This option defines the data size for the DAC devices.
+                       Given in bits, it will be rounded up to 8, 16 or 32 to define
+                       the cyg_dac_output_t type."
+    }
+    
+    cdl_option CYGPKG_IO_DAC_SELECT_SUPPORT {
+	display "Enable DAC device select support"
+	flavor bool
+	active_if CYGPKG_IO_FILEIO
+	requires  { CYGFUN_IO_FILEIO_SELECT == 1 }
+	default_value 1
+	description "
+	    This option enables support for the select() API function on all
+	    DAC devices."
+    }
+    
+    cdl_component CYGPKG_IO_DAC_TESTS {
+        display     "DAC device driver tests"
+        flavor      data
+        no_define
+        calculated  { "tests/dac1" }
+        description "
+            This option specifies the set of tests for the DAC device drivers."
+            
+            
+        cdl_option CYGNUM_IO_DAC_PERFORMANCE_TEST_RATE {
+            display         "DAC performance test rate"
+            flavor          data
+            legal_values    1 to 10000
+            default_value   1000
+            description     "
+                This option specifies the data rate used for the DAC device
+                driver performance test."
+        }
+    }
+}    

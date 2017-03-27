@@ -1,0 +1,111 @@
+# ====================================================================
+#
+#      devs_disk_freescale_usdhc.cdl
+#
+#      Support for SDHC cards
+#
+# ====================================================================
+## ####ECOSGPLCOPYRIGHTBEGIN####                                            
+## -------------------------------------------                              
+## This file is part of eCos, the Embedded Configurable Operating System.   
+## Copyright (C) 2004, 2005, 2006 Free Software Foundation, Inc.            
+##
+## eCos is free software; you can redistribute it and/or modify it under    
+## the terms of the GNU General Public License as published by the Free     
+## Software Foundation; either version 2 or (at your option) any later      
+## version.                                                                 
+##
+## eCos is distributed in the hope that it will be useful, but WITHOUT      
+## ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or    
+## FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License    
+## for more details.                                                        
+##
+## You should have received a copy of the GNU General Public License        
+## along with eCos; if not, write to the Free Software Foundation, Inc.,    
+## 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.            
+##
+## As a special exception, if other files instantiate templates or use      
+## macros or inline functions from this file, or you compile this file      
+## and link it with other works to produce a work based on this file,       
+## this file does not by itself cause the resulting work to be covered by   
+## the GNU General Public License. However the source code for this file    
+## must still be made available in accordance with section (3) of the GNU   
+## General Public License v2.                                               
+##
+## This exception does not invalidate any other reasons why a work based    
+## on this file might be covered by the GNU General Public License.         
+## -------------------------------------------                              
+## ####ECOSGPLCOPYRIGHTEND####                                              
+# ====================================================================
+######DESCRIPTIONBEGIN####
+#
+# Author(s):      Mike Jones <mike@proclivis.com>
+# Date:           2013-12-04
+#
+#####DESCRIPTIONEND####
+# ====================================================================
+
+cdl_package CYGPKG_DEVS_DISK_FREESCALE_USDHC {
+    display     "Disk driver for SDHC cards"
+    doc         ecos-ref/devs-disk-freescale-usdhc-part.html
+
+    include_dir cyg/io
+    
+    parent      CYGPKG_IO_DISK_DEVICES
+    active_if   CYGPKG_IO_DISK
+
+    description "
+        This option enables support for accessing an SDHC card via a
+        Freescale USDHC perpherial."
+
+    compile       -library=libextras.a   freescale_usdhc.c usdhc.c usdhc_host.c usdhc_sd.c board_usdhc.c usdhc_iomux_config.c usdhc1_iomux_config.c usdhc2_iomux_config.c usdhc3_iomux_config.c usdhc4_iomux_config.c gpio.c imx6dq_gpio_map.c
+
+    define_proc {
+	puts $::cdl_system_header "/***** USDHC disk driver output start *****/"
+        puts $::cdl_system_header "#ifndef CYGDAT_DEVS_DISK_CFG"
+	puts $::cdl_system_header "#define CYGDAT_DEVS_DISK_CFG <pkgconf/devs_disk_freescale_usdhc.h>"
+        puts $::cdl_system_header "#endif"
+	puts $::cdl_system_header "/***** USDHC disk driver output end *****/"
+    }
+
+    cdl_component CYGPKG_DEVS_DISK_USDHC {
+	display		"Access an SDHC card via USDHC"
+        flavor          bool
+        default_value   1
+
+	cdl_option CYGDAT_DEVS_DISK_USDHC_DISK0_NAME {
+	    display		"Device name for the SDHC disk 0 device"
+	    flavor		data
+	    default_value	{ "\"/dev/sddisk0/\"" }
+	    description "
+                This is the device name used to access the raw disk device
+                in eCos, for example for mount operations. Note that the
+                trailing slash must be present."
+	}
+    }
+	
+    cdl_option CYGIMP_DEVS_DISK_USDHC_POLLED {
+	display		"Run the driver in polled mode rather than interrupt-driven"
+	default_value	!CYGPKG_KERNEL
+	description "
+            By default the SDHC disk driver will operate in
+            interrupt-driven mode if the kernel is present,
+            i.e. if the application is likely to be
+            multi-threaded. Otherwise it will operate in polled
+            mode."
+
+    }
+
+    cdl_option CYGPKG_DEVS_DISK_USDHC_IDLE_RETRIES_WAIT {
+        display          "Idle to operational retry wait"
+        flavor           booldata
+        default_value    10000
+        description      "
+
+            This option sets how long to wait between retries of
+            attempts to change the card state from idle to
+            operational. It is measured in microseconds."
+    }
+}
+
+# EOF devs_disk_freescale_usdhc.cdl

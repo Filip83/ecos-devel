@@ -72,7 +72,7 @@ typedef struct lpc2xxx_accfilt_entry
 //--------------------------------------------------------------------------
 // On no-suffix and /00 devices, the CAN controllers are numbered 1 to n 
 // (n = 2 or 4) in the LUT tables. However, on /01 devices, the CAN controllers
-// are numbered 0 to nâ1 in the LUT tables.
+// are numbered 0 to nï¿½1 in the LUT tables.
 //
 // On the LPC2468 the LUT channel numbers are also numbered from 0 - 4.
 //
@@ -771,7 +771,7 @@ static void lpc2xxx_can_accfilt_simple_rx_all(void)
 #ifdef CYGOPT_IO_CAN_STD_CAN_ID
     cyg_uint8                 std_address = 0;     // std group entry address
 #ifdef CYGOPT_IO_CAN_EXT_CAN_ID
-    cyg_uint8                 ext_address = lpc2xxx_global_can_info.init_cnt << 2;
+    cyg_uint8                 ext_address = LPC2XXX_INIT_CNT << 2;
 #endif
 #else
     cyg_uint8                 ext_address = 0;

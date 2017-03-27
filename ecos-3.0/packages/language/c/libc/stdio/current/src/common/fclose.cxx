@@ -103,6 +103,11 @@ fclose( FILE *stream ) __THROW
 
     if( err != ENOERR )
     {
+    	// force the stream to close.
+        real_stream->~Cyg_StdioStream();
+        free(real_stream);
+        Cyg_libc_stdio_files::set_file_stream(i, NULL);
+
         Cyg_libc_stdio_files::unlock();
         errno = err;
         return EOF;

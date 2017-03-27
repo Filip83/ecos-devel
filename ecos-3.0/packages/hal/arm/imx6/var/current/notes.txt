@@ -1,0 +1,14 @@
+The code in the var tree should be generic accross all iMX6Q devices. Note that
+it is not generic accross the whole iMX6 set of devices. This means it will not
+support iMX6D. The main issue is that the SD register set is slightly different
+as well as code.
+
+If the long term goal is to support 1,2, and 4 cores, then a subset of the
+registers may have to be moved to the specific processor. Then that leaves
+the issue of whether two dimensions of flexibility, number of cores, and 
+board, must be supported. Boards typically commit to a number of cores,
+so perhaps only one dimension is enough.
+
+The near term goal is to support other iMX6Q boards, not to support other 
+numbers of cores. In this case, the registers will be consistent from board
+to board.

@@ -92,6 +92,19 @@ cdl_package CYGPKG_HAL_ARM {
         @rm target.tmp
     }
 
+    cdl_component CYGPKG_HAL_SMP_SUPPORT {
+	display       "SMP support"
+	default_value 4
+	requires { CYGPKG_HAL_ARM_IMX6 != 0 }
+	
+	cdl_option CYGPKG_HAL_SMP_CPU_MAX {
+	    display       "Max number of CPUs supported"
+	    flavor        data
+            legal_values  2 or 4
+	    default_value 4
+	}
+    }
+
     cdl_interface CYGINT_HAL_ARM_THUMB_ARCH {
         display "The CPU architecture supports THUMB mode"
     }
@@ -188,6 +201,10 @@ cdl_package CYGPKG_HAL_ARM {
         display "The platform uses a processor with an ARM9 core"
     }
 
+    cdl_interface CYGINT_HAL_ARM_ARCH_ARM_CORTEXA9 {
+        display "The platform uses a processor with an ARM Cortex-A9 multicore"
+    }
+
     cdl_interface CYGINT_HAL_ARM_ARCH_STRONGARM {
         display "The platform uses a processor with a StrongARM core"
     }
@@ -202,11 +219,13 @@ cdl_package CYGPKG_HAL_ARM {
         legal_values  { (CYGINT_HAL_ARM_ARCH_ARM7 != 0) ? "ARM7" : ""
                         (CYGINT_HAL_ARM_ARCH_ARM9 != 0) ? "ARM9" : ""
                         (CYGINT_HAL_ARM_ARCH_STRONGARM != 0) ? "StrongARM" : ""
+                        (CYGINT_HAL_ARM_ARCH_ARM_CORTEXA9 != 0) ? "ARM Cortex-A9 MP" : ""
                         (CYGINT_HAL_ARM_ARCH_XSCALE != 0) ? "XScale" : ""
                         "" }
         default_value  { (CYGINT_HAL_ARM_ARCH_ARM7 != 0) ? "ARM7" : 
                          (CYGINT_HAL_ARM_ARCH_ARM9 != 0) ? "ARM9" : 
                          (CYGINT_HAL_ARM_ARCH_STRONGARM != 0) ? "StrongARM" : 
+                         (CYGINT_HAL_ARM_ARCH_ARM_CORTEXA9 != 0) ? "ARM Cortex-A9 MP" :
                          (CYGINT_HAL_ARM_ARCH_XSCALE != 0) ? "XScale" :
                          "unknown" }
         no_define
@@ -292,6 +311,33 @@ cdl_package CYGPKG_HAL_ARM {
             handlers."
     }
 
+    cdl_option CYGOPT_HAL_ARM_FIQ_DISABLE {
+        display          "Disable FIQs"
+        default_value    1
+        description      "This option causes the HAL to disable both IRQ and FIQ
+                          interrupts during critical sections. Disabling this option
+                          causes eCos to only disable IRQs and puts FIQ
+                          interrupts outside the eCos world where they cannot interact
+                          with eCos in any way. Disabling this option also enables
+                          a set of macros, HAL_DISABLE|ENABLE|RESTORE|QUERY_FIQ,
+                          that provide control over the delivery of FIQs.
+                          The default is for this option to be enabled, which provides
+                          backward compatibility with previous versions of the ARM HAL."
+    }
+
+    cdl_option CYGNUM_HAL_ARM_FIQ_STACK_SIZE {
+        display          "FIQ stack size"
+        active_if        !CYGOPT_HAL_ARM_FIQ_DISABLE
+        flavor           data
+        legal_values     32 to 0x80000000
+        default_value    512
+        description      "This option set the size of the stack used to handle FIQ
+                          interrupts. It is only used if the HAL is not disabling
+                          FIQs during critical sections. Otherwise FIQs are translated
+                          into IRQs and delivered on the standard interrupt stack."
+    }
+    
+    
     cdl_component CYGPKG_REDBOOT_ARM_OPTIONS {
         display       "Redboot for ARM options"
         flavor        none

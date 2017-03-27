@@ -123,6 +123,44 @@ OUTPUT_FORMAT(elf32-bigarm)
     > _region_ \
     __rom_vectors_lma = LOADADDR(.rom_vectors);
 
+#define SECTION_ivt(_region_, _vma_, _lma_) \
+    .ivt _vma_ : _lma_ \
+    {  . = . + 0x400; \
+      FORCE_OUTPUT; KEEP (*(.ivt)) } \
+    > _region_
+
+#define SECTION_boot_data(_region_, _vma_, _lma_) \
+    .boot_data _vma_ : _lma_ \
+    { __start_boot_data = .; \
+      FORCE_OUTPUT; KEEP (*(.boot_data)) } \
+    > _region_
+
+#define SECTION_dcd_hdr(_region_, _vma_, _lma_) \
+    .dcd_hdr _vma_ : _lma_ \
+    { __start_dcd = .; \
+      FORCE_OUTPUT; KEEP (*(.dcd_hdr)) } \
+    > _region_
+
+#define SECTION_dcd_wrt_cmd(_region_, _vma_, _lma_) \
+    .dcd_wrt_cmd _vma_ : _lma_ \
+    { FORCE_OUTPUT; KEEP (*(.dcd_wrt_cmd)) } \
+    > _region_
+
+#define SECTION_dcd_data(_region_, _vma_, _lma_) \
+    .dcd_data _vma_ : _lma_ \
+    { FORCE_OUTPUT; KEEP (*(.dcd_data)) } \
+    > _region_
+
+#define SECTION_hab_data(_region_, _vma_, _lma_) \
+    .hab_data _vma_ : _lma_ \
+    { __hab_data = .; \
+      . += 8K; \
+      . = ALIGN (32); \
+      __hab_data_end = .; \
+      FORCE_OUTPUT; KEEP (*(.hab_data)) } \
+    > _region_
+
+
 /* The following two sections are used for C++ exception handling
  * only and so can be discarded if not used for that.
  * These are both included directly from the SECTION_text
@@ -316,10 +354,18 @@ OUTPUT_FORMAT(elf32-bigarm)
       _GOT2_START_ = ABSOLUTE (.); *(.got2) _GOT2_END_ = ABSOLUTE (.);      \
     } > _region_
 
+#ifdef CYGPKG_HAL_SMP_SUPPORT
+#define SECTION_mmu_tables(_region_, _vma_, _lma_) \
+    .mmu_tables _vma_ : _lma_ \
+    { __mmu_tables_start = ABSOLUTE(.); \
+      FORCE_OUTPUT; *(.mmu_tables) } \
+    > _region_
+#else
 #define SECTION_mmu_tables(_region_, _vma_, _lma_) \
     .mmu_tables _vma_ : _lma_ \
     { FORCE_OUTPUT; *(.mmu_tables) } \
     > _region_
+#endif
 
 #define SECTION_sram(_region_, _vma_, _lma_) \
     .sram _vma_ : _lma_ \
@@ -348,6 +394,13 @@ OUTPUT_FORMAT(elf32-bigarm)
     *(.scommon) *(.dynsbss) *(.sbss*) *(.gnu.linkonce.sb.*) \
     *(.dynbss) *(.bss*) *(.gnu.linkonce.b.*) *(COMMON) \
     __bss_end = ABSOLUTE (.); } \
+    > _region_
+
+#define USER_SECTION(_name_, _region_,  _vma_, _lma_) \
+    ._name_ _vma_ : _lma_ \
+    { __ ## _name_ ## _start = ABSOLUTE (.); \
+     *(._name_*) \
+    __ ## _name_ ## _end = ABSOLUTE (.); } \
     > _region_
 
 #define SECTIONS_END . = ALIGN(4); _end = .; PROVIDE (end = .);
