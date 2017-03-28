@@ -62,7 +62,7 @@
 #include <cyg/io/ser_freescale_uart.h>
 
 // Only build this driver for if Freescale UART is needed.
-#ifdef CYGPKG_IO_SERIAL_FREESCALE_UART
+//#ifdef CYGPKG_IO_SERIAL_FREESCALE_UART
 
 typedef struct uart_pins_s {
     cyg_uint32 rx;
