@@ -1,0 +1,177 @@
+#==========================================================================
+#
+#       kbd_button.cdl
+#
+#       eCos configuration data for the Freescale kinetis button keyboard driver
+#
+#==========================================================================
+## ####ECOSGPLCOPYRIGHTBEGIN####
+## -------------------------------------------
+## This file is part of eCos, the Embedded Configurable Operating System.
+## Copyright (C) 1998, 1999, 2000, 2001, 2002 Free Software Foundation, Inc.
+##
+## eCos is free software; you can redistribute it and/or modify it under
+## the terms of the GNU General Public License as published by the Free
+## Software Foundation; either version 2 or (at your option) any later
+## version.
+##
+## eCos is distributed in the hope that it will be useful, but WITHOUT
+## ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+## FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+## for more details.
+##
+## You should have received a copy of the GNU General Public License
+## along with eCos; if not, write to the Free Software Foundation, Inc.,
+## 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+##
+## As a special exception, if other files instantiate templates or use
+## macros or inline functions from this file, or you compile this file
+## and link it with other works to produce a work based on this file,
+## this file does not by itself cause the resulting work to be covered by
+## the GNU General Public License. However the source code for this file
+## must still be made available in accordance with section (3) of the GNU
+## General Public License v2.
+##
+## This exception does not invalidate any other reasons why a work based
+## on this file might be covered by the GNU General Public License.
+## -------------------------------------------
+## ####ECOSGPLCOPYRIGHTEND####
+#==========================================================================
+######DESCRIPTIONBEGIN####
+#
+# Author(s):    Filip
+# Contributors:
+# Date:         2017-03-30
+# Purpose:
+# Description:  Button keyboard driver for Freescale Kinetis
+#
+#####DESCRIPTIONEND####
+#
+#==========================================================================
+
+cdl_package CYGPKG_DEVS_KBD_BUTTON_KINETIS {
+    display     "Button keyboard driver."
+    parent	CYGPKG_IO_KBD
+    active_if   CYGPKG_IO_KBD
+    requires    CYGPKG_IO
+    include_dir   cyg/io
+
+    compile       -library=libextras.a kbd_button.c
+
+    description "Keyboard driver for the buttons. The buttons are connected
+                 to gpio the edge on which interrupt si genrated can be selected.
+                 The glitch filter interval and repeated scan interval is derived
+                 from PIT periodic timer. The AST frequcne must be ca. 
+                 32765Hz. This driver use only one GPIO port wich is button 
+                 limit."
+
+    cdl_component CYGPKG_DEVS_KBD_BUTTON_OPTIONS {
+        display "options"
+        flavor  none
+        no_define
+
+        cdl_option CYGPKG_DEVS_KBD_BUTTON_CFLAGS {
+            display       "Additional compiler flags"
+            flavor        data
+            no_define
+            default_value { "" }
+            description "
+               This option modifies the set of compiler flags for
+               building the keypad driver package. These flags
+               are used in addition to the set of global flags."
+        }
+    }
+
+    cdl_option CYGDAT_DEVS_KBD_BUTTON_NAME {
+        display "Device name for the keyboard driver"
+        flavor data
+        default_value {"\"/dev/kbd\""}
+        description " This option specifies the name of the keypad device"
+    }
+
+    cdl_option CYGNUM_DEVS_KBD_BUTTON_SCAN_INTERVAL {
+        display "Keyboard scan interval"
+        flavor data
+        default_value { 7 }
+        description "
+            This option defines keyboard scan interval in ms."
+    }
+
+    cdl_option CYGNUM_DEVS_KBD_BUTTON_PIT_CNT {
+        display "PIT cnt value to generate scan interval"
+        flavor data
+        default_value 1280/CYGNUM_DEVS_KBD_BUTTON_SCAN_INTERVAL 
+    }
+
+    cdl_option CYGNUM_DEVS_KBD_BUTTON_GLITCH_CNT {
+        display "Keyboard scan interval"
+        flavor data
+        legal_values     1 to 10
+        default_value { 3 }
+        description "
+            The number samples of keyboard state to decide the key
+            is relay pusshed."
+    }
+
+    cdl_option CYGNUM_DEVS_KBD_BUTTON_CALLBACK_MODE {
+        display "Keyboard driver callback mode"
+        flavor bool
+        default_value { 0 }
+        description "
+            This option enable callback only mode. In this mode
+            callback function to deliver key strokes is used.
+            Keyboard IO functionality is disabled."
+    }
+
+    cdl_option CYGNUM_DEVS_KBD_BUTTON_EVENT_BUFFER_SIZE {
+        display "Number of events the driver can buffer"
+        active_if CYGNUM_DEVS_KBD_BUTTON_CALLBACK_MODE == 0
+        flavor data
+        default_value { 5 }
+        description "
+            This option defines the size of the keypad device internal
+        buffer. The cyg_io_read() function will return as many of these
+        as there is space for in the buffer passed."
+    }
+
+    cdl_option CYGNUM_DEVS_KBD_BUTTON_LINUX_KEYBOARD {
+        display "Enable linux keyboard key mapping"
+        active_if CYGNUM_DEVS_KBD_BUTTON_CALLBACK_MODE == 0
+        flavor bool
+        default_value { 1 }
+        description "
+            If this option is enabled a key value is represetnted as 16-bit
+            integer. If a key value is les than 255 it can be interpreted
+            as ASCII character, otherwise it is function key. Function keys
+            are interpreted acording linux_keyboard.h."
+    }
+
+    cdl_option CYGNUM_DEVS_KBD_BUTTON_INTERRUPTS_EDGE {
+        display "Edge on which pin interrupt is gnerated"
+        flavor data
+        legal_values   {"FALLING_EDGE" "RISING_EDGE"} 
+        default_value { "FALLING_EDGE" }
+    }
+
+    cdl_option CYGNUM_DEVS_KBD_BUTTON_ACTIVE_VALUE {
+        display "Value of active pin state"
+        flavor data
+        calculated  (CYGNUM_DEVS_KBD_BUTTON_INTERRUPTS_EDGE == FALLING_EDGE) ? 0:1  
+    }
+
+    cdl_option CYGNUM_IO_KBD_BUTTON_INT_PRIORITY {
+        display      "Freescale kbd driver interrupt priority"
+        flavor       data
+        default_value CYGNUM_IO_KBD_BUTTON_INT_PRIORITY_SP
+        description   "
+            This option selects the interupt priority for the
+            kbd interrupts."
+    }
+
+    cdl_option CYGDAT_DEVS_KBD_BUTTON_DEBUG_OUTPUT {
+        display "Enable keyboard driver debug utput"
+        flavor data
+        legal_values  0 to 3
+        default_value { 0 }
+    }
+}

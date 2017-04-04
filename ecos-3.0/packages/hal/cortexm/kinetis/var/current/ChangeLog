@@ -1,3 +1,8 @@
+2017-03-29  Filip <filip.gnu@gmail.com>
+
+        * cortexm/kinetis/var/current/include/var_io_pit.h:
+	Implemented PIT timer support.
+
 2014-02-13  Ilija Kocho  <ilijak@siva.com.mk>
 
 	* cortexm/kinetis/var/current/include/var_intr.h:

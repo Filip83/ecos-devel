@@ -397,9 +397,10 @@ static void dspi_pin_setup(const cyg_uint32* spi_pins_p,
         pin_p < spi_pins_p + 3;
         CYGHWR_IO_FREESCALE_DSPI_PIN(*pin_p++));
 
-    for(pin_p = cs_pins_p;
+    // CS pins use GPIO control
+    /*for(pin_p = cs_pins_p;
         pin_p < cs_pins_p + cs_pin_n;
-        CYGHWR_IO_FREESCALE_DSPI_PIN(*pin_p++));
+        CYGHWR_IO_FREESCALE_DSPI_PIN(*pin_p++));*/
 }
 
 //-----------------------------------------------------------------------------
@@ -974,26 +975,18 @@ dspi_set_npcs(cyg_spi_freescale_dspi_device_t *spi_bus)
     if(dspi_bus == cyg_spi_dspi_bus0)
     {
         if(val == 0)
-            CYGHWR_HAL_KINETIS_GPIO_CLEAR_PIN(CYGHWR_HAL_KINETIS_GPIO_PORTA_P,
-                    1);
+            CYGHWR_IO_GPIO_PIN_CS_RTC_SET;
         else if( val == 1)
-            CYGHWR_HAL_KINETIS_GPIO_CLEAR_PIN(CYGHWR_HAL_KINETIS_GPIO_PORTA_P,
-                    2);
+            CYGHWR_IO_GPIO_PIN_CS_LCD_SET;
         else
-            CYGHWR_HAL_KINETIS_GPIO_CLEAR_PIN(CYGHWR_HAL_KINETIS_GPIO_PORTA_P,
-                    3);
+            CYGHWR_IO_GPIO_PIN_CS_FRAM_SET;
     }
     else if(dspi_bus == cyg_spi_dspi_bus1)
     {
         if(val == 0)
-            CYGHWR_HAL_KINETIS_GPIO_CLEAR_PIN(CYGHWR_HAL_KINETIS_GPIO_PORTA_P,
-                    1);
-        else if( val == 1)
-            CYGHWR_HAL_KINETIS_GPIO_CLEAR_PIN(CYGHWR_HAL_KINETIS_GPIO_PORTA_P,
-                    2);
+            CYGHWR_IO_GPIO_PIN_CS_ADC_SET;
         else
-            CYGHWR_HAL_KINETIS_GPIO_CLEAR_PIN(CYGHWR_HAL_KINETIS_GPIO_PORTA_P,
-                    3);
+            CYGHWR_IO_GPIO_PIN_CS_DAC_SET
     }
 }
 
@@ -1007,26 +1000,18 @@ dspi_drop_cs(cyg_spi_freescale_dspi_device_t *dev)
     if(dspi_bus == cyg_spi_dspi_bus0)
     {
         if(val == 0)
-            CYGHWR_HAL_KINETIS_GPIO_SET_PIN(CYGHWR_HAL_KINETIS_GPIO_PORTA_P,
-                    1);
+            CYGHWR_IO_GPIO_PIN_CS_RTC_CLR;
         else if( val == 1)
-            CYGHWR_HAL_KINETIS_GPIO_SET_PIN(CYGHWR_HAL_KINETIS_GPIO_PORTA_P,
-                    2);
+            CYGHWR_IO_GPIO_PIN_CS_LCD_CLR;
         else
-            CYGHWR_HAL_KINETIS_GPIO_SET_PIN(CYGHWR_HAL_KINETIS_GPIO_PORTA_P,
-                    3);
+            CYGHWR_IO_GPIO_PIN_CS_FRAM_CLR;
     }
     else if(dspi_bus == cyg_spi_dspi_bus1)
     {
         if(val == 0)
-            CYGHWR_HAL_KINETIS_GPIO_SET_PIN(CYGHWR_HAL_KINETIS_GPIO_PORTA_P,
-                    1);
-        else if( val == 1)
-            CYGHWR_HAL_KINETIS_GPIO_SET_PIN(CYGHWR_HAL_KINETIS_GPIO_PORTA_P,
-                    2);
+            CYGHWR_IO_GPIO_PIN_CS_ADC_CLR;
         else
-            CYGHWR_HAL_KINETIS_GPIO_SET_PIN(CYGHWR_HAL_KINETIS_GPIO_PORTA_P,
-                    3);
+            CYGHWR_IO_GPIO_PIN_CS_DAC_CLR;
     }
 }
 //-----------------------------------------------------------------------------

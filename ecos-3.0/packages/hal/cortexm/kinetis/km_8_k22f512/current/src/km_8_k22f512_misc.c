@@ -51,7 +51,7 @@
 #include <pkgconf/hal.h>
 #include <pkgconf/hal_cortexm.h>
 #include <pkgconf/hal_cortexm_kinetis.h>
-#include <pkgconf/hal_cortexm_kinetis_twr_k60f120m.h>
+#include <pkgconf/hal_cortexm_kinetis_km_8_k22f512.h>
 #ifdef CYGPKG_KERNEL
 #include <pkgconf/kernel.h>
 #endif
@@ -109,9 +109,8 @@ hal_system_init( void )
             (CYGHWR_HAL_KINETIS_SIM_SCGC5_PORTA_M |   \
              CYGHWR_HAL_KINETIS_SIM_SCGC5_PORTB_M |   \
              CYGHWR_HAL_KINETIS_SIM_SCGC5_PORTC_M |   \
-             CYGHWR_HAL_KINETIS_SIM_SCGC5_PORTD_M |   \
-             CYGHWR_HAL_KINETIS_SIM_SCGC5_PORTE_M |   \
-             CYGHWR_HAL_KINETIS_SIM_SCGC5_PORTF_M)
+             CYGHWR_HAL_KINETIS_SIM_SCGC5_PORTD_M)    \
+
 
 static inline void CYGOPT_HAL_KINETIS_MISC_FLASH_SECTION_ATTR
 hal_misc_init(void)
@@ -120,12 +119,34 @@ hal_misc_init(void)
     cyghwr_hal_kinetis_mpu_t *mpu_p = CYGHWR_HAL_KINETIS_MPU_P;
 
     // Enable some peripherals' clocks.
-    sim_p->scgc1 |= CYGHWR_HAL_KINETIS_SIM_SCGC1_OSC1_M;
     sim_p->scgc5 |= CYGHWR_HAL_KINETIS_SIM_SCGC5_PORT_M;
-    sim_p->scgc6 |= CYGHWR_HAL_KINETIS_SIM_SCGC6_RTC_M;
 
     // Disable MPU
     mpu_p->cesr = 0;
+    
+    // Enable miscelciums GPIO pins
+    CYGHWR_IO_FREESCALE_UART_PIN(CYGHWR_IO_FREESCALE_XTAL_PIN_EXTAL0);
+    CYGHWR_IO_FREESCALE_UART_PIN(CYGHWR_IO_FREESCALE_XTAL_PIN_XTAL0;
+    
+    CYGHWR_IO_FREESCALE_UART_PIN(CYGHWR_IO_FREESCALE_LCD_A0);
+    CYGHWR_IO_DIR_PIN_PWOFF;
+    CYGHWR_IO_CLEAR_PIN_NSHUTD;
+    
+    CYGHWR_IO_FREESCALE_UART_PIN(CYGHWR_IO_FRESCALE_PIN_NSHUTD);
+    CYGHWR_IO_DIR_PIN_NSHUTD;
+    CYGHWR_IO_CLEAR_PIN_NSHUTD;
+    
+    CYGHWR_IO_FREESCALE_UART_PIN(CYGHWR_IO_FRESCALE_PIN_ANL_ON);
+    CYGHWR_IO_DIR_PIN_ANL_ON;
+    CYGHWR_IO_CLEAR_PIN_ANL_ON;
+    
+    CYGHWR_IO_FREESCALE_UART_PIN(CYGHWR_IO_FRESCALE_PIN_LCD_BL);
+    CYGHWR_IO_DIR_PIN_LCD_BL;
+    CYGHWR_IO_CLEAR_PIN_LCD_BL;
+    
+    CYGHWR_IO_FREESCALE_UART_PIN(CYGHWR_IO_FRESCALE_PIN_PWOFF);
+    CYGHWR_IO_DIR_PIN_PWOFF;
+    CYGHWR_IO_CLEAR_PIN_PWOFF;
 }
 
 

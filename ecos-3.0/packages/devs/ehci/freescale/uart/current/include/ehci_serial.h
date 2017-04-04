@@ -4,13 +4,6 @@
  * and open the template in the editor.
  */
 
-/* 
- * File:   hal_uart_dma.h
- * Author: filip
- *
- * Created on 31. října 2016, 13:49
- */
-
 #ifndef CYGONCE_EHCI_SERIAL_H
 #define CYGONCE_EHCI_SERIAL_H
 

@@ -108,7 +108,7 @@ cyg_st7565_fb_on(struct cyg_fb* fb)
     tx_data[12] = 0x00;
     tx_data[13] = DISP_ON;
    
-    gpio_set_pin_low(CYGNUM_DEVS_FRAMEBUF_ST7565_A0_PIN);
+    CYGNUM_DEVS_FRAMEBUF_ST7565_A0_PIN_LOW;
     
     cyg_spi_transaction_begin((cyg_spi_device*)&lcd_spi_device);
     cyg_spi_transaction_transfer((cyg_spi_device*)&lcd_spi_device, true, 14, tx_data, NULL, true);
@@ -154,7 +154,7 @@ cyg_st7565_fb_ioctl(struct cyg_fb* fb, cyg_ucount16 key, void* data, size_t* len
                     tx_data[2] = DISP_OFF;
                     tx_data[3] = DISP_ALL_POINTS_ON;
 
-                    gpio_set_pin_low(CYGNUM_DEVS_FRAMEBUF_ST7565_A0_PIN);
+                    CYGNUM_DEVS_FRAMEBUF_ST7565_A0_PIN_LOW;
 
                     cyg_spi_transaction_begin((cyg_spi_device*)&lcd_spi_device);
                     cyg_spi_transaction_transfer((cyg_spi_device*)&lcd_spi_device,
@@ -168,7 +168,7 @@ cyg_st7565_fb_ioctl(struct cyg_fb* fb, cyg_ucount16 key, void* data, size_t* len
                     tx_data[1] = DISP_STATIC_INDICATOR_ON;
                     tx_data[2] = 0x03;      // No blinking constantly on
 
-                    gpio_set_pin_low(CYGNUM_DEVS_FRAMEBUF_ST7565_A0_PIN);
+                    CYGNUM_DEVS_FRAMEBUF_ST7565_A0_PIN_LOW;
 
                     cyg_spi_transaction_begin((cyg_spi_device*)&lcd_spi_device);
                     cyg_spi_transaction_transfer((cyg_spi_device*)&lcd_spi_device,
@@ -227,7 +227,7 @@ cyg_st7565_fb_ioctl(struct cyg_fb* fb, cyg_ucount16 key, void* data, size_t* len
 
             tx_data[0] = DISP_ELECTRONIC_VOLUME_MODE_SET;
             tx_data[1] = fb_data->contrast&0xff;
-            gpio_set_pin_low(CYGNUM_DEVS_FRAMEBUF_ST7565_A0_PIN);
+            CYGNUM_DEVS_FRAMEBUF_ST7565_A0_PIN_LOW;
 
             cyg_spi_transaction_begin((cyg_spi_device*)&lcd_spi_device);
             cyg_spi_transaction_transfer((cyg_spi_device*)&lcd_spi_device, 
@@ -265,12 +265,12 @@ cyg_st7565_fb_synch(struct cyg_fb* fb, cyg_ucount16 when)
     {
         command_buf[2] = DISP_PAGE_ADDRESS_SET | i;
         
-        gpio_set_pin_low(CYGNUM_DEVS_FRAMEBUF_ST7565_A0_PIN);
+        CYGNUM_DEVS_FRAMEBUF_ST7565_A0_PIN_LOW
         
         cyg_spi_transaction_transfer((cyg_spi_device*)&lcd_spi_device, true, 
                                             3,(cyg_uint8*) command_buf, NULL, true);
         
-        gpio_set_pin_high(CYGNUM_DEVS_FRAMEBUF_ST7565_A0_PIN);
+        CYGNUM_DEVS_FRAMEBUF_ST7565_A0_PIN_HIGH;
         //cyg_spi_transaction_begin((cyg_spi_device*)&lcd_spi_device);
         cyg_spi_transaction_transfer((cyg_spi_device*)&lcd_spi_device, true, 
                               fb->fb_width,

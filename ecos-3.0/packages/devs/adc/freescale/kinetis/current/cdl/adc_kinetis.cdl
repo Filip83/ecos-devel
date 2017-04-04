@@ -1,0 +1,204 @@
+# ====================================================================
+#
+#      adc_kinetis.cdl
+#
+#      eCos Frescale Kinetis ADC configuration data
+#
+# ====================================================================
+## ####ECOSGPLCOPYRIGHTBEGIN####
+## -------------------------------------------
+## This file is part of eCos, the Embedded Configurable Operating System.
+## Copyright (C) 2008 Free Software Foundation, Inc.
+##
+## eCos is free software; you can redistribute it and/or modify it under
+## the terms of the GNU General Public License as published by the Free
+## Software Foundation; either version 2 or (at your option) any later
+## version.
+##
+## eCos is distributed in the hope that it will be useful, but WITHOUT
+## ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+## FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+## for more details.
+##
+## You should have received a copy of the GNU General Public License
+## along with eCos; if not, write to the Free Software Foundation, Inc.,
+## 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+##
+## As a special exception, if other files instantiate templates or use
+## macros or inline functions from this file, or you compile this file
+## and link it with other works to produce a work based on this file,
+## this file does not by itself cause the resulting work to be covered by
+## the GNU General Public License. However the source code for this file
+## must still be made available in accordance with section (3) of the GNU
+## General Public License v2.
+##
+## This exception does not invalidate any other reasons why a work based
+## on this file might be covered by the GNU General Public License.
+## -------------------------------------------
+## ####ECOSGPLCOPYRIGHTEND####
+# ====================================================================
+######DESCRIPTIONBEGIN####
+#
+# Author(s):      Filip
+# Contributors:
+# Date:           2017-03-31
+#
+#####DESCRIPTIONEND####
+#
+# ====================================================================
+
+
+cdl_package CYGPKG_DEVS_ADC_KINETIS_ADC {
+    display     "ADC hardware device driver for kinetis family of controllers"
+
+    parent      CYGPKG_IO_ADC
+    description "
+           This package provides a generic ADC device driver for the on-chip
+           ADC peripherals in kinetis processors."
+
+    include_dir cyg/io
+    compile     -library=libextras.a adc_kinetis.c
+
+    define_proc {
+      puts $::cdl_system_header "#define CYGDAT_DEVS_ADC_KINETIS_INL <cyg/io/adc_adcifb.inl>"
+    }
+
+    cdl_option CYGNUM_DEVS_ADC_KINETIS_ENABLE_LOW_POWER {
+        display       "If active enable low power mode"
+        flavor        bool
+        default_value 0
+    }
+
+    cdl_option CYGNUM_DEVS_ADC_KINETIS_ENABLE_HS_CONFIGURATION {
+        display       "If active enable high speed configuration"
+        active_if     !CYGNUM_DEVS_ADC_KINETIS_ENABLE_LOW_POWER
+        flavor        bool
+        default_value 0
+    }
+
+    cdl_option CYGNUM_DEVS_ADC_KINETIS_ENABLE_LONG_SAMPLE_TIME {
+        display       "If active enable long sample time."
+        flavor        bool
+        default_value 0
+    }
+
+    cdl_option CYGNUM_DEVS_ADC_KINETIS_SELECT_LONG_SAMPLE_TIME {
+        display       "Select btwen the entended sample times."
+        active_if     CYGNUM_DEVS_ADC_KINETIS_ENABLE_LONG_SAMPLE_TIME
+        flavor        data
+        legal_values { "T24ADCK" "T16ADCK" "T10ADCK" "T6ADCK" }
+        default_value "T24ADCK"
+    }
+
+    cdl_option CYGNUM_DEVS_ADC_KINETIS_RESOLUTION {
+        display       "Slect adc resolution in bits"
+        flavor        data
+        legal_values  { "R8BITS" "R12BITS" "R10BITS" "R16BITS" }
+        default_value "R16BITS"
+    }
+
+    cdl_option CYGNUM_DEVS_ADC_KINETIS_CLOCK_SOURCE {
+        display       "Slect adc clock source"
+        flavor        data
+        legal_values  { "BUS" "ALTCK2" "ALTCK" "ADACK" }
+        default_value "BUS"
+    }
+
+    cdl_option CYGNUM_DEVS_ADC_KINETIS_ENABLE_ASYNC_CLOCK {
+        display       "If active enable adc asynchronous clock"
+        flavor        bool
+        default_value 0
+    }
+
+    cdl_option CYGNUM_DEVS_ADC_KINETIS_CLOCK_DIVIDE {
+        display       "Slect adc clock divider"
+        flavor        data
+        legal_values  { "DIV1" "DIV2" "DIV4" "DIV8"}
+        default_value "DIV1"
+        description   "
+           This option sets the ADCIFB start-up time value.
+           The typical start-up time of this converter is 15us and must be
+           to this value or higher.
+           ADC start-up time = (STARTUP+1) * 8 / ADCClock"
+    }
+
+    cdl_option CYGNUM_DEVS_ADC_KINETIS_ISR_PRI {
+        display "Interrupt priority"
+        flavor data
+        requires CYGNUM_DEVS_ADC_KINETIS_ISR_PRI_SP
+        calculated CYGNUM_DEVS_ADC_KINETIS_ISR_PRI_SP
+        description "Interrupt priority set-point is provided by HAL"
+    }
+
+    cdl_option CYGNUM_DEVS_ADC_KINETIS_DEFAULT_RATE {
+        display "Default sample rate"
+        flavor   data
+        legal_values 0 to 65535
+        default_value 100
+        description "
+           The driver will be initialized with the default sample rate.
+           If you raise the default sample rate you might need to increase
+           the buffer size for each channel. If sample rate is zero the sample
+           is taken only after new setting of sampling rate to zero or
+           by setiing any higher number the sample gnerator is neabled."
+    }
+
+    # Support up to 1 ADC channels
+    for { set ::channel 0 } { $::channel < 1 } { incr ::channel } {
+
+        cdl_component CYGPKG_DEVS_ADC_KINETIS_CHANNEL[set ::channel] {
+            display        "Access ADC channel [set ::channel]"
+            flavor          bool
+            default_value   [set ::channel] == 0
+            implements      CYGINT_DEVS_ADC_KINETIS_CHANNELS
+            description "
+               If the application needs to access the on-chip ADC
+               channel [set ::channel] via an eCos ADC driver then
+               this option should be enabled."
+
+            cdl_option CYGDAT_DEVS_ADC_KINETIS_CHANNEL[set ::channel]_NAME {
+                display "Device name"
+                flavor      data
+                default_value   [format {"\"/dev/adc0%d\""} $::channel]
+                description "
+                   This option controls the name that an eCos application
+                   should use to access this device via cyg_io_lookup(),
+                   open(), or similar calls."
+            }
+
+            cdl_option CYGDAT_DEVS_ADC_KINETIS_CHANNEL[set ::channel]_BUFSIZE {
+                display "Size of data buffer"
+                flavor  data
+                legal_values  0x01 to 0x2000000
+                default_value 16
+                description "
+                   This option controls the number of samples the
+                   buffer can store. The required RAM depends on the
+                   sample size and on the number of samples. If the
+                   sample size is <= 8 bit the the required RAM =
+                   size of data buffer. If the sample size is 9 or 10
+                   bit then required RAM = size of data buffer * 2."
+            }
+
+            cdl_option CYGDAT_DEVS_ADC_KINETIS_CHANNEL[set ::channel]_SOURCE {
+                display       "Slect adc channel source"
+                flavor        data
+                legal_values  0 to 31
+                default_value 0
+            }
+        }
+    }
+
+    cdl_option CYGPKG_DEVS_ADC_KINETIS_DEBUG_LEVEL {
+        display "Driver debug output level"
+        flavor  data
+        legal_values {0 1}
+        default_value 0
+        description   "
+             This option specifies the level of debug data output by
+             the AVR32UC3C ADC device driver. A value of 0 signifies
+             no debug data output; 1 signifies normal debug data
+             output. If an overrun occurred then this can only be
+             detected by debug output messages."
+    }
+}

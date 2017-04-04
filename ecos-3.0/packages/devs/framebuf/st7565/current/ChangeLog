@@ -1,3 +1,9 @@
+2017-04-04   <filip.gnu@gmail.com>
+
+        * fb_st7565.c: Controler A0 signal is drived by macros 
+          CYGNUM_DEVS_FRAMEBUF_ST7565_A0_PIN_HIGH and 
+          CYGNUM_DEVS_FRAMEBUF_ST7565_A0_PIN_LOW
+
 2016-12-11  Filip  <filip.gnu@gmail.com>
 
         * fb_st7565.c: Graphic functions modified to use inline functions from
