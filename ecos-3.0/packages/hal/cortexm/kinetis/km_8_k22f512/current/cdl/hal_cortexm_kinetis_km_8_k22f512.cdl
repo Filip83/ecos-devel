@@ -60,7 +60,7 @@ cdl_package CYGPKG_HAL_CORTEXM_KINETIS_KM_8_K22F512 {
         can also be used for other boards that employ a controller from Kinetis
         families."
 
-    compile       km8_k22f512_misc.c
+    compile       km_8_k22f512_misc.c
 
     requires      { is_active(CYGPKG_HAL_FREESCALE_EDMA) implies
         (CYGNUM_HAL_FREESCALE_EDMA_CHAN_NUM == 16) }
@@ -86,6 +86,12 @@ cdl_package CYGPKG_HAL_CORTEXM_KINETIS_KM_8_K22F512 {
     implements    CYGINT_HAL_FREESCALE_UART1
     implements    CYGINT_HAL_CORTEXM_KINETIS_RTC
 
+    implements    CYGINT_DEVS_FREESCALE_ADC0
+    implements    CYGHWR_DEVS_FREESCALE_ADC0
+
+    implements    CYGINT_DEVS_FREESCALE_FTM0
+    implements    CYGINT_DEVS_FREESCALE_FTM1
+
     implements    CYGINT_HAL_CORTEXM_KINETIS_HAS_PLL1
     implements    CYGINT_HAL_CORTEXM_KINETIS_HAS_OSC1
     implements    CYGINT_HAL_CORTEXM_KINETIS_150
@@ -97,7 +103,7 @@ cdl_package CYGPKG_HAL_CORTEXM_KINETIS_KM_8_K22F512 {
     
 
     define_proc {
-        puts $::cdl_system_header "#define CYGBLD_HAL_PLATFORM_H <pkgconf/hal_cortexm_kinetis_twr_k22f512.h>"
+        puts $::cdl_system_header "#define CYGBLD_HAL_PLATFORM_H <pkgconf/hal_cortexm_kinetis_km_8_k22f512.h>"
         puts $::cdl_header "#define HAL_PLATFORM_CPU    \"Cortex-M4\""
         puts $::cdl_header "#define HAL_PLATFORM_BOARD  \"KM-8\""
         puts $::cdl_header "#define HAL_PLATFORM_EXTRA  \"\""
@@ -258,7 +264,7 @@ cdl_package CYGPKG_HAL_CORTEXM_KINETIS_KM_8_K22F512 {
             display "Global command prefix"
             flavor  data
             no_define
-            default_value { "arm-eabi" }
+            default_value { "arm-none-eabi" }
             description "
                 This option specifies the command prefix used when
                 invoking the build tools."

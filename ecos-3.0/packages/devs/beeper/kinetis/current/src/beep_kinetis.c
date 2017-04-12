@@ -49,34 +49,34 @@
 //
 //==========================================================================
 
-
-#include <pkgconf/devs_beep_avr32.h>
-
-#include <cyg/kernel/kapi.h>
+#include <pkgconf/hal.h>
+#include <string.h>
 #include <cyg/hal/hal_io.h>
-#include <cyg/hal/hal_arch.h>
-#include <cyg/hal/drv_api.h>
+#include <cyg/hal/hal_if.h>
 #include <cyg/hal/hal_intr.h>
+#include <cyg/hal/drv_api.h>
+#include <cyg/hal/hal_cache.h>
+
 #include <cyg/infra/cyg_type.h>
 #include <cyg/infra/cyg_ass.h>
 #include <cyg/infra/diag.h>
 
-#include <cyg/io/beep_avr32.h>
-#include <cyg/hal/gpio.h>
-#include <cyg/hal/avr32/io.h>
-#include <cyg/io/devtab.h>
-#include CYGBLD_HAL_BOARD_H
+#include <cyg/io/beep_kinetis.h>
+#include <cyg/hal/hal_endian.h>
 
+#include <cyg/io/devtab.h>
+
+#include <pkgconf/devs_beep_kinetis.h>
 
 /** Declaration and initialization of button keyborad data structure.
 *
 */
 static cyg_beep_kinetis_t cyg_beep_kinetis =
 {
-#if CYGNUM_DEVS_BEEP_CHANNEL == 0
+#if CYGNUM_DEVS_BEEP_TIMER == 0
     .timer_base             = CYGADDR_IO_FTM_FREESCALE_FTM0_BASE,
-#elif CYGNUM_DEVS_BEEP_CHANNEL == 1
-    .timer_base             = CYGADDR_IO_FTM_FREESCALE_FTM0_BASE,
+#elif CYGNUM_DEVS_BEEP_TIMER == 1
+    .timer_base             = CYGADDR_IO_FTM_FREESCALE_FTM1_BASE,
 #else
     .timer_base             = CYGADDR_IO_FTM_FREESCALE_FTM2_BASE,
 #endif
@@ -84,14 +84,14 @@ static cyg_beep_kinetis_t cyg_beep_kinetis =
     .beeping                = false,
     .beep_interrupt         = NULL,
     .beep_interrupt_handle  = NULL,
-    #if CYGNUM_DEVS_BEEP_CHANNEL == 0
+    #if CYGNUM_DEVS_BEEP_TIMER == 0
     .interrupt_number       = CYGNUM_HAL_INTERRUPT_FTM0,
-    #elif CYGNUM_DEVS_BEEP_CHANNEL == 1
+    #elif CYGNUM_DEVS_BEEP_TIMER == 1
     .interrupt_number       = CYGNUM_HAL_INTERRUPT_FTM1,
     #else
     .interrupt_number       = CYGNUM_HAL_INTERRUPT_FTM2,
     #endif
-    .interrupt_prio         = CYGNUM_DEVS_BEEP_INTERRUPT_PRIO,
+    .interrupt_prio         = CYGNUM_DEVS_BEEP_KINETIS_ISR_PRI,
 };
 
 // Functions in this module
@@ -125,7 +125,7 @@ DEVTAB_ENTRY(beep_device,
             &beep_handlers,
             beep_init,
             beep_lookup,
-            &cyg_beep_avr32);                // Private data pointer
+            &cyg_beep_kinetis);                // Private data pointer
 
 
 static cyg_uint32
@@ -153,17 +153,20 @@ beep_set_config(cyg_io_handle_t handle,
             if(*len == -1)
             {
                 priv->cnt = 0;
-                regval = beep_dev->timer_cmp_value;
+                regval = priv->timer_cmp_value;
     
-                HAL_WRITE_UINT16(base + CYGHWR_DEV_FREESCALE_FTM_COV, regval);
+                HAL_WRITE_UINT16(base + CYGHWR_DEV_FREESCALE_FTM_COV +
+                        8*CYGNUM_DEVS_BEEP_CHANNEL, regval);
                 
                 priv->cnt_beep_count = priv->time_to_cnt*
                         CYGDAT_DEVS_BEEP_DEFAULT_TIME;
                 
                 // read status register to clear status falgs
-                HAL_READ_UINT32(base + CYGHWR_DEV_FREESCALE_FTM_C0SC, regval); 
+                HAL_READ_UINT32(base + CYGHWR_DEV_FREESCALE_FTM_C0SC +
+                        CYGNUM_DEVS_BEEP_CHANNEL, regval); 
                 regval |= CYGHWR_DEV_FREESCALE_FTM_CNSC_CHIE;
-                HAL_READ_UINT32(base + CYGHWR_DEV_FREESCALE_FTM_C0SC, regval); 
+                HAL_READ_UINT32(base + CYGHWR_DEV_FREESCALE_FTM_C0SC +
+                        CYGNUM_DEVS_BEEP_CHANNEL, regval); 
                 
                 // Clock source system clock divided by 1 slo by i vice
                 regval = (1 << 3) | 0;
@@ -178,16 +181,19 @@ beep_set_config(cyg_io_handle_t handle,
                 
                 priv->cnt = 0;
                 
-                regval = beep_dev->timer_cmp_value;
+                regval = priv->timer_cmp_value;
     
-                HAL_WRITE_UINT16(base + CYGHWR_DEV_FREESCALE_FTM_COV, regval);
+                HAL_WRITE_UINT16(base + CYGHWR_DEV_FREESCALE_FTM_COV +
+                        CYGNUM_DEVS_BEEP_CHANNEL, regval);
                 
                 priv->cnt_beep_count = priv->time_to_cnt*(*time);
                 
                 // read status register to clear status falgs
-                HAL_READ_UINT32(base + CYGHWR_DEV_FREESCALE_FTM_C0SC, regval); 
+                HAL_READ_UINT32(base + CYGHWR_DEV_FREESCALE_FTM_C0SC + 
+                        CYGNUM_DEVS_BEEP_CHANNEL, regval); 
                 regval |= CYGHWR_DEV_FREESCALE_FTM_CNSC_CHIE;
-                HAL_READ_UINT32(base + CYGHWR_DEV_FREESCALE_FTM_C0SC, regval); 
+                HAL_READ_UINT32(base + CYGHWR_DEV_FREESCALE_FTM_C0SC + 
+                        CYGNUM_DEVS_BEEP_CHANNEL, regval); 
                 
                 // Clock source system clock divided by 1 slo by i vice
                 regval = (1 << 3) | 0;
@@ -245,16 +251,16 @@ beep_init(struct cyg_devtab_entry *tab)
     cyg_drv_interrupt_attach(beep_dev->beep_interrupt_handle);
 
     // Enable clocks
-#if CYGNUM_DEVS_BEEP_CHANNEL == 0
+#if CYGNUM_DEVS_BEEP_TIMER == 0
     CYGHWR_IO_CLOCK_ENABLE(CYGHWR_HAL_KINETIS_SIM_SCGC_FTM0);
-#elif CYGNUM_DEVS_BEEP_CHANNEL == 1
+#elif CYGNUM_DEVS_BEEP_TIMER == 1
     CYGHWR_IO_CLOCK_ENABLE(CYGHWR_HAL_KINETIS_SIM_SCGC_FTM1);
 #else
     CYGHWR_IO_CLOCK_ENABLE(CYGHWR_HAL_KINETIS_SIM_SCGC_FTM2);
 #endif
     
     // Configure pin mux
-    CYGHWR_IO_FREESCALE_UART_PIN(CYGHWR_IO_FREESCALE_FTM1_PIN_CH0);
+    hal_set_pin_function(CYGHWR_IO_FREESCALE_BEEP_PIN);
     
     regval = CYGHWR_DEV_FREESCALE_FTM_MODE_WPDIS;
     HAL_WRITE_UINT8(base + CYGHWR_DEV_FREESCALE_FTM_MODE, regval);
@@ -267,12 +273,13 @@ beep_init(struct cyg_devtab_entry *tab)
     regval = CYGHWR_DEV_FREESCALE_FTM_CNSC_MSA | 
              CYGHWR_DEV_FREESCALE_FTM_CNSC_ELSA;
     
-    HAL_WRITE_UINT8(base + CYGHWR_DEV_FREESCALE_FTM_C0SC, regval);
+    HAL_WRITE_UINT8(base + CYGHWR_DEV_FREESCALE_FTM_C0SC + 
+            CYGNUM_DEVS_BEEP_CHANNEL, regval);
     
     // Maxk output event 
-    regval = CYGHWR_DEV_FREESCALE_FTM_OUTMASK_CH0OM;
+    /*-regval = CYGHWR_DEV_FREESCALE_FTM_OUTMASK_CH0OM;
     
-    HAL_WRITE_UINT8(base + CYGHWR_DEV_FREESCALE_FTM_OUTMASK, regval);
+    HAL_WRITE_UINT8(base + CYGHWR_DEV_FREESCALE_FTM_OUTMASK, regval);*/
     
     // Souce clock is PBA/2
     // On compare pin value is toogle
@@ -283,7 +290,8 @@ beep_init(struct cyg_devtab_entry *tab)
     
     regval = beep_dev->timer_cmp_value;
     
-    HAL_WRITE_UINT16(base + CYGHWR_DEV_FREESCALE_FTM_COV, regval);
+    HAL_WRITE_UINT16(base + CYGHWR_DEV_FREESCALE_FTM_COV +
+            CYGNUM_DEVS_BEEP_CHANNEL, regval);
     
     beep_dev->init = true;
         
@@ -307,8 +315,8 @@ beep_lookup(struct cyg_devtab_entry **tab,
 cyg_uint32 kinetis_beep_ISR(cyg_vector_t vector, cyg_addrword_t data)
 {
     cyg_uint32 regval;
-    cyg_addrword_t base = beep_dev->timer_base;
     cyg_beep_kinetis_t * priv = (cyg_beep_kinetis_t*)data;
+    cyg_addrword_t base = priv->timer_base;
     
     HAL_READ_UINT32(base + CYGHWR_DEV_FREESCALE_FTM_C0SC, regval);
     
@@ -318,7 +326,8 @@ cyg_uint32 kinetis_beep_ISR(cyg_vector_t vector, cyg_addrword_t data)
         {
             // Disable channel interrupt
             regval &= ~CYGHWR_DEV_FREESCALE_FTM_CNSC_CHIE;
-            HAL_WRITE_UINT32(base + CYGHWR_DEV_FREESCALE_FTM_C0SC, regval);
+            HAL_WRITE_UINT32(base + CYGHWR_DEV_FREESCALE_FTM_C0SC +
+                    CYGNUM_DEVS_BEEP_CHANNEL, regval);
             
             // disable clock
             regval = 0;

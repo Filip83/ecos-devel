@@ -1195,6 +1195,10 @@ typedef volatile struct cyghwr_hal_kinetis_mpu_s {
 // FTM
 #include <cyg/hal/var_io_ftm.h>
 
+//---------------------------------------------------------------------------
+// FTM
+#include <cyg/hal/var_io_pit.h>
+
 //=============================================================================
 // DEVS:
 // Following macros may also be, and usually are borrwed by some device drivers.

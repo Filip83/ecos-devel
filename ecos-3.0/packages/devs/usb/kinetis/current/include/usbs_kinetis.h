@@ -1,16 +1,16 @@
-#ifndef CYGONCE_HAL_PLF_INTR_H
-#define CYGONCE_HAL_PLF_INTR_H
-//=============================================================================
+#ifndef CYGONCE_USBS_UC3C_H
+#define CYGONCE_USBS_UC3C_H
+//==========================================================================
 //
-//      plf_intr.h
+//      include/usbs_uc3c.h
 //
-//      Platform specific interrupt overrides
+//      The interface exported by the AVR32UC3C USB device driver
 //
-//=============================================================================
+//==========================================================================
 // ####ECOSGPLCOPYRIGHTBEGIN####                                            
 // -------------------------------------------                              
 // This file is part of eCos, the Embedded Configurable Operating System.   
-// Copyright (C) 2012 Free Software Foundation, Inc.                        
+// Copyright (C) 2006, 2007 Free Software Foundation, Inc.                  
 //
 // eCos is free software; you can redistribute it and/or modify it under    
 // the terms of the GNU General Public License as published by the Free     
@@ -38,25 +38,39 @@
 // on this file might be covered by the GNU General Public License.         
 // -------------------------------------------                              
 // ####ECOSGPLCOPYRIGHTEND####                                              
-//=============================================================================
+//==========================================================================
 //#####DESCRIPTIONBEGIN####
 //
-// Author(s):   Ilija Kocho <ilijak@siva.com.mk>
-// Contrib(s):  Mike Jones <mjones@proclivis.com>
-// Purpose:     TWR-K60F120M platform specific interrupt overrides
-// Description: 
-// Usage:       #include <cyg/hal/plf_intr.h>
+// Author(s):    Filip Adamec
+// Contributors: bartv
+// Date:         2012-02-25
+// Purpose:
 //
 //####DESCRIPTIONEND####
-//
-//=============================================================================
+//==========================================================================
 
-#include <pkgconf/hal.h>
-#include <pkgconf/hal_cortexm_kinetis_km_8_k22f512.h>
+#include <cyg/io/usb/usbs.h>
+#include <pkgconf/devs_usb_uc3c.h>
+#include <pkgconf/system.h>
 
 
-//=============================================================================
 
-//-----------------------------------------------------------------------------
-// end of plf_intr.h
-#endif // CYGONCE_HAL_PLF_INTR_H
+#define UC3C_USB_ENDPOINTS 6
+
+ 
+extern usbs_control_endpoint    usbs_uc3c_ep0;
+extern usbs_rx_endpoint         usbs_uc3c_ep1;
+extern usbs_rx_endpoint         usbs_uc3c_ep2;
+extern usbs_rx_endpoint         usbs_uc3c_ep3;
+#if (UC3C_USB_ENDPOINTS > 4)
+extern usbs_rx_endpoint         usbs_uc3c_ep4;
+extern usbs_rx_endpoint         usbs_uc3c_ep5;
+#if (UC3C_USB_ENDPOINTS > 6)
+extern usbs_rx_endpoint         usbs_uc3c_ep6;
+extern usbs_rx_endpoint         usbs_uc3c_ep7;
+#endif
+#endif
+/*
+extern void usbs_uc3c_endpoint_init(usbs_rx_endpoint * pep, 
+                                    cyg_uint8 endpoint_type, cyg_bool enable);*/
+#endif /* CYGONCE_USBS_UC3C_H */

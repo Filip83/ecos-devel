@@ -49,20 +49,27 @@
 //####DESCRIPTIONEND####
 //
 //==========================================================================
-
+#include <pkgconf/hal.h>
 #include <pkgconf/io_serial.h>
 #include <pkgconf/io.h>
 #include <pkgconf/hal_freescale_edma.h>
+#include <pkgconf/devs_ehci_serial_freescale.h>
 
-#include <cyg/io/io.h>
-#include <cyg/hal/hal_intr.h>
-#include <cyg/hal/hal_arbiter.h>
+#include <string.h>
 #include <cyg/hal/hal_io.h>
-#include <cyg/io/devtab.h>
+#include <cyg/hal/hal_if.h>
+#include <cyg/hal/hal_intr.h>
+#include <cyg/hal/drv_api.h>
+#include <cyg/hal/hal_cache.h>
+
+#include <cyg/infra/cyg_type.h>
+#include <cyg/infra/cyg_ass.h>
 #include <cyg/infra/diag.h>
+
+#include <cyg/io/ehci_serial.h>
+#include <cyg/io/devtab.h>
 #include <cyg/hal/freescale_edma.h>
 #include <cyg/io/ser_freescale_uart.h>
-#include "ehci_serial.h"
 
 #define CYGPKG_DEVS_EHCI_SERIAL_FREESCALE
 #ifdef  CYGPKG_DEVS_EHCI_SERIAL_FREESCALE
@@ -85,70 +92,72 @@ static const uart_pins_t uart0_pins = {
     cts : CYGHWR_IO_FREESCALE_EHCI_PIN_CTS
 };
 
-static const cyghwr_hal_freescale_dma_chan_set_t ehci_dma_chan[2] =              \
-{                                                                                \
-    {                                                                            \
-        .dma_src = FREESCALE_DMAMUX_SRC_KINETIS_EHCI_TX,                         \
-        | FREESCALE_DMAMUX_CHCFG_ENBL_M,                                         \
-        .dma_chan_i = CYGHWR_DEVS_EHCI_SERIAL_FREESCALE_TX_DMA_CHAN,                    \
-        .dma_prio   = CYGNUM_DEVS_EHCI_SERIAL_FREESCALE_TX_DMA_PRI,                     \
-        .isr_prio   = CYGNUM_DEVS_EHCI_SERIAL_FREESCALE_TX_DMA_ISR_PRI,                \
-        .isr_num    = CYGNUM_DEVS_EHCI_SERIAL_FREESCALE_TX_DMA_ISR_NUM              \
-    },                                                                           \
-    {                                                                            \
-        .dma_src = FREESCALE_DMAMUX_SRC_KINETIS_EHCI_RX,                         \
-        | FREESCALE_DMAMUX_CHCFG_ENBL_M,                                         \
-        .dma_chan_i = CYGHWR_DEVS_EHCI_SERIAL_FREESCALE_RX_DMA_CHAN,                    \
-        .dma_prio   = CYGNUM_DEVS_EHCI_SERIAL_FREESCALE_RX_DMA_PRI,                     \
-        .isr_prio   = CYGNUM_DEVS_EHCI_SERIAL_FREESCALE_RX_DMA_ISR_PRI,                \
-        .isr_num    = CYGNUM_DEVS_EHCI_SERIAL_FREESCALE_RX_DMA_ISR_NUM              \
-    }                                                                            \
-};                                                                               \
-                                                                                 \
-static cyghwr_hal_freescale_dma_set_t ehci_dma_set = {                           \
-    .chan_p = ehci_dma_chan,                                                     \
-    .chan_n = 2                                                                  \
+static const cyghwr_hal_freescale_dma_chan_set_t ehci_dma_chan[2] =              
+{                                                                                
+    {                                                                            
+        .dma_src = FREESCALE_DMAMUX_SRC_KINETIS_EHCI_TX                         
+        | FREESCALE_DMAMUX_CHCFG_ENBL_M,                                         
+        .dma_chan_i = CYGHWR_DEVS_EHCI_SERIAL_FREESCALE_TX_DMA_CHAN,                    
+        .dma_prio   = CYGNUM_DEVS_EHCI_SERIAL_FREESCALE_TX_DMA_PRI,                     
+        .isr_prio   = CYGNUM_DEVS_EHCI_SERIAL_FREESCALE_TX_DMA_ISR_PRI,                
+        .isr_num    = CYGNUM_HAL_INTERRUPT_DMA0 +                             
+                      CYGHWR_DEVS_EHCI_SERIAL_FREESCALE_TX_DMA_CHAN             
+    },                                                                           
+    {                                                                            
+        .dma_src = FREESCALE_DMAMUX_SRC_KINETIS_EHCI_RX                         
+        | FREESCALE_DMAMUX_CHCFG_ENBL_M,                                         
+        .dma_chan_i = CYGHWR_DEVS_EHCI_SERIAL_FREESCALE_RX_DMA_CHAN,                    
+        .dma_prio   = CYGNUM_DEVS_EHCI_SERIAL_FREESCALE_RX_DMA_PRI,                     
+        .isr_prio   = CYGNUM_DEVS_EHCI_SERIAL_FREESCALE_RX_DMA_ISR_PRI,                
+        .isr_num    = CYGNUM_HAL_INTERRUPT_DMA0 +                             
+                      CYGHWR_DEVS_EHCI_SERIAL_FREESCALE_RX_DMA_CHAN             
+    }                                                                            
+};                                                                               
+                                                                                 
+static cyghwr_hal_freescale_dma_set_t ehci_dma_set = {                           
+    .chan_p = ehci_dma_chan,                                                     
+    .chan_n = 2                                                                  
 };  
 
-static const cyghwr_hal_freescale_edma_tcd_t ehci_dma_tcd_tx_ini =               \
-{                                                                                \
-        .saddr = NULL,                                                           \
-        .soff  = 1,                                                              \
-        .attr = FREESCALE_EDMA_ATTR_SSIZE(FREESCALE_EDMA_ATTR_SIZE_8) |          \
-                FREESCALE_EDMA_ATTR_DSIZE(FREESCALE_EDMA_ATTR_SIZE_8) |          \
-                FREESCALE_EDMA_ATTR_SMOD(0) |                                    \
-                FREESCALE_EDMA_ATTR_DMOD(0),                                     \
-        .daddr = (cyg_uint32 *)                                                  \
-                 CYGADDR_DEVS_EHCI_SERIAL_FREESCALE_UART_BASE +                  \
-                 CYGHWR_DEV_FREESCALE_UART_D,                                 \
-        .doff = 0,                                                               \
-        .nbytes = 1,                                                             \
-        .slast = 0,                                                              \
-        .citer.elinkno = 0,                                                      \
-        .dlast_sga.dlast = 0,                                                    \
-        .biter.elinkno = 0,                                                      \
-        .csr = DSPI_DMA_BANDWIDTH                                                \
-};                                                                               \
-                                                                                 \
-static const cyghwr_hal_freescale_edma_tcd_t ehci_dma_tcd_rx_ini =               \
-{                                                                                \
-        .saddr = (cyg_uint32 *)                                                  \
-                 CYGADDR_DEVS_EHCI_SERIAL_FREESCALE_UART_BASE +                  \
-                 CYGHWR_DEV_FREESCALE_UART_D,                                 \
-        .soff = 0,                                                               \
-        .attr = FREESCALE_EDMA_ATTR_SSIZE(FREESCALE_EDMA_ATTR_SIZE_8) |          \
-                FREESCALE_EDMA_ATTR_DSIZE(FREESCALE_EDMA_ATTR_SIZE_8) |          \
-                FREESCALE_EDMA_ATTR_SMOD(0) |                                    \
-                FREESCALE_EDMA_ATTR_DMOD(0),                                     \
-        .daddr = NULL,                                                           \
-        .doff = 1,                                                               \
-        .nbytes = 1,                                                             \
-        .slast = 0,                                                              \
-        .citere.linkno = 0,                                                      \
-        .dlast_sga.dlast = 0,                                                    \
-        .biter.elinkno = 0,                                                      \
-        .csr = DSPI_DMA_BANDWIDTH                                                \
-}
+static const cyghwr_hal_freescale_edma_tcd_t ehci_dma_tcd_tx_ini =               
+{                                                                                
+        .saddr = NULL,                                                           
+        .soff  = 1,                                                              
+        .attr = FREESCALE_EDMA_ATTR_SSIZE(FREESCALE_EDMA_ATTR_SIZE_8) |          
+                FREESCALE_EDMA_ATTR_DSIZE(FREESCALE_EDMA_ATTR_SIZE_8) |          
+                FREESCALE_EDMA_ATTR_SMOD(0) |                                    
+                FREESCALE_EDMA_ATTR_DMOD(0),                                     
+        .daddr = (cyg_uint32 *)                                                  
+                 CYGADDR_DEVS_EHCI_SERIAL_FREESCALE_UART_BASE +                  
+                 CYGHWR_DEV_FREESCALE_UART_D,                                 
+        .doff = 0,                                                               
+        .nbytes = 1,                                                             
+        .slast = 0,                                                              
+        .citer.elinkno = 0,                                                      
+        .dlast_sga.dlast = 0,                                                    
+        .biter.elinkno = 0,                                                      
+        .csr = FREESCALE_EDMA_CSR_BWC_0                                                
+};                                                                               
+                                                                                 
+static const cyghwr_hal_freescale_edma_tcd_t ehci_dma_tcd_rx_ini =               
+{                                                                                
+        .saddr = (cyg_uint32 *)                                                  
+                 CYGADDR_DEVS_EHCI_SERIAL_FREESCALE_UART_BASE +                  
+                 CYGHWR_DEV_FREESCALE_UART_D,                                 
+        .soff = 0,                                                               
+        .attr = FREESCALE_EDMA_ATTR_SSIZE(FREESCALE_EDMA_ATTR_SIZE_8) |          
+                FREESCALE_EDMA_ATTR_DSIZE(FREESCALE_EDMA_ATTR_SIZE_8) |          
+                FREESCALE_EDMA_ATTR_SMOD(0) |                                    
+                FREESCALE_EDMA_ATTR_DMOD(0),                                     
+        .daddr = NULL,                                                           
+        .doff = 1,                                                               
+        .nbytes = 1,                                                             
+        .slast = 0,                                                              
+        .citer.elinkno = 0,                                                      
+        .dlast_sga.dlast = 0,                                                    
+        .biter.elinkno = 0,                                                      
+        .csr = FREESCALE_EDMA_CSR_BWC_0                                                
+};
 
 typedef struct freescale_ehci_serial_info {
     CYG_ADDRWORD        uart_base;          // Base address of the uart port
@@ -170,7 +179,7 @@ typedef struct freescale_ehci_serial_info {
     const cyghwr_hal_freescale_edma_tcd_t* rx_dma_tcd_ini_p; //     data
     volatile cyghwr_hal_freescale_edma_tcd_t* rx_dma_tcd_p; // DMA TCD (RX)
     volatile cyghwr_hal_freescale_edma_tcd_t* tx_dma_tcd_p; // DMA TCD (TX)
-} ehci_serial_info;
+} freescale_ehci_serial_info;
 
 static freescale_ehci_serial_info freescale_ehci_serial_info_s = {
     uart_base                : CYGADDR_DEVS_EHCI_SERIAL_FREESCALE_UART_BASE,
@@ -278,9 +287,11 @@ freescale_ehci_serial_config_port(ehci_serial_channel *chan,
 {
     cyg_uint32 regval;
     cyghwr_hal_freescale_dma_set_t* dma_set_p;
-    ehci_serial_info * uart_chan = (uart_serial_info *)(chan->dev_priv);
+    cyghwr_hal_freescale_edma_t *edma_p;
+    freescale_ehci_serial_info * uart_chan = (freescale_ehci_serial_info *)(chan->dev_priv);
     cyg_addrword_t uart_base = uart_chan->uart_base;
     cyg_uint32 baud_rate;
+    cyg_uint32 dma_chan_i;
 
     // Enable uso of hgner baud rates
     if(new_config->baud > 21)
@@ -353,19 +364,19 @@ freescale_ehci_serial_config_port(ehci_serial_channel *chan,
         hal_freescale_edma_init_chanset(dma_set_p);
 #if DEBUG_EHCI >= 1
         hal_freescale_edma_diag(dma_set_p, 0xffff);
-        cyghwr_devs_freescale_dspi_diag(spi_bus_p);
+        cyghwr_devs_freescale_dspi_diag(uart_chan);
 #endif
         // Set up DMA transfer control descriptors
         edma_p = dma_set_p->edma_p;
         dma_chan_i = dma_set_p->chan_p[EHCI_DMA_CHAN_TX_I].dma_chan_i;
         hal_freescale_edma_transfer_init(edma_p, dma_chan_i,
-                                         spi_bus_p->tx_dma_tcd_ini_p);
+                                         uart_chan->tx_dma_tcd_ini_p);
 #if DEBUG_EHCI >= 1
         hal_freescale_edma_transfer_diag(edma_p, dma_chan_i, true);
 #endif
         dma_chan_i = dma_set_p->chan_p[EHCI_DMA_CHAN_RX_I].dma_chan_i;
         hal_freescale_edma_transfer_init(edma_p, dma_chan_i,
-                                         spi_bus_p->rx_dma_tcd_ini_p);
+                                         uart_chan->rx_dma_tcd_ini_p);
 #if DEBUG_EHCI >= 1
         hal_freescale_edma_transfer_diag(edma_p, dma_chan_i, true);
 #endif
@@ -390,7 +401,7 @@ static bool
 freescale_ehci_serial_init(struct cyg_devtab_entry *tab)
 {
     ehci_serial_channel * const chan = (ehci_serial_channel *) tab->priv;
-    ehci_serial_info * const freescale_chan = (ehci_serial_info *) chan->dev_priv;
+    freescale_ehci_serial_info * const freescale_chan = (freescale_ehci_serial_info *) chan->dev_priv;
     int res;
 
 #ifdef CYGDBG_IO_INIT
@@ -398,8 +409,8 @@ freescale_ehci_serial_init(struct cyg_devtab_entry *tab)
 #endif
    
     //serial interrupt
-    cyg_drv_interrupt_create(freescale_chan->int_num,
-                             1,                      // Priority
+    cyg_drv_interrupt_create(freescale_chan->interrupt_num,
+                             freescale_chan->interrupt_priority,                      // Priority
                              (cyg_addrword_t)chan,   // Data item passed to interrupt handler
                              freescale_ehci_serial_ISR,
                              freescale_ehci_serial_DSR,
@@ -446,8 +457,7 @@ freescale_ehci_serial_lookup(struct cyg_devtab_entry **tab,
         freescale_ehci_serial_init(*tab);
         chan->init = true;
     }
-    CYGHWR_HAL_KINETIS_GPIO_SET_PIN(CYGHWR_HAL_KINETIS_GPIO_PORTA_P,BT_NSHUTD_PIN);
-
+    CYGHWR_IO_SET_PIN_NSHUTD;
     return ENOERR;
 }
 
@@ -455,14 +465,14 @@ static void
 freescale_ehci_serial_close(ehci_serial_channel *chan)
 {
     cyg_uint32 regval;
-    uart_serial_info * uart_chan = (uart_serial_info *)(chan->dev_priv);
+    freescale_ehci_serial_info * uart_chan = (freescale_ehci_serial_info *)(chan->dev_priv);
     cyg_addrword_t uart_base = uart_chan->uart_base;
     
     // Disable ehci uart
     regval = 0;
     HAL_WRITE_UINT8(uart_base + CYGHWR_DEV_FREESCALE_UART_C2, regval);
     // Shut down module
-    CYGHWR_HAL_KINETIS_GPIO_CLEAR_PIN(CYGHWR_HAL_KINETIS_GPIO_PORTA_P,BT_NSHUTD_PIN);
+    CYGHWR_IO_CLEAR_PIN_NSHUTD;
     
     chan->init = 0;
 }
@@ -493,18 +503,18 @@ freescale_ehci_serial_set_config(ehci_serial_channel *chan, cyg_uint32 key,
         // higher-level code is running out of buffer space, even
         // if the fifo is not yet full.
         freescale_ehci_serial_info * const freescale_chan = (freescale_ehci_serial_info *) chan->dev_priv;
-        volatile freescale_usart_t  *dev = freescale_chan->usart_dev;
+   
         cyg_uint32 *f = (cyg_uint32 *)xbuf;
         unsigned char mask=0;
         if ( *len < sizeof(*f) )
             return -EINVAL;
 
-        if ( chan->config.flags & CYGNUM_SERIAL_FLOW_RTSCTS_RX )
+        /*if ( chan->config.flags & CYGNUM_SERIAL_FLOW_RTSCTS_RX )
             mask = AVR32_USART_RTSDIS_MASK;
         else
             mask = AVR32_USART_RTSEN_MASK;
 
-        dev->cr = mask; 
+        dev->cr = mask; */
     }
         break;
         
@@ -521,7 +531,7 @@ static void
 freescale_ehci_serial_start_xmit(ehci_serial_channel *chan, const cyg_uint8 *buffer,
                                 cyg_uint16 len)
 {
-    ehci_serial_info * const freescale_chan = (freescale_ehci_serial_info *)
+    freescale_ehci_serial_info * const uart_chan = (freescale_ehci_serial_info *)
                                                 chan->dev_priv;
     cyg_addrword_t uart_base = uart_chan->uart_base;
     cyg_uint32 regval;
@@ -534,14 +544,14 @@ freescale_ehci_serial_start_xmit(ehci_serial_channel *chan, const cyg_uint8 *buf
     if(!uart_chan->tx_active) {
         // enable trasmitter
         uart_chan->tx_active = true;
-        dma_set_p = freescale_chan->dma_set_p;
+        dma_set_p = uart_chan->dma_set_p;
         edma_p = dma_set_p->edma_p;
         
         // Set up the DMA channels.
         dma_chan_tx_i = dma_set_p->chan_p[EHCI_DMA_CHAN_TX_I].dma_chan_i;
         edma_p->tcd[dma_chan_tx_i].saddr = buffer;
         edma_p->tcd[dma_chan_tx_i].biter.elinkno = len;
-        edma_p->tcd[dma_chan_tx_i].biter.citer.elinkno = len;
+        edma_p->tcd[dma_chan_tx_i].citer.elinkno = len;
         edma_p->tcd[dma_chan_tx_i].csr |= FREESCALE_EDMA_CSR_INTMAJOR_M |
                                           FREESCALE_EDMA_CSR_DREQ_M;
         
@@ -562,7 +572,7 @@ static void
 freescale_ehci_serial_start_recive(ehci_serial_channel *chan, const cyg_uint8 *buffer,
                                 cyg_uint16 len)
 {
-    ehci_serial_info * const freescale_chan = (freescale_ehci_serial_info *) 
+    freescale_ehci_serial_info * const uart_chan = (freescale_ehci_serial_info *) 
                                                 chan->dev_priv;
     cyg_addrword_t uart_base = uart_chan->uart_base;
     cyg_uint32 regval;
@@ -572,14 +582,14 @@ freescale_ehci_serial_start_recive(ehci_serial_channel *chan, const cyg_uint8 *b
 
     cyg_drv_dsr_lock();
     
-    dma_set_p = freescale_chan->dma_set_p;
+    dma_set_p = uart_chan->dma_set_p;
     edma_p = dma_set_p->edma_p;
 
     // Set up the DMA channels.
     dma_chan_rx_i = dma_set_p->chan_p[EHCI_DMA_CHAN_RX_I].dma_chan_i;
     edma_p->tcd[dma_chan_rx_i].saddr = buffer;
     edma_p->tcd[dma_chan_rx_i].biter.elinkno = len;
-    edma_p->tcd[dma_chan_rx_i].biter.citer.elinkno = len;
+    edma_p->tcd[dma_chan_rx_i].citer.elinkno = len;
     edma_p->tcd[dma_chan_rx_i].csr |= FREESCALE_EDMA_CSR_INTMAJOR_M |
                                       FREESCALE_EDMA_CSR_DREQ_M;
 

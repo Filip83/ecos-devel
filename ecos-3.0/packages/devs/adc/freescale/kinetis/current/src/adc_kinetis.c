@@ -53,20 +53,24 @@
 //==========================================================================
 //                                 INCLUDES
 //==========================================================================
-#include <cyg/hal/var_io.h>
-#include <cyg/hal/var_gpio.h>
-
-#include <pkgconf/system.h>
-#include <pkgconf/devs_adc_kinetis.h>
+#include <pkgconf/hal.h>
+#include <string.h>
+#include <cyg/hal/hal_io.h>
+#include <cyg/hal/hal_if.h>
+#include <cyg/hal/hal_intr.h>
+#include <cyg/hal/drv_api.h>
+#include <cyg/hal/hal_cache.h>
 
 #include <cyg/infra/cyg_type.h>
 #include <cyg/infra/cyg_ass.h>
 #include <cyg/infra/diag.h>
+
 #include <cyg/io/adc.h>
-#include <cyg/hal/hal_arch.h>
-#include <cyg/hal/hal_io.h>
-#include <cyg/hal/hal_intr.h>
-#include <cyg/hal/drv_api.h>
+#include <cyg/hal/hal_endian.h>
+
+#include <pkgconf/devs_adc_kinetis.h>
+#if defined(CYGHWR_DEVS_ADC_KINETIS)
+
 #include "adc_hdr.h"
 
 #if CYGPKG_DEVS_ADC_KINETIS_DEBUG_LEVEL > 0
@@ -74,8 +78,6 @@
 #else
    #define adc_printf(args...)
 #endif
-
-#define AVR32_MAX_ADC_CHAN                  9 //8 + temp sensor
 
 
 #define BUS     0
@@ -110,7 +112,7 @@ typedef struct kinetis_adc_info
     cyg_uint32              timer_cnt;         // Timer value
     cyg_handle_t            int_handle;        // For initializing the interrupt
     cyg_interrupt           int_data;
-    struct cyg_adc_channel  *channel[1]; // stores references to channel objects
+    struct cyg_adc_channel  *channel[1];       // stores references to channel objects
     cyg_uint8               num_active_ch;     // Number of currently active chanels
     cyg_uint16              chan_mask;         // mask that indicates channels used
                                                // by ADC driver
@@ -428,5 +430,6 @@ static void kinetis_adc_dsr(cyg_vector_t vector,
     }
 }
 
+#endif // CYGHWR_DEVS_ADC_KINETIS
 //---------------------------------------------------------------------------
 // eof adc_adcifb.c

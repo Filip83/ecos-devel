@@ -64,11 +64,11 @@ cdl_package CYGPKG_DEVS_EHCI_SERIAL_FREESCALE {
 
     compile       -library=libextras.a   uart_ehci_serial.c
 
-    define_proc {
-        puts $::cdl_system_header "/***** serial driver proc output start *****/"
-        puts $::cdl_system_header "#define CYGDAT_IO_SERIAL_DEVICE_HEADER <pkgconf/io_ehci_serial_avr32_uc3c.h>"
-        puts $::cdl_system_header "/*****  serial driver proc output end  *****/"
-    }
+    #define_proc {
+    #    puts $::cdl_system_header "/***** serial driver proc output start *****/"
+    #     puts $::cdl_system_header "#define CYGDAT_IO_SERIAL_DEVICE_HEADER <pkgconf/io_ehci_serial_avr32_uc3c.h>"
+    #    puts $::cdl_system_header "/*****  serial driver proc output end  *****/"
+    #}
 
     cdl_option CYGDAT_DEVS_EHCI_SERIAL_FREESCALE_NAME {
         display       "Device name for ehci serial driver."
@@ -92,10 +92,10 @@ cdl_package CYGPKG_DEVS_EHCI_SERIAL_FREESCALE {
 
     cdl_option CYGNUM_DEVS_EHCI_SERIAL_FREESCALE_ISR_PRI {
         display "Interrupt priority"
-        flavor data
-        requires CYGNUM_DEVS_EHCI_SERIAL_FREESCALE_ISR_PRI_SP
-        calculated CYGNUM_DEVS_EHCI_SERIAL_FREESCALE_ISR_PRI_SP
-        description "Interrupt priority set-point is provided by HAL"
+        flavor        data
+        default_value 0x90
+        legal_values  { 0 0x10 0x20 0x30 0x40 0x50 0x60 0x70 0x80 
+            0x90  0xA0 0xB0 0xC0 0xD0 0xE0 }
     }
 
     cdl_component CYGHWR_DEVS_EHCI_SERIAL_FREESCALE_TX_DMA_CHAN {
@@ -115,34 +115,28 @@ cdl_package CYGPKG_DEVS_EHCI_SERIAL_FREESCALE {
             mode. In preemptive mode, DMA each channel has unique priority,
             lower number meaning lower priority.
             255 is a phony meaning \"default channel priority\"."
+        }
 
-            cdl_option CYGNUM_DEVS_EHCI_SERIAL_FREESCALE_TX_DMA_ECP {
-                display "Enable channel preemption"
-                flavor data
-                legal_values { 0 1 }
-                default_value 0
-            }
+        cdl_option CYGNUM_DEVS_EHCI_SERIAL_FREESCALE_TX_DMA_ECP {
+            display "Enable channel preemption"
+            flavor data
+            legal_values { 0 1 }
+            default_value 0
+        }
 
-            cdl_option CYGNUM_DEVS_EHCI_SERIAL_FREESCALE_TX_DMA_DPA {
-                display "Disable preempt ability"
-                flavor data
-                legal_values { 0 1 }
-                default_value 0
-            }
+        cdl_option CYGNUM_DEVS_EHCI_SERIAL_FREESCALE_TX_DMA_DPA {
+            display "Disable preempt ability"
+            flavor data
+            legal_values { 0 1 }
+            default_value 0
+        }
 
-            cdl_option CYGNUM_DEVS_EHCI_SERIAL_FREESCALE_TX_DMA_ISR_NUM {
-                display "TX DMA channel interrupt number"
-                flavor data
-                calculated CYGNUM_HAL_INTERRUPT_DMA[CYGHWR_DEVS_EHCI_SERIAL_FREESCALE_TX_DMA_CHAN]
-            }
-
-            cdl_option CYGNUM_DEVS_EHCI_SERIAL_FREESCALE_TX_DMA_ISR_PRI {
+        cdl_option CYGNUM_DEVS_EHCI_SERIAL_FREESCALE_TX_DMA_ISR_PRI {
                 display "TX DMA channel interrupt priority"
-                flavor data
-                requires CYGNUM_DEVS_EHCI_SERIAL_FREESCALE_TX_DMA_ISR_PRI_SP
-                calculated CYGNUM_DEVS_EHCI_SERIAL_FREESCALE_TX_DMA_ISR_PRI_SP
-                description "Interrupt priority set-point is provided by HAL"
-            }
+                flavor        data
+                default_value 0x90
+                legal_values  { 0 0x10 0x20 0x30 0x40 0x50 0x60 0x70 0x80 
+                    0x90  0xA0 0xB0 0xC0 0xD0 0xE0 }
         }
     }
 
@@ -163,35 +157,29 @@ cdl_package CYGPKG_DEVS_EHCI_SERIAL_FREESCALE {
             mode. In preemptive mode, DMA each channel has unique priority,
             lower number meaning lower priority.
             255 is a phony meaning \"default channel priority\"."
-
-            cdl_option CYGNUM_DEVS_EHCI_SERIAL_FREESCALE_RX_DMA_ECP {
-                display "Enable channel preemption"
-                flavor data
-                legal_values { 0 1 }
-                default_value 0
-            }
-
-            cdl_option CYGNUM_DEVS_EHCI_SERIAL_FREESCALE_RX_DMA_DPA {
-                display "Disable preempt ability"
-                flavor data
-                legal_values { 0 1 }
-                default_value 0
-            }
-
-            cdl_option CYGNUM_DEVS_EHCI_SERIAL_FREESCALE_RX_DMA_ISR_NUM {
-                display "TX DMA channel interrupt number"
-                flavor data
-                calculated CYGNUM_HAL_INTERRUPT_DMA[CYGHWR_DEVS_EHCI_SERIAL_FREESCALE_RX_DMA_CHAN]
-            }
-
-            cdl_option CYGNUM_DEVS_EHCI_SERIAL_FREESCALE_RX_DMA_ISR_PRI {
-                display "RX DMA channel interrupt priority"
-                flavor data
-                requires CYGNUM_DEVS_EHCI_SERIAL_FREESCALE_RX_DMA_ISR_PRI_SP
-                calculated CYGNUM_DEVS_EHCI_SERIAL_FREESCALE_RX_DMA_ISR_PRI_SP
-                description "Interrupt priority set-point is provided by HAL"
-            }
         }
+
+        cdl_option CYGNUM_DEVS_EHCI_SERIAL_FREESCALE_RX_DMA_ECP {
+            display "Enable channel preemption"
+            flavor data
+            legal_values { 0 1 }
+            default_value 0
+        }
+
+        cdl_option CYGNUM_DEVS_EHCI_SERIAL_FREESCALE_RX_DMA_DPA {
+            display "Disable preempt ability"
+            flavor data
+            legal_values { 0 1 }
+            default_value 0
+        }
+
+        cdl_option CYGNUM_DEVS_EHCI_SERIAL_FREESCALE_RX_DMA_ISR_PRI {
+                display "RX DMA channel interrupt priority"
+                flavor        data
+                default_value 0x90
+                legal_values  { 0 0x10 0x20 0x30 0x40 0x50 0x60 0x70 0x80 
+                    0x90  0xA0 0xB0 0xC0 0xD0 0xE0 }
+            }
     }
 
     cdl_component CYGPKG_DEVS_EHCI_SERIAL_FREESCALE_OPTIONS {

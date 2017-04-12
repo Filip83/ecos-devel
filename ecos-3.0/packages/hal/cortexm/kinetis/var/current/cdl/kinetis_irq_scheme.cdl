@@ -196,6 +196,39 @@
             }
         }
 
+        cdl_component CYGHWR_HAL_DEVS_IRQ_PRIO_SCHEME_ADC {
+            display "ADC interrupt priorities"
+            flavor none
+            no_define
+            
+                
+            cdl_option CYGNUM_DEVS_ADC_KINETIS_ISR_PRI_SP {
+                display       "ADC bus interrupt priority"
+                flavor        data
+                active_if     CYGHWR_DEVS_ADC_KINETIS
+                default_value 0x90
+                legal_values  { 0 0x10 0x20 0x30 0x40 0x50 0x60 0x70 0x80 
+                    0x90  0xA0 0xB0 0xC0 0xD0 0xE0 }
+            }
+        }
+
+        cdl_component CYGHWR_HAL_DEVS_IRQ_PRIO_SCHEME_FTM {
+            display "FTM interrupt priorities"
+            flavor none
+            no_define
+            
+            for { set ::ftm 0 } { $::ftm < 3 } { incr ::ftm } {
+                
+                cdl_option CYGNUM_DEVS_FREESCALE_FTM[set ::ftm]_ISR_PRI_SP {
+                    display       "FTM [set ::ftm] interrupt priority"
+                    flavor        data
+                    #active_if     CYGHWR_DEVS_FREESCALE_FTM[set ::ftm]
+                    default_value 0x90
+                    legal_values  { 0 0x10 0x20 0x30 0x40 0x50 0x60 0x70 0x80 
+                        0x90  0xA0 0xB0 0xC0 0xD0 0xE0 }
+                }
+            }
+        }                 
 #    }
 
 

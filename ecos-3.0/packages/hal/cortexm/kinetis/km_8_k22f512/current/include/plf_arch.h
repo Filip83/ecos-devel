@@ -53,7 +53,7 @@
 //=============================================================================
 
 #include <pkgconf/hal.h>
-#include <pkgconf/hal_cortexm_kinetis_twr_k60f120m.h>
+#include <pkgconf/hal_cortexm_kinetis_km_8_k22f512.h>
 
 
 //=============================================================================

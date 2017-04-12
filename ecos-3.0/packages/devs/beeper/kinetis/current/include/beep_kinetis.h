@@ -61,7 +61,7 @@ extern "C" {
 */
 typedef struct cyg_beep_kinetis_s
 {
-    volatile cyg_addrword        *timer_base;          /**< Timer base. */ 
+    volatile cyg_addrword_t        *timer_base;          /**< Timer base. */ 
     float	      time_to_cnt;          /**< Default beeper frequency. */ 
     cyg_uint32        cnt;                  /**< Number of beeper cicles */
     cyg_uint32        cnt_beep_count;       /**< Number of count to genrate beep interval. */

@@ -1043,6 +1043,16 @@ package CYGPKG_DEVS_KBD_BUTTON_AVR32  {
            ont AVR32 CPU."
 }
 
+package CYGPKG_DEVS_KBD_BUTTON_KINETIS  {
+	alias 		{ "Button keyboar support for Kinetis CPU" kbd_button }
+	directory	devs/kbd/kinetis/button
+	script		kbd_button.cdl
+	hardware
+        description "
+           This package contains hardware support for button keyboar
+           ont Kinetis CPU."
+}
+
 package CYGPKG_DEVS_TOUCH_AAED2000 {
 	alias 		{ "Touch screen support for Agilent AAED2000" touch_aaed2000 }
 	directory	devs/touch/arm/aaed2000
@@ -1064,13 +1074,23 @@ package CYGPKG_DEVS_KBD_TOUCH {
 }
 
 package CYGPKG_DEVS_BEEP_AVR32 {
-	alias 		{ "Beeper support for Atmel AVR32" bep_avr32 }
+	alias 		{ "Beeper support for Atmel AVR32" beep_avr32 }
 	directory	devs/beeper/avr32
 	script		beep_avr32.cdl
 	hardware
         description "
            This package contains hardware support for beeper using
            AVR32 timer."
+}
+
+package CYGPKG_DEVS_BEEP_KINETIS {
+	alias 		{ "Beeper support for Frescale Kinetis" beep_kinetis }
+	directory	devs/beeper/kinetis
+	script		beep_kinetis.cdl
+	hardware
+        description "
+           This package contains hardware support for beeper using
+           Frescale Kinetis FTM."
 }
 
 package CYGPKG_IO_SERIAL_ARM_EBSA285 {
@@ -1240,11 +1260,20 @@ package CYGPKG_IO_SERIAL_AVR32_UC3C {
 
 package CYGPKG_IO_EHCI_SERIAL_AVR32_UC3C {
     alias 	      { "Atmel AVR32UC3C ehci serial device driver"
-                        devs_serial_avr32_uc3c avr32_serial_driver }
+                        devs_ehci_avr32_uc3c avr32_ehci_driver }
     hardware
     directory	      devs/ehci/avr32/uc3c
     script	      avr32_ehci_serial.cdl	
     description       "Atmel AVR32UC3C on-chip serial device driver."
+}
+
+package CYGPKG_DEVS_EHCI_SERIAL_FREESCALE {
+    alias 	      { "Frescale Kinetis ehci serial device driver"
+                        devs_ehci_kinetis frescale_ehci_driver }
+    hardware
+    directory	      devs/ehci/freescale/uart
+    script	      uart_ehci_serial.cdl	
+    description       "Frescale Kinetis ehci on-chip serial device driver."
 }
 
 package CYGPKG_IO_SERIAL_ARM_LPC2XXX {
@@ -2672,6 +2701,16 @@ package CYGPKG_DEVS_SPI_FREESCALE_DSPI {
     script        spi_freescale_dspi.cdl
     description   "
         This package provides a driver for the Freescale DSPI interfaces."
+}
+
+package CYGPKG_DEVS_SPI_FREESCALE_DSPI_GPIO {
+    alias         { "Freescale DSPI driver" }
+    hardware
+    directory     devs/spi/freescale/dspi-gpio
+    script        spi_freescale_dspi.cdl
+    description   "
+        This package provides a driver for the Freescale DSPI interfaces.
+        GPIO pins are used to driver chip slects."
 }
 
 package CYGPKG_DEVS_SPI_CORTEXM_A2FXXX {
@@ -7765,6 +7804,15 @@ package CYGPKG_DEVS_ADC_AVR32_ADCIFB {
     ATM AVR32 microcontroller family."
 }
 
+package CYGPKG_DEVS_ADC_KINETIS_ADC {
+    alias         { "Frescale Kinetis ADC driver" adc_kinetis }
+    hardware
+    directory     devs/adc/freescale/kinetis
+    script        adc_kinetis.cdl
+    description "
+    This package provides a driver for the Frescale Kinetis on
+    board ADC converter."
+}
 
 package CYGPKG_DEVS_USB_CORTEXM_STM32 {
         alias           { "ST STM32 USB slave support" usb_stm32 }
@@ -8054,7 +8102,8 @@ target freescale_kwikstik {
 
 target satisgeo_km_8_k22f512 {
         alias { "Satisgeo km-8" km_8 }
-        packages { CYGPKG_HAL_CORTEXM
+        packages { 
+                   CYGPKG_HAL_CORTEXM
                    CYGPKG_HAL_CORTEXM_KINETIS
                    CYGPKG_HAL_CORTEXM_KINETIS_KM_8_K22F512
                    CYGPKG_HAL_FREESCALE_EDMA
@@ -8062,7 +8111,7 @@ target satisgeo_km_8_k22f512 {
                    CYGPKG_IO_SERIAL_FREESCALE_UART
                    CYGPKG_DEVICES_WALLCLOCK_KINETIS_RTC
                    CYGPKG_IO_SPI
-                   CYGPKG_DEVS_SPI_FREESCALE_DSPI
+                   CYGPKG_DEVS_SPI_FREESCALE_DSPI_GPIO
                    CYGPKG_DEVS_FLASH_KINETIS
                    CYGPKG_CRC
                    CYGPKG_IO_FLASH
@@ -8070,12 +8119,17 @@ target satisgeo_km_8_k22f512 {
                    CYGPKG_IO_FILEIO
                    CYGPKG_IO_FRAMEBUF
                    CYGPKG_DEVS_FRAMEBUF_ST7565
+                   CYGPKG_IO_ADC
+                   CYGPKG_DEVS_ADC_KINETIS_ADC
+                   CYGPKG_IO_KBD
+                   CYGPKG_DEVS_KBD_BUTTON_KINETIS
+                   CYGPKG_DEVS_BEEP_KINETIS
+                   CYGPKG_DEVS_EHCI_SERIAL_FREESCALE
                  }
 
         description "
-            The freescale_twr_k60n512_fxm target provides the packages needed
-            to run eCos on the Freescale TWR-K60N512 development system
-            equipped with TWR-FXM external memory module."
+            The satisgeo_km_8_k22f512 target provides the packages needed
+            to run eCos on the Satisgeo KM-8 board."
 }
 
 target freescale_twr_k70f120m {

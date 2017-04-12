@@ -62,10 +62,10 @@
 #include <cyg/io/spi.h>
 #include <cyg/hal/hal_endian.h>
 
-#include <pkgconf/devs_spi_freescale_dspi.h>
-/*#if defined(CYGHWR_DEVS_SPI_FREESCALE_DSPI0) || \
+#include <pkgconf/devs_spi_freescale_dspi_gpio.h>
+#if defined(CYGHWR_DEVS_SPI_FREESCALE_DSPI0) || \
     defined(CYGHWR_DEVS_SPI_FREESCALE_DSPI1) || \
-    defined(CYGHWR_DEVS_SPI_FREESCALE_DSPI2)*/
+    defined(CYGHWR_DEVS_SPI_FREESCALE_DSPI2)
 
 #include <cyg/io/spi_freescale_dspi.h>
 
@@ -965,14 +965,13 @@ static void dspi_transaction_begin(cyg_spi_device* device)
 // IO CS manipulation function
 #include <cyg/hal/var_io_gpio.h>
 static void
-dspi_set_npcs(cyg_spi_freescale_dspi_device_t *spi_bus)
+dspi_set_npcs(cyg_spi_freescale_dspi_device_t *dev)
 {
-    cyg_spi_freescale_dspi_bus_t* dspi_bus =
-          (cyg_spi_freescale_dspi_bus_t*) spi_bus;
-
+    cyg_spi_freescale_dspi_device_t* dspi_device =
+          (cyg_spi_freescale_dspi_device_t*) dev;
     int val = dev->chip_sel;
     
-    if(dspi_bus == cyg_spi_dspi_bus0)
+    if(dspi_device == &cyg_spi_dspi_bus0)
     {
         if(val == 0)
             CYGHWR_IO_GPIO_PIN_CS_RTC_SET;
@@ -981,23 +980,22 @@ dspi_set_npcs(cyg_spi_freescale_dspi_device_t *spi_bus)
         else
             CYGHWR_IO_GPIO_PIN_CS_FRAM_SET;
     }
-    else if(dspi_bus == cyg_spi_dspi_bus1)
+    else if(dspi_device == &cyg_spi_dspi_bus1)
     {
         if(val == 0)
             CYGHWR_IO_GPIO_PIN_CS_ADC_SET;
         else
-            CYGHWR_IO_GPIO_PIN_CS_DAC_SET
+            CYGHWR_IO_GPIO_PIN_CS_DAC_SET;
     }
 }
 
 static void
 dspi_drop_cs(cyg_spi_freescale_dspi_device_t *dev)
 {
-    cyg_spi_freescale_dspi_bus_t* dspi_bus =
-          (cyg_spi_freescale_dspi_bus_t*) spi_bus;
-
+    cyg_spi_freescale_dspi_device_t* dspi_device =
+          (cyg_spi_freescale_dspi_device_t*) dev;
     int val = dev->chip_sel;
-    if(dspi_bus == cyg_spi_dspi_bus0)
+    if(dspi_device == &cyg_spi_dspi_bus0)
     {
         if(val == 0)
             CYGHWR_IO_GPIO_PIN_CS_RTC_CLR;
@@ -1006,7 +1004,7 @@ dspi_drop_cs(cyg_spi_freescale_dspi_device_t *dev)
         else
             CYGHWR_IO_GPIO_PIN_CS_FRAM_CLR;
     }
-    else if(dspi_bus == cyg_spi_dspi_bus1)
+    else if(dspi_device == &cyg_spi_dspi_bus1)
     {
         if(val == 0)
             CYGHWR_IO_GPIO_PIN_CS_ADC_CLR;
@@ -1038,7 +1036,7 @@ static void dspi_transaction_transfer(cyg_spi_device* device, cyg_bool polled,
                     !((cyg_uint32) rx_data & 1),
                     "DSPI: Misaligned data in 16-bit transfer.");
     }
-    dspi_set_npcs(device)
+    dspi_set_npcs(device);
     spi_transaction_do (device, false, polled, count, tx_data, rx_data, drop_cs);
     if(drop_cs)
         dspi_drop_cs(device);

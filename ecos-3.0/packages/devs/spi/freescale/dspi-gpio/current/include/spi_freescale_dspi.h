@@ -53,7 +53,7 @@
 
 #include <pkgconf/hal.h>
 #include <pkgconf/io_spi.h>
-#include <pkgconf/devs_spi_freescale_dspi.h>
+#include <pkgconf/devs_spi_freescale_dspi_gpio.h>
 #include <pkgconf/hal_freescale_edma.h>
 
 #include <cyg/infra/cyg_type.h>

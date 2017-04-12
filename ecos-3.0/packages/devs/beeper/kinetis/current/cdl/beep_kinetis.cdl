@@ -41,24 +41,24 @@
 #
 # Author(s):    Filip
 # Contributors:
-# Date:         2016-11-28
+# Date:         2017-04-05
 # Purpose:
-# Description:  Beeper driver for Atmel AVR32
+# Description:  Beeper driver for Frescale Kinetis
 #
 #####DESCRIPTIONEND####
 #
 #==========================================================================
 
-cdl_package CYGPKG_DEVS_BEEP_AVR32 {
+cdl_package CYGPKG_DEVS_BEEP_KINETIS {
     display     "Beeper driver."
     requires    CYGPKG_IO
-    requires    CYGPKG_HAL_AVR32
+    
     include_dir   cyg/io
 
-    compile       -library=libextras.a beep_avr32.c
+    compile       -library=libextras.a beep_kinetis.c
 
     description "Beeper driver for piezo-electric beeper. This dreiver
-                 use AVR32 timer to generate beeper frequncy in wave generation
+                 use Kinetis timer to generate beeper frequncy in wave generation
                  mode. The timer is as well used to generate beeper beep interval"
 
     cdl_component CYGPKG_DEVS_BEEP_OPTIONS {
@@ -100,27 +100,24 @@ cdl_package CYGPKG_DEVS_BEEP_AVR32 {
     }
 
     cdl_option CYGNUM_DEVS_BEEP_TIMER {
-        display "Beeper timer to use"
+        display "Beeper timer to use FTM0 to FTM2"
         flavor data
-        legal_values     0 to 1
+        legal_values     0 to 2
         default_value { 0 }
     }
 
     cdl_option CYGNUM_DEVS_BEEP_CHANNEL {
         display "Timer channel to use"
         flavor data
-        legal_values     0 to 3
+        legal_values     0 to 7
         default_value { 0 }
     }
 
-
-    cdl_option CYGNUM_DEVS_BEEP_INTERRUPT_PRIO {
-        display "Beeper driver interrupt priority"
+    cdl_option CYGNUM_DEVS_BEEP_KINETIS_ISR_PRI {
+        display "Interrupt priority"
         flavor data
-        legal_values  0 to 3
-        default_value { 0 }
-        description "
-            This option set keyboard river insterrupt priortiy."
+        calculated 0x90
+        description "Interrupt priority is set to defalut value"
     }
 
     cdl_option CYGDAT_DEVS_BEEP_OUTPUT {

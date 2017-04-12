@@ -50,7 +50,8 @@
 
 cdl_package CYGPKG_DEVS_ADC_KINETIS_ADC {
     display     "ADC hardware device driver for kinetis family of controllers"
-
+    active_if   CYGINT_DEVS_ADC_KINETIS
+    implements  CYGHWR_DEVS_ADC_KINETIS
     parent      CYGPKG_IO_ADC
     description "
            This package provides a generic ADC device driver for the on-chip
@@ -87,21 +88,21 @@ cdl_package CYGPKG_DEVS_ADC_KINETIS_ADC {
         active_if     CYGNUM_DEVS_ADC_KINETIS_ENABLE_LONG_SAMPLE_TIME
         flavor        data
         legal_values { "T24ADCK" "T16ADCK" "T10ADCK" "T6ADCK" }
-        default_value "T24ADCK"
+        default_value {"T24ADCK"}
     }
 
     cdl_option CYGNUM_DEVS_ADC_KINETIS_RESOLUTION {
         display       "Slect adc resolution in bits"
         flavor        data
         legal_values  { "R8BITS" "R12BITS" "R10BITS" "R16BITS" }
-        default_value "R16BITS"
+        default_value {"R16BITS"}
     }
 
     cdl_option CYGNUM_DEVS_ADC_KINETIS_CLOCK_SOURCE {
         display       "Slect adc clock source"
         flavor        data
         legal_values  { "BUS" "ALTCK2" "ALTCK" "ADACK" }
-        default_value "BUS"
+        default_value {"BUS"}
     }
 
     cdl_option CYGNUM_DEVS_ADC_KINETIS_ENABLE_ASYNC_CLOCK {
@@ -114,18 +115,18 @@ cdl_package CYGPKG_DEVS_ADC_KINETIS_ADC {
         display       "Slect adc clock divider"
         flavor        data
         legal_values  { "DIV1" "DIV2" "DIV4" "DIV8"}
-        default_value "DIV1"
+        default_value {"DIV1"}
         description   "
            This option sets the ADCIFB start-up time value.
            The typical start-up time of this converter is 15us and must be
            to this value or higher.
            ADC start-up time = (STARTUP+1) * 8 / ADCClock"
     }
-
+               
     cdl_option CYGNUM_DEVS_ADC_KINETIS_ISR_PRI {
         display "Interrupt priority"
         flavor data
-        requires CYGNUM_DEVS_ADC_KINETIS_ISR_PRI_SP
+        requires   CYGNUM_DEVS_ADC_KINETIS_ISR_PRI_SP
         calculated CYGNUM_DEVS_ADC_KINETIS_ISR_PRI_SP
         description "Interrupt priority set-point is provided by HAL"
     }

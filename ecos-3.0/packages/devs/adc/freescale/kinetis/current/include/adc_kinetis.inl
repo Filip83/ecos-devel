@@ -53,7 +53,7 @@
 #ifndef CYGONCE_DEVS_ADC_KINETIS_INL
 #define CYGONCE_DEVS_ADC_KINETIS_INL
 
-// Declare ADC0
+// Declare ADC
 #ifdef CYGPKG_DEVS_ADC_KINETIS_ADC
 
 static kinetis_adc_info kinetis_adc_info =

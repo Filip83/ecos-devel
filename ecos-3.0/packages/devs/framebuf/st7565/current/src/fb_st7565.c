@@ -48,26 +48,27 @@
 //####DESCRIPTIONEND####
 //
 //==========================================================================
-#include <pkgconf/devs_framebuf_st7565.h>
+#include <pkgconf/hal.h>
+#include <string.h>
+#include <errno.h>
+#include <cyg/hal/hal_io.h>
+#include <cyg/hal/hal_if.h>
+#include <cyg/hal/hal_intr.h>
+#include <cyg/hal/drv_api.h>
+#include <cyg/hal/hal_cache.h>
+
 #include <cyg/infra/cyg_type.h>
 #include <cyg/infra/cyg_ass.h>
 #include <cyg/infra/diag.h>
-
-#include <errno.h>
-#include <string.h>
+#include <pkgconf/devs_framebuf_st7565.h>
+#include <cyg/io/fb_st7565.h>
 
 #include <cyg/io/spi.h>
-#include <cyg/io/spi_avr32.h>
 #include <cyg/io/framebuf.h>
-#include <cyg/hal/gpio.h>
-#include <cyg/io/fb_st7565.h>
-#include <cyg/hal/hal_io.h>
-#include <cyg/hal/board_config.h>
-
 #include <cyg/io/framebuf.inl>
 
 
-externC cyg_spi_avr32_device_t lcd_spi_device;
+externC cyg_spi_device lcd_spi_device;
 
 cyg_st7565_fb_driver_t cy_st7565_fb_driver = 
 {
@@ -87,8 +88,8 @@ static int
 cyg_st7565_fb_on(struct cyg_fb* fb)
 {
     cyg_uint8 tx_data[15];
-    gpio_set_pin_high(LCD_RESET_PIN);
-    cyg_thread_delay(1);
+    //gpio_set_pin_high(LCD_RESET_PIN);
+    //cyg_thread_delay(1);
     
     tx_data[0]  = DISP_START_LINE_SET | 0x00;
     tx_data[1]  = DISP_ADC_SELECT_REVERS;
@@ -265,7 +266,7 @@ cyg_st7565_fb_synch(struct cyg_fb* fb, cyg_ucount16 when)
     {
         command_buf[2] = DISP_PAGE_ADDRESS_SET | i;
         
-        CYGNUM_DEVS_FRAMEBUF_ST7565_A0_PIN_LOW
+        CYGNUM_DEVS_FRAMEBUF_ST7565_A0_PIN_LOW;
         
         cyg_spi_transaction_transfer((cyg_spi_device*)&lcd_spi_device, true, 
                                             3,(cyg_uint8*) command_buf, NULL, true);

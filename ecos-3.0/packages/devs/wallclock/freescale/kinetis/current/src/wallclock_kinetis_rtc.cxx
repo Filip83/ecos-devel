@@ -77,7 +77,7 @@ Cyg_WallClock::init_hw_seconds(void)
     }
 }
 
-cyg_uint32
+cyg_uint64
 Cyg_WallClock::get_hw_seconds(void)
 {
     volatile cyghwr_hal_kinetis_rtc_t *rtc_p = CYGHWR_HAL_KINETIS_RTC_P;
@@ -87,7 +87,7 @@ Cyg_WallClock::get_hw_seconds(void)
 
 #ifdef CYGSEM_WALLCLOCK_SET_GET_MODE
 void
-Cyg_WallClock::set_hw_seconds(cyg_uint32 secs)
+Cyg_WallClock::set_hw_seconds(cyg_uint64 secs)
 {
     volatile cyghwr_hal_kinetis_rtc_t *rtc_p = CYGHWR_HAL_KINETIS_RTC_P;
 

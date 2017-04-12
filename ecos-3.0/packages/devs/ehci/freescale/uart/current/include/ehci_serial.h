@@ -80,8 +80,8 @@ ehci_serial_channel _l = {                                                   \
 // Low level interface functions
 struct ehci_serial_funs 
 {
-    void (*block_receive)(ehci_serial_channel *priv, const uint8_t *buffer, uint16_t length);
-    void (*block_send)(ehci_serial_channel *priv,const uint8_t *buffer, uint16_t length);
+    void (*block_receive)(ehci_serial_channel *priv, const cyg_uint8 *buffer, cyg_uint16 length);
+    void (*block_send)(ehci_serial_channel *priv,const cyg_uint8 *buffer, cyg_uint16 length);
     // Change hardware configuration (baud rate, etc)
     Cyg_ErrNo (*set_config)(ehci_serial_channel *priv, cyg_uint32 key, const void *xbuf,
                             cyg_uint32 *len);
