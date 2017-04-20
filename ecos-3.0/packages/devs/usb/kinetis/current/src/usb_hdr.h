@@ -489,29 +489,6 @@ typedef struct {
 #define USB_IRQS                                 { USB0_IRQn }
 
 
-/* ----------------------------------------------------------------------------
-   -- USB BDT
-   ---------------------------------------------------------------------------- */
-
-typedef struct
-{
-    cyg_uint32 bd_control;
-    cyg_uint32 bd_address;
-}usb_buffer_descritpor_t;
-
-#define CYGNUM_DEVS_USB_BD_BYTE_COUNT_MASK  (0x3ff)
-#define CYGNUM_DEVS_USB_BD_BYTE_COUNT_SHIFT (16)
-
-#define CYGNUM_DEVS_USB_BD_OWN_MASK         (0x80)
-#define CYGNUM_DEVS_USB_BD_DATA0_1_MASK     (0x40)
-#define CYGNUM_DEVS_USB_BD_KEEP_MASK        (0x20)
-#define CYGNUM_DEVS_USB_BD_NINC_MASK        (0x10)
-#define CYGNUM_DEVS_USB_BD_DTS_MASK         (0x08)
-#define CYGNUM_DEVS_USB_BD_STALL_MASK       (0x04)
-
-#define GET_BD_RX( _ep, _odd) (_ep << 2) | (_odd)
-#define GET_BD_TX( _ep, _odd) (_ep << 2) | (2) | (_odd)
-
 /*!
  * @addtogroup usb_device_controller_khci_driver
  * @{
@@ -549,6 +526,7 @@ typedef struct
     (*(volatile uint32_t *)((bdt_base & 0xfffffe00U) | (((uint32_t)ep & 0x0fU) << 5U) | \
                             (((uint32_t)direction & 1U) << 4U) | (((uint32_t)odd & 1U) << 3U)))
 
+#define USB_SETUP_PACKET_SIZE  256
 /*! @brief Endpoint state structure */
 typedef struct _usb_device_khci_endpoint_state_struct
 {
@@ -599,5 +577,100 @@ typedef struct _usb_device_khci_state_struct
     uint8_t otgStatus;
 #endif
 } usb_device_khci_state_struct_t;
+
+/*! @brief USB error code */
+typedef enum _usb_status
+{
+    kStatus_USB_Success = 0x00U, /*!< Success */
+    kStatus_USB_Error,           /*!< Failed */
+
+    kStatus_USB_Busy,                       /*!< Busy */
+    kStatus_USB_InvalidHandle,              /*!< Invalid handle */
+    kStatus_USB_InvalidParameter,           /*!< Invalid parameter */
+    kStatus_USB_InvalidRequest,             /*!< Invalid request */
+    kStatus_USB_ControllerNotFound,         /*!< Controller cannot be found */
+    kStatus_USB_InvalidControllerInterface, /*!< Invalid controller interface */
+
+    kStatus_USB_NotSupported,   /*!< Configuration is not supported */
+    kStatus_USB_Retry,          /*!< Enumeration get configuration retry */
+    kStatus_USB_TransferStall,  /*!< Transfer stalled */
+    kStatus_USB_TransferFailed, /*!< Transfer failed */
+    kStatus_USB_AllocFail,      /*!< Allocation failed */
+    kStatus_USB_LackSwapBuffer, /*!< Insufficient swap buffer for KHCI */
+    kStatus_USB_TransferCancel, /*!< The transfer cancelled */
+    kStatus_USB_BandwidthFail,  /*!< Allocate bandwidth failed */
+    kStatus_USB_MSDStatusFail,  /*!< For MSD, the CSW status means fail */
+    kStatus_USB_EHCIAttached,
+    kStatus_USB_EHCIDetached,
+} usb_status_t;
+
+/*! @brief Endpoint initialization structure */
+typedef struct _usb_device_endpoint_init_struct
+{
+    uint16_t maxPacketSize;  /*!< Endpoint maximum packet size */
+    uint8_t endpointAddress; /*!< Endpoint address*/
+    uint8_t transferType;    /*!< Endpoint transfer type*/
+    uint8_t zlt;             /*!< ZLT flag*/
+} usb_device_endpoint_init_struct_t;
+
+#define USB_KHCI_BDT_DEVICE_OUT_TOKEN (0x01U)
+#define USB_KHCI_BDT_DEVICE_IN_TOKEN (0x09U)
+#define USB_KHCI_BDT_DEVICE_SETUP_TOKEN (0x0DU)
+
+#define USB_KHCI_BDT_OWN (0x80U)
+#define USB_KHCI_BDT_DATA01(x) ((((uint32_t)(x)) & 0x01U) << 0x06U)
+#define USB_KHCI_BDT_BC(x) ((((uint32_t)(x)) & 0x3FFU) << 0x10U)
+#define UBS_KHCI_BDT_KEEP (0x20U)
+#define UBS_KHCI_BDT_NINC (0x10U)
+#define USB_KHCI_BDT_DTS (0x08U)
+#define USB_KHCI_BDT_STALL (0x04U)
+
+typedef enum _usb_khci_interrupt_type
+{
+    kUSB_KhciInterruptReset = 0x01U,
+    kUSB_KhciInterruptError = 0x02U,
+    kUSB_KhciInterruptSofToken = 0x04U,
+    kUSB_KhciInterruptTokenDone = 0x08U,
+    kUSB_KhciInterruptSleep = 0x10U,
+    kUSB_KhciInterruptResume = 0x20U,
+    kUSB_KhciInterruptAttach = 0x40U,
+    kUSB_KhciInterruptStall = 0x80U,
+} usb_khci_interrupt_type_t;
+
+/* USB standard descriptor endpoint bmAttributes */
+#define USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_MASK (0x80U)
+#define USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_SHIFT (7U)
+#define USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_OUT (0U)
+#define USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_IN (0x80U)
+
+/*! @brief Control type for controller */
+typedef enum _usb_device_control_type
+{
+    kUSB_DeviceControlRun = 0U,          /*!< Enable the device functionality */
+    kUSB_DeviceControlStop,              /*!< Disable the device functionality */
+    kUSB_DeviceControlEndpointInit,      /*!< Initialize a specified endpoint */
+    kUSB_DeviceControlEndpointDeinit,    /*!< De-initialize a specified endpoint */
+    kUSB_DeviceControlEndpointStall,     /*!< Stall a specified endpoint */
+    kUSB_DeviceControlEndpointUnstall,   /*!< Unstall a specified endpoint */
+    kUSB_DeviceControlGetDeviceStatus,   /*!< Get device status */
+    kUSB_DeviceControlGetEndpointStatus, /*!< Get endpoint status */
+    kUSB_DeviceControlSetDeviceAddress,  /*!< Set device address */
+    kUSB_DeviceControlGetSynchFrame,     /*!< Get current frame */
+    kUSB_DeviceControlResume,            /*!< Drive controller to generate a resume signal in USB bus */
+    kUSB_DeviceControlSleepResume,       /*!< Drive controller to generate a LPM resume signal in USB bus */
+    kUSB_DeviceControlSuspend,           /*!< Drive controller to enetr into suspend mode */
+    kUSB_DeviceControlSleep,             /*!< Drive controller to enetr into sleep mode */
+    kUSB_DeviceControlSetDefaultStatus,  /*!< Set controller to default status */
+    kUSB_DeviceControlGetSpeed,          /*!< Get current speed */
+    kUSB_DeviceControlGetOtgStatus,      /*!< Get OTG status */
+    kUSB_DeviceControlSetOtgStatus,      /*!< Set OTG status */
+    kUSB_DeviceControlSetTestMode,       /*!< Drive xCHI into test mode */
+    kUSB_DeviceControlGetRemoteWakeUp,   /*!< Get flag of LPM Remote Wake-up Enabled by USB host. */
+#if (defined(USB_DEVICE_CHARGER_DETECT_ENABLE) && (USB_DEVICE_CHARGER_DETECT_ENABLE > 0U))
+    kUSB_DeviceControlDcdInitModule,
+    kUSB_DeviceControlDcdDeinitModule,
+    kUSB_DeviceControlGetDeviceAttachStatus,
+#endif
+} usb_device_control_type_t;
 #endif /* USB_HDR_H */
 

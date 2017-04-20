@@ -1,16 +1,12 @@
-2017-01-06  Filip <filip.gnu@gmail.com>
 
-        * src/usbc_device.c: Moified to supoort UC3L3 and UC3L4 chips
+2017-04-20  Filip <filip.gnu@gmail.com>
 
-2014-04-29  Filip <filip.gnu@gmail.com>
-
-        * cdl/usbs_uc2c.cdl:
-        * include/usbc_device.h:
-        * include/usbc_otg.h:
-        * include/usbc_uc3c.h:
-        * src/usbc_device.c:
+        * cdl/usbs_kinetis.cdl:
+        * include/usbs_kinetish:
+        * src/usbc_kinetis.c:
+        * src/usb_hdr.h:
         * src/usbs_uc3c_data.cxx:
-        Atmel AVR32UC3C USB device bus driver implementation.   	 	 
+          Frescale Kinetis USB device bus driver implementation.   	 	 
 
 
 

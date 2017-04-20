@@ -2,9 +2,9 @@
 #define CYGONCE_USBS_UC3C_H
 //==========================================================================
 //
-//      include/usbs_uc3c.h
+//      include/usbs_kinetis.h
 //
-//      The interface exported by the AVR32UC3C USB device driver
+//      The interface exported by the Freescale Kinetis USB device driver
 //
 //==========================================================================
 // ####ECOSGPLCOPYRIGHTBEGIN####                                            
@@ -41,33 +41,29 @@
 //==========================================================================
 //#####DESCRIPTIONBEGIN####
 //
-// Author(s):    Filip Adamec
-// Contributors: bartv
-// Date:         2012-02-25
+// Author(s):    Filip
+// Contributors: 
+// Date:         2017-04-20
 // Purpose:
 //
 //####DESCRIPTIONEND####
 //==========================================================================
+#include <pkgconf/hal.h>
+#include <pkgconf/devs_usb_kinetis.h>
 
 #include <cyg/io/usb/usbs.h>
-#include <pkgconf/devs_usb_uc3c.h>
-#include <pkgconf/system.h>
-
-
-
-#define UC3C_USB_ENDPOINTS 6
 
  
-extern usbs_control_endpoint    usbs_uc3c_ep0;
-extern usbs_rx_endpoint         usbs_uc3c_ep1;
-extern usbs_rx_endpoint         usbs_uc3c_ep2;
-extern usbs_rx_endpoint         usbs_uc3c_ep3;
-#if (UC3C_USB_ENDPOINTS > 4)
-extern usbs_rx_endpoint         usbs_uc3c_ep4;
-extern usbs_rx_endpoint         usbs_uc3c_ep5;
-#if (UC3C_USB_ENDPOINTS > 6)
-extern usbs_rx_endpoint         usbs_uc3c_ep6;
-extern usbs_rx_endpoint         usbs_uc3c_ep7;
+extern usbs_control_endpoint    ep0;
+extern usbs_rx_endpoint         ep1;
+extern usbs_rx_endpoint         ep2;
+extern usbs_rx_endpoint         ep3;
+#if (CYGNUM_DEVS_USB_KINETIS_CONFIG_ENDPOINTS > 4)
+extern usbs_rx_endpoint         ep4;
+extern usbs_rx_endpoint         ep5;
+#if (CYGNUM_DEVS_USB_KINETIS_CONFIG_ENDPOINTS > 6)
+extern usbs_rx_endpoint         ep6;
+extern usbs_rx_endpoint         ep7;
 #endif
 #endif
 /*
