@@ -68,7 +68,14 @@ cdl_package CYGPKG_DEVICES_WALLCLOCK_NXP_PCF2129A {
         implements    CYGINT_WALLCLOCK_IMPLEMENTATIONS
     }
 
-    
+    cdl_option CYGNUM_DEVS_WALLOCK_NXP_PCF2129A_INTERFACE {
+        display "PCF2129A SPI, I2C interface select."
+        flavor bool
+        default_value 0
+        description   "If this option is enabled PFC2129A use
+                I2C interface SPI otherwise."
+    }
+
     cdl_component CYGPKG_DEVICES_WALLCLOCK_NXP_PCF2129A_OPTIONS {
         display "DS1307 wallclock build options"
         flavor  none
