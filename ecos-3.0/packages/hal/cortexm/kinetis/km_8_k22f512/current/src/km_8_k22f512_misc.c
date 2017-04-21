@@ -56,6 +56,9 @@
 #include <pkgconf/kernel.h>
 #endif
 
+#include <cyg/io/spi.h>
+#include <cyg/io/spi_freescale_dspi.h>
+
 #include <cyg/infra/diag.h>
 #include <cyg/infra/cyg_type.h>
 #include <cyg/infra/cyg_trac.h>         // tracing macros
@@ -155,6 +158,104 @@ hal_misc_init(void)
 __externC void hal_platform_init( void )
 {
 }
+
+//! CPU start up error flags
+cyg_uint64	_hw_error = 0;
+
+
+#ifndef BOOT_LOADER
+
+#include <cyg/io/fm25vxx.h>
+
+// Underlaying Freescale DSPI device
+CYG_DEVS_SPI_FREESCALE_DSPI_DEVICE(
+    cyg_spi_wallclock_pcf2129a,             // Device name
+    cyg_spi_dspi_bus0,                      // SPI bus
+    CYGHWR_DEVS_RTC_PCF2129A_DEV0_SPI_CS,   // Dev num (CS)
+    PCF2129A_SPI_FRAME_SIZE,                // Frame size
+    PCF2129A_SPI_CLOCK_POL,                 // Clock pol
+    PCF2129A_SPI_CLOCK_PHASE,               // Clock phase
+    CYGHWR_DEVS_RTC_PCF2129A_DEV0_SPEED,    // Clock speed (Hz)
+    CYGHWR_DEVS_RTC_PCF2129A_DEV0_CS_DLY,   // CS assert delay
+    CYGHWR_DEVS_RTC_PCF2129A_DEV0_CS_DLY,   // CS negate delay
+    CYGHWR_DEVS_RTC_PCF2129A_DEV0_CS_DLY,   // Delay between transfers
+    CYGHWR_DEVS_RTC_PCF2129A_DEV0_CS_DLY_UN,// Delay unit (100 or 1000 ns)
+    PCF2129A_SPI_DBR_DEV0                   // Use double baud rate
+);
+
+externC cyg_spi_freescale_dspi_device_t cyg_spi_wallclock_pcf2129a;
+
+CYG_DEVS_SPI_FREESCALE_DSPI_DEVICE(
+    lcd_spi_device,                         // Device name
+    cyg_spi_dspi_bus0,                      // SPI bus
+    CYGHWR_DEVS_LCD_DEV1_SPI_CS,            // Dev num (CS)
+    LCD_SPI_FRAME_SIZE,                     // Frame size
+    LCD_SPI_CLOCK_POL,                      // Clock pol
+    LCD_SPI_CLOCK_PHASE,                    // Clock phase
+    CYGHWR_DEVS_LCD_DEV1_SPEED,             // Clock speed (Hz)
+    CYGHWR_DEVS_LCD_DEV1_CS_DLY,            // CS assert delay
+    CYGHWR_DEVS_LCD_DEV1_CS_DLY,            // CS negate delay
+    CYGHWR_DEVS_LCD_DEV1_CS_DLY,            // Delay between transfers
+    CYGHWR_DEVS_LCD_DEV1_CS_DLY_UN,         // Delay unit (100 or 1000 ns)
+    LCD_SPI_DBR_DEV1                        // Use double baud rate
+);
+
+externC cyg_spi_freescale_dspi_device_t lcd_spi_device;
+
+CYG_DEVS_SPI_FREESCALE_DSPI_DEVICE(
+    fm25vxx_spi_dev0,                       // Device name
+    cyg_spi_dspi_bus0,                      // SPI bus
+    CYGHWR_DEVS_FRAM_FM25VXX_DEV2_SPI_CS,   // Dev num (CS)
+    FM25VXX_SPI_FRAME_SIZE,                 // Frame size
+    FM25VXX_SPI_CLOCK_POL,                  // Clock pol
+    FM25VXX_SPI_CLOCK_PHASE,                // Clock phase
+    CYGHWR_DEVS_FRAM_FM25VXX_DEV2_SPEED,    // Clock speed (Hz)
+    CYGHWR_DEVS_FRAM_FM25VXX_DEV2_CS_DLY,   // CS assert delay
+    CYGHWR_DEVS_FRAM_FM25VXX_DEV2_CS_DLY,   // CS negate delay
+    CYGHWR_DEVS_FRAM_FM25VXX_DEV2_CS_DLY,   // Delay between transfers
+    CYGHWR_DEVS_FRAM_FM25VXX_DEV2_CS_DLY_UN,// Delay unit (100 or 1000 ns)
+    FM25VXX_SPI_DBR_DEV2                    // Use double baud rate
+);
+
+CYG_DEVS_SPI_FREESCALE_DSPI_DEVICE(
+    adc_spi_device,                         // Device name
+    cyg_spi_dspi_bus1,                      // SPI bus
+    CYGHWR_DEVS_ADC_AD7124_DEV0_SPI_CS,     // Dev num (CS)
+    AD7124_SPI_FRAME_SIZE,                  // Frame size
+    AD7124_SPI_CLOCK_POL,                   // Clock pol
+    AD7124_SPI_CLOCK_PHASE,                 // Clock phase
+    CYGHWR_DEVS_ADC_AD7124_DEV0_SPEED,      // Clock speed (Hz)
+    CYGHWR_DEVS_ADC_AD7124_DEV0_CS_DLY,     // CS assert delay
+    CYGHWR_DEVS_ADC_AD7124_DEV0_CS_DLY,     // CS negate delay
+    CYGHWR_DEVS_ADC_AD7124_DEV0_CS_DLY,     // Delay between transfers
+    CYGHWR_DEVS_ADC_AD7124_DEV0_CS_DLY_UN,  // Delay unit (100 or 1000 ns)
+    AD7124_SPI_DBR_DEV0                     // Use double baud rate
+);
+
+externC cyg_spi_freescale_dspi_device_t adc_spi_device;
+
+CYG_DEVS_SPI_FREESCALE_DSPI_DEVICE(
+    dac_control_spi_device                  // Device name
+    cyg_spi_dspi_bus1,                      // SPI bus
+    CYGHWR_DEVS_DAC_TLV320_DEV1_SPI_CS,     // Dev num (CS)
+    TLV320_SPI_FRAME_SIZE,                  // Frame size
+    TLV320_SPI_CLOCK_POL,                   // Clock pol
+    TLV320_SPI_CLOCK_PHASE,                 // Clock phase
+    CYGHWR_DEVS_DAC_TLV320_DEV1_SPEED,      // Clock speed (Hz)
+    CYGHWR_DEVS_DAC_TLV320_DEV1_CS_DLY,     // CS assert delay
+    CYGHWR_DEVS_DAC_TLV320_DEV1_CS_DLY,     // CS negate delay
+    CYGHWR_DEVS_DAC_TLV320_DEV1_CS_DLY,     // Delay between transfers
+    CYGHWR_DEVS_DAC_TLV320_DEV1_CS_DLY_UN,  // Delay unit (100 or 1000 ns)
+    TLV320_SPI_DBR_DEV1                     // Use double baud rate
+);
+
+externC cyg_spi_freescale_dspi_device_t dac_control_spi_device;
+/**
+* Definition of FLASH drivers structure for FLASH and FRAM
+*/
+CYG_DEVS_FLASH_SPI_FM25VXX_DRIVER(fm25wxx_spi_fram,FRAM_FM25WXX_BASE_ADDRESS,&fm25vxx_spi_dev0);
+
+#endif
 
 //==========================================================================
 

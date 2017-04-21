@@ -54,7 +54,7 @@
 
 #include <pkgconf/hal.h>
 #include <pkgconf/hal_cortexm_kinetis_km_8_k22f512.h>
-
+#include <cyg/io/spi_freescale_dspi.h>
 
 // UART PINs
 #ifndef CYGHWR_HAL_FREESCALE_UART1_PIN_RX
@@ -216,6 +216,71 @@
 #define CYGHWR_IO_DIR_PIN_PWOFF      CYGHWR_HAL_KINETIS_GPIO_PIN_DDR_OUT(C, 9)
 #define CYGHWR_IO_SET_PIN_PWOFF      CYGHWR_HAL_KINETIS_GPIO_SET_PIN(C,9)
 #define CYGHWR_IO_CLEAR_PIN_PWOFF    CYGHWR_HAL_KINETIS_GPIO_CLEAR_PIN(C,9)
+
+/**
+/* cphol and ncpha configuration see documentation page 660
+*/
+// SPI RTC
+#define CYGHWR_DEVS_RTC_PCF2129A_DEV0_SPI_CS            0
+#define PCF2129A_SPI_FRAME_SIZE                         8
+#define PCF2129A_SPI_CLOCK_POL                          0
+#define PCF2129A_SPI_CLOCK_PHASE                        0
+#define CYGHWR_DEVS_RTC_PCF2129A_DEV0_SPEED             1000000
+#define CYGHWR_DEVS_RTC_PCF2129A_DEV0_CS_DLY            0
+#define CYGHWR_DEVS_RTC_PCF2129A_DEV0_CS_DLY            0
+#define CYGHWR_DEVS_RTC_PCF2129A_DEV0_CS_DLY            0
+#define CYGHWR_DEVS_RTC_PCF2129A_DEV0_CS_DLY_UN         0
+#define PCF2129A_SPI_DBR_DEV0      
+
+// SPI LCD Display
+#define CYGHWR_DEVS_LCD_DEV1_SPI_CS                     1
+#define LCD_SPI_FRAME_SIZE                              8
+#define LCD_SPI_CLOCK_POL                               0
+#define LCD_SPI_CLOCK_PHASE                             0
+#define CYGHWR_DEVS_LCD_DEV1_SPEED                      16000000
+#define CYGHWR_DEVS_LCD_DEV1_CS_DLY                     0
+#define CYGHWR_DEVS_LCD_DEV1_CS_DLY                     0
+#define CYGHWR_DEVS_LCD_DEV1_CS_DLY                     0
+#define CYGHWR_DEVS_LCD_DEV1_CS_DLY_UN                  0
+#define LCD_SPI_DBR_DEV1                                0
+
+// FM25W SPI FRAM
+#define CYGHWR_DEVS_FRAM_FM25VXX_DEV2_SPI_CS            2
+#define FM25VXX_SPI_FRAME_SIZE                          8
+#define FM25VXX_SPI_CLOCK_POL                           0
+#define FM25VXX_SPI_CLOCK_PHASE                         0
+#define CYGHWR_DEVS_FRAM_FM25VXX_DEV2_SPEED             16000000
+#define CYGHWR_DEVS_FRAM_FM25VXX_DEV2_CS_DLY            0
+#define CYGHWR_DEVS_FRAM_FM25VXX_DEV2_CS_DLY            0
+#define CYGHWR_DEVS_FRAM_FM25VXX_DEV2_CS_DLY            0
+#define CYGHWR_DEVS_FRAM_FM25VXX_DEV2_CS_DLY_UN         0
+#define FM25VXX_SPI_DBR_DEV2                            0
+
+// Analog board ADC config SPI
+#define CYGHWR_DEVS_ADC_AD7124_DEV0_SPI_CS              0
+#define AD7124_SPI_FRAME_SIZE                           8
+#define AD7124_SPI_CLOCK_POL                            0
+#define AD7124_SPI_CLOCK_PHASE                          1
+#define CYGHWR_DEVS_ADC_AD7124_DEV0_SPEED               2000000
+#define CYGHWR_DEVS_ADC_AD7124_DEV0_CS_DLY              0
+#define CYGHWR_DEVS_ADC_AD7124_DEV0_CS_DLY              0
+#define CYGHWR_DEVS_ADC_AD7124_DEV0_CS_DLY              0
+#define CYGHWR_DEVS_ADC_AD7124_DEV0_CS_DLY_UN           0
+#define AD7124_SPI_DBR_DEV0                             0
+  
+// Analog board DAC SPI
+#define CYGHWR_DEVS_DAC_TLV320_DEV1_SPI_CS              1
+#define TLV320_SPI_FRAME_SIZE                           8
+#define TLV320_SPI_CLOCK_POL                            0
+#define TLV320_SPI_CLOCK_PHASE                          1
+#define CYGHWR_DEVS_DAC_TLV320_DEV1_SPEED               2000000
+#define CYGHWR_DEVS_DAC_TLV320_DEV1_CS_DLY              0
+#define CYGHWR_DEVS_DAC_TLV320_DEV1_CS_DLY              0
+#define CYGHWR_DEVS_DAC_TLV320_DEV1_CS_DLY              0
+#define CYGHWR_DEVS_DAC_TLV320_DEV1_CS_DLY_UN           0
+#define TLV320_SPI_DBR_DEV1                             0
+
+
 
 //=============================================================================
 // Memory access checks.
