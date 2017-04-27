@@ -1790,8 +1790,8 @@ void usbs_kinetis_init (void)
 
     cyg_drv_interrupt_attach (usbs_kinetis_intr_handle);
     
-    usbs_kinetis_ep0.state = USBS_STATE_POWERED;
-    usbs_state_notify (&usbs_kinetis_ep0);
+    ep0.state = USBS_STATE_POWERED;
+    usbs_state_notify (&ep0);
 }
 
 // There has been a change in state. Update the end point.
@@ -1882,7 +1882,7 @@ usbs_parse_host_get_command (usbs_control_endpoint * pcep)
 usbs_kinetis_control_setup_get_status(void)
 {
     ep0_low_level_status_t status;
-    usb_devreq *req = (usb_devreq *)usbs_kinetis_ep0.control_buffer;
+    usb_devreq *req = (usb_devreq *)ep0.control_buffer;
     cyg_uint8 recipient = req->type & USB_DEVREQ_RECIPIENT_MASK;
     cyg_uint16 word = 0;
 
@@ -1894,7 +1894,7 @@ usbs_kinetis_control_setup_get_status(void)
       // Nothing to do
       break;
     case USB_DEVREQ_RECIPIENT_ENDPOINT:
-        if ((usbs_kinetis_ep0.state == USBS_STATE_CONFIGURED) &&
+        if ((ep0.state == USBS_STATE_CONFIGURED) &&
             (req->index_lo > 0) &&
             (req->index_lo < CYGNUM_DEVS_USB_KINETIS_CONFIG_ENDPOINTS)) {
 
@@ -1908,8 +1908,8 @@ usbs_kinetis_control_setup_get_status(void)
         status = UDD_EPCTRL_STALL_REQ;
     }
 
-    *((cyg_uint16*)usbs_kinetis_ep0.control_buffer) = word;
-    usbs_kinetis_ep0.buffer_size = sizeof (word);
+    *((cyg_uint16*)uep0.control_buffer) = word;
+    ep0.buffer_size = sizeof (word);
     return status;
   }
 
@@ -1918,7 +1918,7 @@ ep0_low_level_status_t
 usbs_kinetis_control_setup_set_feature(void)
 {
     ep0_low_level_status_t status;
-    usb_devreq *req = (usb_devreq *)usbs_kinetis_ep0.control_buffer;
+    usb_devreq *req = (usb_devreq *)ep0.control_buffer;
     cyg_uint8 recipient = req->type & USB_DEVREQ_RECIPIENT_MASK;
     usbs_rx_endpoint * pep;
     cyg_uint8 epn = req->index_lo & 0x0F;
@@ -1934,7 +1934,7 @@ usbs_kinetis_control_setup_set_feature(void)
         // Nothing to do
         break;
     case USB_DEVREQ_RECIPIENT_ENDPOINT:
-        if ((usbs_kinetis_ep0.state == USBS_STATE_CONFIGURED) &&
+        if ((ep0.state == USBS_STATE_CONFIGURED) &&
             (epn > 0) &&
             (epn < CYGNUM_DEVS_USB_KINETIS_CONFIG_ENDPOINTS)) 
         {
@@ -1960,7 +1960,7 @@ ep0_low_level_status_t
 usbs_kinetis_control_setup_clear_feature(void)
 {
     ep0_low_level_status_t status;
-    usb_devreq *req = (usb_devreq *)usbs_kinetis_ep0.control_buffer;
+    usb_devreq *req = (usb_devreq *)ep0.control_buffer;
     cyg_uint8 recipient = req->type & USB_DEVREQ_RECIPIENT_MASK;
     usbs_rx_endpoint * pep;
     cyg_uint8 epn = req->index_lo & 0x0F;
@@ -1976,7 +1976,7 @@ usbs_kinetis_control_setup_clear_feature(void)
         // Nothing to do
         break;
     case USB_DEVREQ_RECIPIENT_ENDPOINT:
-        if ((usbs_kinetis_ep0.state == USBS_STATE_CONFIGURED) &&
+        if ((ep0.state == USBS_STATE_CONFIGURED) &&
             (epn > 0) &&
             (epn < CYGNUM_DEVS_USB_KINETIS_CONFIG_ENDPOINTS)) {
             pep = (usbs_rx_endpoint *) usbs_kinetis_endpoints[epn];
@@ -2046,12 +2046,12 @@ usbs_kinetis_control_setup(ep0_low_level_status_t status)
     {
         // Ask the layer above to process the message
         // TODO: Neni to asi idealni
-        usbcode = usbs_parse_host_get_command (&usbs_kinetis_ep0);
-        usbs_kinetis_ep0.buffer_size = MIN (ep0.buffer_size, length);
+        usbcode = usbs_parse_host_get_command (&ep0);
+        ep0.buffer_size = MIN (ep0.buffer_size, length);
         if (usbcode == USBS_CONTROL_RETURN_HANDLED)
         {
             handled = true;
-            if(usbs_kinetis_ep0.fill_buffer_fn)
+            if(ep0.fill_buffer_fn)
             {
                 cyg_uint32 pos = 0;
                 memcpy(kinetis_usb_device.setupPacketBuffer,
@@ -2072,10 +2072,10 @@ usbs_kinetis_control_setup(ep0_low_level_status_t status)
                     }					
                 }		
 
-                usbs_kinetis_ep0.buffer = kinetis_usb_device.setupPacketBuffer;
-                usbs_kinetis_ep0.buffer_size = pos;
+                ep0.buffer = kinetis_usb_device.setupPacketBuffer;
+                ep0.buffer_size = pos;
                 USB_DeviceKhciEndpointTransfer(&kinetis_usb_device,0,USB_IN,
-                        usbs_kinetis_ep0.buffer, usbs_kinetis_ep0.buffer_size);
+                        ep0.buffer, ep0.buffer_size);
             }			
 
         }
@@ -2108,7 +2108,7 @@ usbs_kinetis_poll (usbs_control_endpoint * endpoint)
 {
   CYG_ASSERT (endpoint == &ep0, "Wrong endpoint");
   if (CYG_ISR_CALL_DSR == usbs_kinetis_isr (CYGNUM_HAL_INTERRUPT_USB0, 0)) {
-     usbs_kinetis_dsr (CYGNUM_HAL_VECTOR_USB, 0, 0);
+     usbs_kinetis_dsr (CYGNUM_HAL_INTERRUPT_USB0, 0, 0);
   }
 }
 
@@ -2119,7 +2119,7 @@ usbs_testing_endpoint usbs_testing_endpoints[] = {
         endpoint_type       : USB_ENDPOINT_DESCRIPTOR_ATTR_CONTROL,
         endpoint_number     : 0,
         endpoint_direction  : USB_ENDPOINT_DESCRIPTOR_ENDPOINT_IN,
-        endpoint            : (void*) &usbs_kinetis_ep0,
+        endpoint            : (void*) &ep0,
 #ifdef CYGVAR_DEVS_USB_AT91_EP0_DEVTAB_ENTRY
         devtab_entry        : CYGDAT_DEVS_USB_AT91_DEVTAB_BASENAME "0c",
 #else
@@ -2134,7 +2134,7 @@ usbs_testing_endpoint usbs_testing_endpoints[] = {
         endpoint_type       : USB_ENDPOINT_DESCRIPTOR_ATTR_BULK,
         endpoint_number     : 1,
         endpoint_direction  : USB_ENDPOINT_DESCRIPTOR_ENDPOINT_OUT,
-        endpoint            : (void*) &usbs_kinetis_ep1,
+        endpoint            : (void*) &ep1,
 #ifdef CYGVAR_DEVS_USB_AT91_EP1_DEVTAB_ENTRY
         devtab_entry        : CYGDAT_DEVS_USB_AT91_DEVTAB_BASENAME "1r",
 #else
@@ -2149,7 +2149,7 @@ usbs_testing_endpoint usbs_testing_endpoints[] = {
         endpoint_type       : USB_ENDPOINT_DESCRIPTOR_ATTR_BULK,
         endpoint_number     : 2,
         endpoint_direction  : USB_ENDPOINT_DESCRIPTOR_ENDPOINT_IN,
-        endpoint            : (void*) &usbs_kinetis_ep2,
+        endpoint            : (void*) &ep2,
 #ifdef CYGVAR_DEVS_USB_AT91_EP2_DEVTAB_ENTRY
         devtab_entry        : CYGDAT_DEVS_USB_AT91_DEVTAB_BASENAME "2w",
 #else
@@ -2164,7 +2164,7 @@ usbs_testing_endpoint usbs_testing_endpoints[] = {
         endpoint_type       : USB_ENDPOINT_DESCRIPTOR_ATTR_BULK,
         endpoint_number     : 3,
         endpoint_direction  : USB_ENDPOINT_DESCRIPTOR_ENDPOINT_IN,
-        endpoint            : (void*) &usbs_kinetis_ep3,
+        endpoint            : (void*) &ep3,
 #ifdef CYGVAR_DEVS_USB_AT91_EP3_DEVTAB_ENTRY
         devtab_entry        : CYGDAT_DEVS_USB_AT91_DEVTAB_BASENAME "3w",
 #else

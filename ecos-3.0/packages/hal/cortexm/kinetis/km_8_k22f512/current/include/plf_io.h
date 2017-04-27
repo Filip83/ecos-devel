@@ -54,7 +54,6 @@
 
 #include <pkgconf/hal.h>
 #include <pkgconf/hal_cortexm_kinetis_km_8_k22f512.h>
-#include <cyg/io/spi_freescale_dspi.h>
 
 // UART PINs
 #ifndef CYGHWR_HAL_FREESCALE_UART1_PIN_RX
@@ -230,7 +229,9 @@
 #define CYGHWR_DEVS_RTC_PCF2129A_DEV0_CS_DLY            0
 #define CYGHWR_DEVS_RTC_PCF2129A_DEV0_CS_DLY            0
 #define CYGHWR_DEVS_RTC_PCF2129A_DEV0_CS_DLY_UN         0
-#define PCF2129A_SPI_DBR_DEV0      
+#define PCF2129A_SPI_DBR_DEV0                           1000
+
+
 
 // SPI LCD Display
 #define CYGHWR_DEVS_LCD_DEV1_SPI_CS                     1
@@ -242,7 +243,8 @@
 #define CYGHWR_DEVS_LCD_DEV1_CS_DLY                     0
 #define CYGHWR_DEVS_LCD_DEV1_CS_DLY                     0
 #define CYGHWR_DEVS_LCD_DEV1_CS_DLY_UN                  0
-#define LCD_SPI_DBR_DEV1                                0
+#define LCD_SPI_DBR_DEV1                                1000
+
 
 // FM25W SPI FRAM
 #define CYGHWR_DEVS_FRAM_FM25VXX_DEV2_SPI_CS            2
@@ -254,7 +256,8 @@
 #define CYGHWR_DEVS_FRAM_FM25VXX_DEV2_CS_DLY            0
 #define CYGHWR_DEVS_FRAM_FM25VXX_DEV2_CS_DLY            0
 #define CYGHWR_DEVS_FRAM_FM25VXX_DEV2_CS_DLY_UN         0
-#define FM25VXX_SPI_DBR_DEV2                            0
+#define FM25VXX_SPI_DBR_DEV2                            1000
+#define FRAM_FM25WXX_BASE_ADDRESS			0x20000000
 
 // Analog board ADC config SPI
 #define CYGHWR_DEVS_ADC_AD7124_DEV0_SPI_CS              0
@@ -266,7 +269,7 @@
 #define CYGHWR_DEVS_ADC_AD7124_DEV0_CS_DLY              0
 #define CYGHWR_DEVS_ADC_AD7124_DEV0_CS_DLY              0
 #define CYGHWR_DEVS_ADC_AD7124_DEV0_CS_DLY_UN           0
-#define AD7124_SPI_DBR_DEV0                             0
+#define AD7124_SPI_DBR_DEV0                             1000
   
 // Analog board DAC SPI
 #define CYGHWR_DEVS_DAC_TLV320_DEV1_SPI_CS              1
@@ -278,9 +281,24 @@
 #define CYGHWR_DEVS_DAC_TLV320_DEV1_CS_DLY              0
 #define CYGHWR_DEVS_DAC_TLV320_DEV1_CS_DLY              0
 #define CYGHWR_DEVS_DAC_TLV320_DEV1_CS_DLY_UN           0
-#define TLV320_SPI_DBR_DEV1                             0
+#define TLV320_SPI_DBR_DEV1                             1000
 
+externC cyg_uint64 _hw_error;
+#define SET_HW_ERRROR(_code_) _hw_error |= _code_
 
+#define HW_ERROR_OSC0_NOT_RUNNING		0x0000000000000001
+#define HW_ERROR_OSC1_NOT_RUNNING		0x0000000000000002
+#define HW_ERROR_OSC32_NOT_RUNNING		0x0000000000000004
+#define HW_ERROR_RC8M_NOT_RUNNING		0x0000000000000008
+#define HW_ERROR_MAIN_CLOCK_NOT_RUNNIGN         0x0000000000000010
+#define HW_ERROR_DFLL_NO_LOCK                   0x0000000000000400
+
+#define HW_ERROR_RTC_NO_RESPONSE		0x0000000000000020
+#define HW_ERROR_RTC_CHECK_TIME			0x0000000000000040
+
+#define HW_ERROR_MAIN_FRAM_NOT_INIT             0x0000000000000080ll
+#define HW_ERROR_MAIN_FLASH_NOT_INIT            0x0000000000000100ll
+#define HW_ERROR_MOUNT                          0x0000000000000200ll
 
 //=============================================================================
 // Memory access checks.

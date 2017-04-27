@@ -68,6 +68,8 @@
 #include <cyg/io/i2c.h>
 #else
 #include <cyg/io/spi.h>
+#include <cyg/io/spi_freescale_dspi.h>
+externC cyg_spi_device cyg_spi_wallclock_pcf2129a;
 #endif
 
 
@@ -206,8 +208,8 @@ DS_GET(cyg_uint8* regs)
     else 
     {
         // Now fetch the data
-        cyg_i2c_transaction_rx(&cyg_i2c_wallclock_pcf2129a, true, 
-                regs, 9, true, true);
+        /*cyg_i2c_transaction_rx(&cyg_i2c_wallclock_pcf2129a, true, 
+                regs, 9, true, true);*/
 
         // Verify that there are reasonable default settings. The
         // register values can be used as array indices so bogus
@@ -254,7 +256,7 @@ DS_GET(cyg_uint8* regs)
             ok = false;
         }
     }
-    cyg_i2c_transaction_end(&cyg_i2c_wallclock_pcf2129a);
+    
     if (! ok) 
     {
         // Any problems, return Jan 1 2013 but do not update the hardware.
@@ -347,7 +349,7 @@ get_pcf_hwclock(cyg_uint32* year, cyg_uint32* month, cyg_uint32* mday,
     // Fetch the current state
     DS_GET(regs);
 
-    *year = (cyg_uint32)TO_DEC(regs[DS_YEAR]);
+    *year = (cyg_uint32)TO_DEC(regs[PCF_YEAR]);
     // The year field only has the 2 least significant digits :-(
     *year += 2000;
     *month = (cyg_uint32)TO_DEC(regs[PCF_MONTH]);
@@ -373,13 +375,13 @@ get_pcf_hwclock(cyg_uint32* year, cyg_uint32* month, cyg_uint32* mday,
 // Functions required for the hardware-driver API.
 
 // Returns the number of seconds elapsed since 1970-01-01 00:00:00.
-cyg_uint32 
+cyg_uint64 
 Cyg_WallClock::get_hw_seconds(void)
 {
     cyg_uint32 year, month, mday, hour, minute, second;
 
     get_pcf_hwclock(&year, &month, &mday, &hour, &minute, &second);
-    cyg_uint32 now = _simple_mktime(year, month, mday, hour, minute, second);
+    cyg_uint64 now = _simple_mktime(year, month, mday, hour, minute, second);
     return now;
 }
 
@@ -387,7 +389,7 @@ Cyg_WallClock::get_hw_seconds(void)
 
 // Sets the clock. Argument is seconds elapsed since 1970-01-01 00:00:00.
 void
-Cyg_WallClock::set_hw_seconds( cyg_uint32 secs )
+Cyg_WallClock::set_hw_seconds( cyg_uint64 secs )
 {
     cyg_uint32 year, month, mday, hour, minute, second;
 

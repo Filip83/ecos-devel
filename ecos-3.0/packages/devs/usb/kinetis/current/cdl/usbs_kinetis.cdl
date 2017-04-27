@@ -165,7 +165,7 @@ cdl_package CYGPKG_DEVS_USB_KINETIS {
                 of open and read calls then a devtab entry is needed."
         }
 
-        cdl_option CYGVAR_DEVS_USB_UC3C_KINETIS_DEVTAB_ENTRY {
+        cdl_option CYGVAR_DEVS_USB_KINETIS_EP5_DEVTAB_ENTRY {
             display       "Provide a devtab entry for endpoint 5"
             flavor        bool
             default_value 0
@@ -191,7 +191,7 @@ cdl_package CYGPKG_DEVS_USB_KINETIS {
                 of open and read calls then a devtab entry is needed."
         }
 
-        cdl_option CYGVAR_DEVS_USB_UC3C_KINETIS_DEVTAB_ENTRY {
+        cdl_option CYGVAR_DEVS_USB_KINETIS_EP7_DEVTAB_ENTRY {
             display       "Provide a devtab entry for endpoint 7"
             flavor        bool
             default_value 0
@@ -204,25 +204,13 @@ cdl_package CYGPKG_DEVS_USB_KINETIS {
                 of open and read calls then a devtab entry is needed."
         }
 
-        cdl_option CYGVAR_DEVS_USB_UC3C_EP8_DEVTAB_ENTRY {
-            display       "Provide a devtab entry for endpoint 7"
-            flavor        bool
-            default_value 0
-            requires      CYGPKG_IO
-            description "
-                If this endpoint will only be accessed via the low-level
-                USB-specific calls then there is no need for an entry
-                in the device table, saving some memory. If the
-                application intends to access the endpoint by means
-                of open and read calls then a devtab entry is needed."
-        }
 
         cdl_option CYGDAT_DEVS_USB_KINETIS_DEVTAB_BASENAME {
             display       "Base name for devtab entries"
             flavor        data
             default_value { "\"/dev/usbs\"" }
             description "
-                If the uUC3C USB device driver package provides devtab
+                If the Kinetis USB device driver package provides devtab
                 entries for any of the endpoints then this option gives
                 control over the names of these entries. By default the
                 endpoints will be called \"/dev/usbs0c\", \"/dev/usbs3w\"

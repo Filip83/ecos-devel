@@ -1808,6 +1808,14 @@ package CYGPKG_DEVS_USB_UC3C {
         description     "A device driver for the ATMEL AVR32UC3C on-chip USB device"
 }
 
+package CYGPKG_DEVS_USB_KINETIS {
+        alias           { usb_kinetis }
+        hardware
+        directory       devs/usb/kinetis
+        script          usbs_kinetis.cdl
+        description     "A device driver for the ATMEL AVR32UC3C on-chip USB device"
+}
+
 package CYGPKG_DEVS_USB_D12 {
 	alias           { usb_d12 }
 	hardware
@@ -2517,6 +2525,16 @@ package CYGPKG_DEVICES_WALLCLOCK_KINETIS_RTC {
         description "
            This package provides a wallclock driver implementation for the
            Kinetis RTC module."
+}
+
+package CYGPKG_DEVICES_WALLCLOCK_NXP_PCF2129A {
+	alias		{ "Wallclock driver for NXP PCF2129A" devices_wallclock_pcf2129a device_wallclock_pcf2129a }
+	directory	devs/wallclock/nxp/pcf2129a
+	script          wallclock_pcf2129a.cdl
+	hardware
+        description "
+           This package provides a driver implementation for 
+           the NXP PCF2129A wallclock."
 }
 
 package CYGPKG_DEVICES_WATCHDOG_ARM_AEB {
@@ -8109,7 +8127,8 @@ target satisgeo_km_8_k22f512 {
                    CYGPKG_HAL_FREESCALE_EDMA
                    CYGPKG_IO_SERIAL_FREESCALE_UART_HDR
                    CYGPKG_IO_SERIAL_FREESCALE_UART
-                   CYGPKG_DEVICES_WALLCLOCK_KINETIS_RTC
+                   #CYGPKG_DEVICES_WALLCLOCK_KINETIS_RTC
+                   CYGPKG_DEVICES_WALLCLOCK_NXP_PCF2129A
                    CYGPKG_IO_SPI
                    CYGPKG_DEVS_SPI_FREESCALE_DSPI_GPIO
                    CYGPKG_DEVS_FLASH_KINETIS
@@ -8125,6 +8144,10 @@ target satisgeo_km_8_k22f512 {
                    CYGPKG_DEVS_KBD_BUTTON_KINETIS
                    CYGPKG_DEVS_BEEP_KINETIS
                    CYGPKG_DEVS_EHCI_SERIAL_FREESCALE
+                   CYGPKG_DEVS_USB_KINETIS
+                   CYGPKG_IO_USB_SLAVE_WINUSB_SERIAL
+                   CYGPKG_IO_USB
+                   CYGPKG_IO_USB_SLAVE
                  }
 
         description "

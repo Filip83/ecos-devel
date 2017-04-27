@@ -212,12 +212,12 @@ void CYGOPT_HAL_KINETIS_MISC_FLASH_SECTION_ATTR
 hal_start_main_clock(void)
 {
     cyghwr_hal_kinetis_mcg_t *mcg_p = CYGHWR_HAL_KINETIS_MCG_P;
-#if defined CYGOPT_HAL_CORTEXM_KINETIS_MCG_MCGOUTCLK_PLL ||\
+/*#if defined CYGOPT_HAL_CORTEXM_KINETIS_MCG_MCGOUTCLK_PLL ||\
     defined CYGOPT_HAL_CORTEXM_KINETIS_MCG_MCGOUTCLK_PLL1 ||\
     (defined CYGOPT_HAL_CORTEXM_KINETIS_MCG_REF_EXT_IS_RTC &&\
-    CYGHWR_HAL_CORTEXM_KINETIS_REV == 1)
+    CYGHWR_HAL_CORTEXM_KINETIS_REV == 1)*/
     cyghwr_hal_kinetis_sim_t *sim_p = CYGHWR_HAL_KINETIS_SIM_P;
-#endif
+//#endif
 
 #ifdef CYGOPT_HAL_CORTEXM_KINETIS_MCG_REF_EXT_IS_RTC
     // Select RTC clock source for MCG reference
