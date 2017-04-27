@@ -1878,34 +1878,36 @@ usbs_parse_host_get_command (usbs_control_endpoint * pcep)
 }
 
 // Handle a get status setup message on the control end point
- ep0_low_level_status_t
+ usb_status_t
 usbs_kinetis_control_setup_get_status(void)
 {
-    ep0_low_level_status_t status;
+    usb_status_t status = kStatus_USB_Error;
     usb_devreq *req = (usb_devreq *)ep0.control_buffer;
     cyg_uint8 recipient = req->type & USB_DEVREQ_RECIPIENT_MASK;
     cyg_uint16 word = 0;
 
-    status = UDD_EPCTRL_DATA_IN;
-
     switch (recipient) {
     case USB_DEVREQ_RECIPIENT_DEVICE:
     case USB_DEVREQ_RECIPIENT_INTERFACE:
-      // Nothing to do
+        status = kStatus_USB_Success;
       break;
     case USB_DEVREQ_RECIPIENT_ENDPOINT:
         if ((ep0.state == USBS_STATE_CONFIGURED) &&
             (req->index_lo > 0) &&
             (req->index_lo < CYGNUM_DEVS_USB_KINETIS_CONFIG_ENDPOINTS)) {
-
-          if(Is_udd_stall(req->index_lo))
-              word = 1;
-        } else {
-          status = UDD_EPCTRL_STALL_REQ;
+            
+            word = (cyg_uint16)kinetis_usb_device.endpointState[(((req->index_lo) & USB_ENDPOINT_NUMBER_MASK) << 1U) |
+                                                (((req->index_lo) &
+                                                  USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_MASK) >>
+                                                 USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_SHIFT)]
+                                .stateUnion.stateBitField.stalled == 1U) ?
+                            kUSB_DeviceEndpointStateStalled :
+                            kUSB_DeviceEndpointStateIdle;
+            status = kStatus_USB_Success;
         }
       break;
     default:
-        status = UDD_EPCTRL_STALL_REQ;
+        status = kStatus_USB_InvalidRequest;
     }
 
     *((cyg_uint16*)uep0.control_buffer) = word;
@@ -1914,91 +1916,81 @@ usbs_kinetis_control_setup_get_status(void)
   }
 
 // Handle a get status set feature message on the control endpoint
-ep0_low_level_status_t
+usb_status_t
 usbs_kinetis_control_setup_set_feature(void)
 {
-    ep0_low_level_status_t status;
+    usb_status_t status;
     usb_devreq *req = (usb_devreq *)ep0.control_buffer;
     cyg_uint8 recipient = req->type & USB_DEVREQ_RECIPIENT_MASK;
-    usbs_rx_endpoint * pep;
-    cyg_uint8 epn = req->index_lo & 0x0F;
-
-    //usbs_kinetis_control_setup_send_ack();
-    status = UDD_EPCTRL_SETUP;
+ 
+    status = kStatus_USB_InvalidRequest;
 
     switch(recipient) {
     case USB_DEVREQ_RECIPIENT_DEVICE:
-        status = UDD_EPCTRL_STALL_REQ  ;
         break;
     case USB_DEVREQ_RECIPIENT_INTERFACE:
         // Nothing to do
         break;
     case USB_DEVREQ_RECIPIENT_ENDPOINT:
-        if ((ep0.state == USBS_STATE_CONFIGURED) &&
-            (epn > 0) &&
-            (epn < CYGNUM_DEVS_USB_KINETIS_CONFIG_ENDPOINTS)) 
+        /* Set or Clear the endpoint featrue. */
+        if (USB_REQUEST_STANDARD_FEATURE_SELECTOR_ENDPOINT_HALT == setup->wValue)
         {
-            pep = (usbs_rx_endpoint *) usbs_kinetis_endpoints[epn];
-            if ( !Is_udd_stall(epn) ) {
-              usbs_kinetis_endpoint_set_halted ( pep , true );
-            }
-            else
-              status = UDD_EPCTRL_STALL_REQ ;
+            /* Set or Clear the control endpoint status(halt or not). */
+
+            USB_DeviceKhciControl(&kinetis_usb_device,
+                    kUSB_DeviceControlEndpointStall, req->index_lo);
+
         }
-        else {
-            status = UDD_EPCTRL_STALL_REQ  ;
+        else
+        {
         }
         break;
     default:
-        status = UDD_EPCTRL_STALL_REQ  ;
+        status = kStatus_USB_InvalidRequest  ;
     }
     return status;
 }
 
 // Handle a get status clear feature message on the control endpoint
-ep0_low_level_status_t
+usb_status_t
 usbs_kinetis_control_setup_clear_feature(void)
 {
-    ep0_low_level_status_t status;
+    usb_status_t status;
     usb_devreq *req = (usb_devreq *)ep0.control_buffer;
     cyg_uint8 recipient = req->type & USB_DEVREQ_RECIPIENT_MASK;
-    usbs_rx_endpoint * pep;
-    cyg_uint8 epn = req->index_lo & 0x0F;
 
-    udd_ctrl_send_zlp_in();
-    status = UDD_EPCTRL_SETUP;
+    status = kStatus_USB_InvalidRequest;
 
     switch (recipient) {
     case USB_DEVREQ_RECIPIENT_DEVICE:
-        status = UDD_EPCTRL_STALL_REQ;
+        status = kStatus_USB_InvalidRequest;
         break;
     case USB_DEVREQ_RECIPIENT_INTERFACE:
         // Nothing to do
         break;
     case USB_DEVREQ_RECIPIENT_ENDPOINT:
-        if ((ep0.state == USBS_STATE_CONFIGURED) &&
-            (epn > 0) &&
-            (epn < CYGNUM_DEVS_USB_KINETIS_CONFIG_ENDPOINTS)) {
-            pep = (usbs_rx_endpoint *) usbs_kinetis_endpoints[epn];
-            if ( Is_udd_stall(epn) && pep->halted ) {
-                usbs_kinetis_endpoint_set_halted ( pep , false );
-            }
-            else
-                status = UDD_EPCTRL_STALL_REQ;
+        /* Set or Clear the endpoint featrue. */
+        if (USB_REQUEST_STANDARD_FEATURE_SELECTOR_ENDPOINT_HALT == setup->wValue)
+        {
+            /* Set or Clear the control endpoint status(halt or not). */
+
+            USB_DeviceKhciControl(&kinetis_usb_device,
+                    kUSB_DeviceControlEndpointUnstall, req->index_lo);
+
         }
-        else {
-            status = UDD_EPCTRL_STALL_REQ;
+        else
+        {
         }
       break;
     default:
-        status = UDD_EPCTRL_STALL_REQ;
+        status = kStatus_USB_InvalidRequest;
     }
     return status;
 }
 
 // Handle a setup message from the host
-ep0_low_level_status_t
-usbs_kinetis_control_setup(ep0_low_level_status_t status)
+usb_status_t
+usbs_kinetis_control_setup(usb_status_t status)
 {
     // Data are in control_buffer
     usb_devreq *req = (usb_devreq *) ep0.control_buffer;
@@ -2083,7 +2075,7 @@ usbs_kinetis_control_setup(ep0_low_level_status_t status)
             handled = false;
     }
     
-    if (status == UDD_EPCTRL_STALL_REQ)
+    if (status == kStatus_USB_InvalidRequest)
     {
         cyg_uint8 epn = 0;
         USB_DeviceKhciControl(&kinetis_usb_device,
