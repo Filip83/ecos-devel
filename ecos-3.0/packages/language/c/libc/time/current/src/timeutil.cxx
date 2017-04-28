@@ -290,5 +290,97 @@ cyg_libc_time_itoa( cyg_uint8 *s, cyg_int32 num, cyg_uint8 width,
     return ret;
 } // cyg_libc_time_itoa()
 
+//===========================================================================
+//
+// Utility functions
+
+//////////////////////////////////
+// cyg_libc_time_year_is_leap() //
+//////////////////////////////////
+//
+// This returns true if the year is a leap year.
+// The argument is of type int in line with struct tm
+//
+
+cyg_bool
+cyg_libc_time_year_is_leap( int __year )
+{
+    cyg_bool _leap=false;
+
+    if (!(__year % 400))
+        _leap = true;
+    else if (!(__year % 4) && (__year % 100))
+        _leap = true;
+    return _leap;
+} // cyg_libc_time_year_is_leap()
+
+
+////////////////////////////////////
+// cyg_libc_time_getzoneoffsets() //
+////////////////////////////////////
+//
+// This function retrieves the current state of the Daylight Savings Time
+// and the offsets of both STD and DST
+// The offsets are both in time_t's i.e. seconds
+//
+
+Cyg_libc_time_dst
+cyg_libc_time_getzoneoffsets( time_t *__stdoffset, time_t *__dstoffset )
+{
+    CYG_REPORT_FUNCNAMETYPE("cyg_libc_time_getzoneoffsets",
+                            "returning DST state %d");
+    CYG_REPORT_FUNCARG2("__stdoffset is at address %08x, "
+                        "__dstoffset is at %08x", __stdoffset, __dstoffset);
+
+    CYG_CHECK_DATA_PTR(__stdoffset, "__stdoffset is not a valid pointer!");
+    CYG_CHECK_DATA_PTR(__dstoffset, "__dstoffset is not a valid pointer!");
+
+    *__stdoffset = cyg_libc_time_current_std_offset;
+    *__dstoffset = cyg_libc_time_current_dst_offset;
+
+    CYG_REPORT_RETVAL(cyg_libc_time_current_dst_stat);
+
+    return cyg_libc_time_current_dst_stat;
+} // cyg_libc_time_getzoneoffsets()
+
+
+////////////////////////////////////
+// cyg_libc_time_setzoneoffsets() //
+////////////////////////////////////
+//
+// This function sets the offsets used when Daylight Savings Time is enabled
+// or disabled. The offsets are in time_t's i.e. seconds
+//
+
+void
+cyg_libc_time_setzoneoffsets( time_t __stdoffset, time_t __dstoffset )
+{
+    CYG_REPORT_FUNCNAME("cyg_libc_time_setzoneoffsets");
+    CYG_REPORT_FUNCARG2DV(__stdoffset, __dstoffset);
+
+    cyg_libc_time_current_std_offset = __stdoffset;
+    cyg_libc_time_current_dst_offset = __dstoffset;
+
+    CYG_REPORT_RETURN();
+} // cyg_libc_time_setzoneoffsets()
+
+
+////////////////////////////
+// cyg_libc_time_setdst() //
+////////////////////////////
+//
+// This function sets the state of Daylight Savings Time: on, off, or unknown
+//
+
+void
+cyg_libc_time_setdst( Cyg_libc_time_dst __state )
+{
+    CYG_REPORT_FUNCNAME("cyg_libc_time_setdst");
+    CYG_REPORT_FUNCARG1("__state=%d", __state);
+
+    cyg_libc_time_current_dst_stat = __state;
+
+    CYG_REPORT_RETURN();
+} // cyg_libc_time_setdst()
 
 // EOF timeutil.cxx

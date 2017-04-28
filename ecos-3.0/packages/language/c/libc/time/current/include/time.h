@@ -307,6 +307,16 @@ cyg_libc_time_getzoneoffsets( time_t *__stdoffset, time_t *__dstoffset );
 extern cyg_bool
 cyg_libc_time_settime( time_t __utctime );
 
+//////////////////////////////////
+// cyg_libc_time_year_is_leap() //
+//////////////////////////////////
+//
+// This returns true if the year is a leap year.
+// The argument is of type int in line with struct tm
+//
+
+extern cyg_bool
+cyg_libc_time_year_is_leap( int __year );
 
 #ifdef __cplusplus
 } // extern "C"
