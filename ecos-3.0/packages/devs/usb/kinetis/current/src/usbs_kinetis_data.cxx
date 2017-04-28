@@ -52,8 +52,8 @@
 
 #include <cyg/infra/diag.h>
 #include <cyg/io/devtab.h>
-#include <cyg/io/usb/usbs_uc3c.h>
-#include <pkgconf/devs_usb_uc3c.h>
+#include <cyg/io/usb/usbs_kinetis.h>
+#include <pkgconf/devs_usb_kinetis.h>
 
 // ----------------------------------------------------------------------------
 // Initialization. The goal here is to call usbs_uc3c_init()
@@ -69,7 +69,7 @@
 // an initpri attribute. Instead it is necessary to define a
 // dummy C++ class.
 
-extern "C" void usbs_uc3c_init(void);
+extern "C" void usbs_kinetis_init(void);
 
 #ifdef CYGVAR_DEVS_USB_UC3C_EP0_DEVTAB_ENTRY
 

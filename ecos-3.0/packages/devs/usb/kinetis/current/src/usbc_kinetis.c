@@ -71,7 +71,7 @@
 #include <cyg/infra/diag.h>
 #include <string.h>
 
-
+#if 0
 
 #define USB_DEVICE_MAX_EP 16
 
@@ -2169,6 +2169,6 @@ usbs_testing_endpoint usbs_testing_endpoints[] = {
     },
     USBS_TESTING_ENDPOINTS_TERMINATOR
 };
-
+#endif
 
 

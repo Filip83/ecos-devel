@@ -13,7 +13,7 @@
 
 #ifndef USB_HDR_H
 #define USB_HDR_H
-
+#if 0
 /* ----------------------------------------------------------------------------
    -- USB Peripheral Access Layer
    ---------------------------------------------------------------------------- */
@@ -674,3 +674,4 @@ typedef enum _usb_device_control_type
 } usb_device_control_type_t;
 #endif /* USB_HDR_H */
 
+#endif
