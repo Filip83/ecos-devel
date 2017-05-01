@@ -199,12 +199,12 @@ cyg_st7565_fb_ioctl(struct cyg_fb* fb, cyg_ucount16 key, void* data, size_t* len
                     "data argument should be a cyg_fb_ioctl_backlight structure");
             if(backlight->fbbl_current == 0)
             {
-                gpio_set_pin_low(CYGNUM_DEVS_FRAMEBUF_ST7565_BACKLIGHT_PIN);
+                CYGHWR_IO_CLEAR_PIN_LCD_BL;
                 fb_data->backlight = 0;
             }
             else
             {
-                gpio_set_pin_high(CYGNUM_DEVS_FRAMEBUF_ST7565_BACKLIGHT_PIN);
+                CYGHWR_IO_SET_PIN_LCD_BL;
                 fb_data->backlight = 1;
             }
             result = 0;
