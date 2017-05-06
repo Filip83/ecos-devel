@@ -133,8 +133,8 @@ hal_misc_init(void)
     hal_set_pin_function(CYGHWR_IO_FREESCALE_XTAL_PIN_XTAL0);
     
     hal_set_pin_function(CYGHWR_IO_FREESCALE_LCD_A0);
-    CYGHWR_IO_DIR_PIN_PWOFF;
-    CYGHWR_IO_CLEAR_PIN_NSHUTD;
+    CYGHWR_IO_DIR_LCD_A0;
+    CYGNUM_DEVS_FRAMEBUF_ST7565_A0_PIN_LOW;
     
     hal_set_pin_function(CYGHWR_IO_FRESCALE_PIN_NSHUTD);
     CYGHWR_IO_DIR_PIN_NSHUTD;
