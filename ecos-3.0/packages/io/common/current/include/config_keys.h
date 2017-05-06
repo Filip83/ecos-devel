@@ -170,17 +170,21 @@
 #define CYG_IO_SET_CONFIG_ADC_DISABLE               0x0926
 #define CYG_IO_SET_CONFIG_ADC_DATA_FLUSH            0x0927
 
+// Mabey old API ???
+#if 0
 #define CYG_IO_SET_CONFIG_ADC_RATE                  0x0931
 #define CYG_IO_SET_CONFIG_ADC_ENABLE                0x0932
 #define CYG_IO_SET_CONFIG_ADC_DISABLE               0x0933
 #define CYG_IO_SET_CONFIG_ADC_DATA_FLUSH            0x0934
-
+#endif
 // ======== 0x900 DAC ========================================================
 // Get/Set configuration 'key' values for DAC I/O
-
+// Mabey old API ???
+#if 0
 #define CYG_IO_GET_CONFIG_DAC_RATE                  0x0951
 #define CYG_IO_GET_CONFIG_DAC_GAIN                  0x0952
 #define CYG_IO_GET_CONFIG_DAC_POLARITY              0x0953
+#endif
 
 #define CYG_IO_SET_CONFIG_DAC_RATE                  0x0971
 #define CYG_IO_SET_CONFIG_DAC_GAIN                  0x0972
