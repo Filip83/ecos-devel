@@ -61,6 +61,7 @@
 #include <cyg/infra/cyg_ass.h>            // Common assertion functions
 #include <cyg/infra/cyg_trac.h>           // Common tracing functions
 #include <stdio.h>                        // Header for this file
+#include <string.h>
 #include <errno.h>                        // errno
 #ifdef CYGPKG_LIBC_STDIO_FILEIO           // unix-y functions, e.g. stat,rmdir,unlink,...
 # include <unistd.h>
