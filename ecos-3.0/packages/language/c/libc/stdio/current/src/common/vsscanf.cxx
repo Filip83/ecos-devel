@@ -59,6 +59,7 @@
 #include <cyg/infra/cyg_type.h>     // Common project-wide type definitions
 #include <stddef.h>                 // NULL and size_t from compiler
 #include <stdio.h>                  // header for this file
+#include <string.h>
 #include <errno.h>                  // error codes
 #include <cyg/io/devtab.h>          // Device table
 #include <cyg/libc/stdio/stream.hxx>// Cyg_StdioStream
