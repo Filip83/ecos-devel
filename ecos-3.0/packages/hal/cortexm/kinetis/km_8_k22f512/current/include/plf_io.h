@@ -216,9 +216,8 @@
 #define CYGHWR_IO_SET_PIN_PWOFF      CYGHWR_HAL_KINETIS_GPIO_SET_PIN(C,9)
 #define CYGHWR_IO_CLEAR_PIN_PWOFF    CYGHWR_HAL_KINETIS_GPIO_CLEAR_PIN(C,9)
 
-/**
-/* cphol and ncpha configuration see documentation page 660
-*/
+
+// cphol and ncpha configuration see documentation page 660
 // SPI RTC
 #define CYGHWR_DEVS_RTC_PCF2129A_DEV0_SPI_CS            0
 #define PCF2129A_SPI_FRAME_SIZE                         8
