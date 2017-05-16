@@ -1,3 +1,8 @@
+2017-05-16  Filip <filip.gnu@gmail.com>
+
+        * cortexm/kinetis/var/current/include/var_io_i2s.h:
+	Implemented I2S support.
+
 2017-03-29  Filip <filip.gnu@gmail.com>
 
         * cortexm/kinetis/var/current/include/var_io_pit.h:
