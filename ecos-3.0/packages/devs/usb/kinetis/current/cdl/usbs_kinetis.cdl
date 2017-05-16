@@ -98,7 +98,7 @@ cdl_package CYGPKG_DEVS_USB_KINETIS {
         description "
              This component controls if /dev/usb entries will be created."
 
-        cdl_option CYGVAR_DEVS_USB_UC3C_KINETIS_DEVTAB_ENTRY {
+        cdl_option CYGVAR_DEVS_USB_KINETIS_EP0_DEVTAB_ENTRY {
             display       "Provide a devtab entry for endpoint 0"
             flavor        bool
             default_value 0

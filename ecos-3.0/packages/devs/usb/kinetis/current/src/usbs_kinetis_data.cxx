@@ -1,8 +1,8 @@
 //==========================================================================
 //
-//      usbs_uc3c_data.cxx
+//      usbs_kinetis_data.cxx
 //
-//      Static data for the ATMEL UC3C USB device driver
+//      Static data for the Frescale Kinetis USB device driver
 //
 //==========================================================================
 // ####ECOSGPLCOPYRIGHTBEGIN####
@@ -41,7 +41,7 @@
 //
 // Author(s):    Filip Adamec
 // Contributors:
-// Date:         2012-11-22
+// Date:         2017-05-12
 //
 // This file contains various objects that should go into extras.o
 // rather than libtarget.a, e.g. devtab entries that would normally
@@ -56,7 +56,7 @@
 #include <pkgconf/devs_usb_kinetis.h>
 
 // ----------------------------------------------------------------------------
-// Initialization. The goal here is to call usbs_uc3c_init()
+// Initialization. The goal here is to call usbs_kinetis_init()
 // early on during system startup, to take care of things like
 // registering interrupt handlers etc. which are best done
 // during system init.
@@ -71,17 +71,17 @@
 
 extern "C" void usbs_kinetis_init(void);
 
-#ifdef CYGVAR_DEVS_USB_UC3C_EP0_DEVTAB_ENTRY
+#ifndef CYGVAR_DEVS_USB_KINETIS_EP0_DEVTAB_ENTRY
 
-class usbs_uc3c_initialization {
+class usbs_kinetis_initialization {
 public:
-  usbs_uc3c_initialization() {
-    usbs_uc3c_init();
+  usbs_kinetis_initialization() {
+    usbs_kinetis_init();
   }
 };
 
-static usbs_uc3c_initialization CYGBLD_ATTRIB_INIT_BEFORE(CYG_INIT_IO)
-  usbs_uc3c_init_object;
+static usbs_kinetis_initialization CYGBLD_ATTRIB_INIT_BEFORE(CYG_INIT_IO)
+  usbs_kinetis_init_object;
 #endif
 
 // ----------------------------------------------------------------------------
@@ -89,168 +89,168 @@ static usbs_uc3c_initialization CYGBLD_ATTRIB_INIT_BEFORE(CYG_INIT_IO)
 // will want to use the lower-level API rather than go via
 // open/read/write/ioctl.
 
-#ifdef CYGVAR_DEVS_USB_UC3C_EP0_DEVTAB_ENTRY
+#ifdef CYGVAR_DEVS_USB_KINETIS_EP0_DEVTAB_ENTRY
 // For endpoint 0 the only legal operations are get_config() and
 // set_config(), and these are provided by the common package.
 
-static bool usbs_uc3c_devtab_ep0_init(struct cyg_devtab_entry* tab){
+static bool usbs_kinetis_devtab_ep0_init(struct cyg_devtab_entry* tab){
 
   CYG_UNUSED_PARAM(struct cyg_devtab_entry*, tab);
 
-  usbs_uc3c_init();
+  usbs_kinetis_init();
 
   return true;
 }
 
-CHAR_DEVIO_TABLE(usbs_uc3c_ep0_devtab_functions,
+CHAR_DEVIO_TABLE(usbs_kinetis_ep0_devtab_functions,
                  &cyg_devio_cwrite,
                  &cyg_devio_cread,
                  &cyg_devio_select,
                  &usbs_devtab_get_config,
                  &usbs_devtab_set_config);
 
-CHAR_DEVTAB_ENTRY(usbs_uc3c_ep0_devtab_entry,
+CHAR_DEVTAB_ENTRY(usbs_kinetis_ep0_devtab_entry,
                   CYGDAT_DEVS_USB_UC3C_DEVTAB_BASENAME "0",
                   0,
-                  &usbs_uc3c_ep0_devtab_functions,
-                  &usbs_uc3c_devtab_ep0_init,
+                  &usbs_kinetis_ep0_devtab_functions,
+                  &usbs_kinetis_devtab_ep0_init,
                   0,
-                  (void*) &usbs_uc3c_ep0);
+                  (void*) &ep0);
 #endif
 
 // ----------------------------------------------------------------------------
 // Common routines for ep1..3
 
-#if defined(CYGVAR_DEVS_USB_UC3C_EP1_DEVTAB_ENTRY) || \
-    defined(CYGVAR_DEVS_USB_UC3C_EP2_DEVTAB_ENTRY) || \
-    defined(CYGVAR_DEVS_USB_UC3C_EP3_DEVTAB_ENTRY) || \
-    defined(CYGVAR_DEVS_USB_UC3C_EP4_DEVTAB_ENTRY) || \
-    defined(CYGVAR_DEVS_USB_UC3C_EP5_DEVTAB_ENTRY) || \
-    defined(CYGVAR_DEVS_USB_UC3C_EP6_DEVTAB_ENTRY) || \
-    defined(CYGVAR_DEVS_USB_UC3C_EP7_DEVTAB_ENTRY)
+#if defined(CYGVAR_DEVS_USB_KINETIS_EP1_DEVTAB_ENTRY) || \
+    defined(CYGVAR_DEVS_USB_KINETIS_EP2_DEVTAB_ENTRY) || \
+    defined(CYGVAR_DEVS_USB_KINETIS_EP3_DEVTAB_ENTRY) || \
+    defined(CYGVAR_DEVS_USB_KINETIS_EP4_DEVTAB_ENTRY) || \
+    defined(CYGVAR_DEVS_USB_KINETIS_EP5_DEVTAB_ENTRY) || \
+    defined(CYGVAR_DEVS_USB_KINETIS_EP6_DEVTAB_ENTRY) || \
+    defined(CYGVAR_DEVS_USB_KINETIS_EP7_DEVTAB_ENTRY)
 
-static bool usbs_uc3c_devtab_dummy_init(struct cyg_devtab_entry* tab){
+static bool usbs_kinetis_devtab_dummy_init(struct cyg_devtab_entry* tab){
 
     CYG_UNUSED_PARAM(struct cyg_devtab_entry*, tab);
     return true;
 }
 #endif
 
-#ifdef CYGVAR_DEVS_USB_UC3C_EP1_DEVTAB_ENTRY
-CHAR_DEVIO_TABLE(usbs_uc3c_ep1_devtab_functions,
+#ifdef CYGVAR_DEVS_USB_KINETIS_EP1_DEVTAB_ENTRY
+CHAR_DEVIO_TABLE(usbs_kinetis_ep1_devtab_functions,
                  &usbs_devtab_cwrite,
                  &usbs_devtab_cread,
                  &cyg_devio_select,
                  &usbs_devtab_get_config,
                  &usbs_devtab_set_config);
 
-CHAR_DEVTAB_ENTRY(usbs_uc3c_ep1_devtab_entry,
+CHAR_DEVTAB_ENTRY(usbs_kinetis_ep1_devtab_entry,
                   CYGDAT_DEVS_USB_UC3C_DEVTAB_BASENAME "1",
                   0,
-                  &usbs_uc3c_ep1_devtab_functions,
-                  &usbs_uc3c_devtab_dummy_init,
+                  &usbs_kinetis_ep1_devtab_functions,
+                  &usbs_kinetis_devtab_dummy_init,
                   0,
-                  (void*) &usbs_uc3c_ep1);
+                  (void*) &ep1);
 #endif
 
-#ifdef CYGVAR_DEVS_USB_UC3C_EP2_DEVTAB_ENTRY
-CHAR_DEVIO_TABLE(usbs_uc3c_ep2_devtab_functions,
+#ifdef CYGVAR_DEVS_USB_KINETIS_EP2_DEVTAB_ENTRY
+CHAR_DEVIO_TABLE(usbs_kinetis_ep2_devtab_functions,
                  &usbs_devtab_cwrite,
                  &usbs_devtab_cread,
                  &cyg_devio_select,
                  &usbs_devtab_get_config,
                  &usbs_devtab_set_config);
 
-CHAR_DEVTAB_ENTRY(usbs_uc3c_ep2_devtab_entry,
+CHAR_DEVTAB_ENTRY(usbs_kinetis_ep2_devtab_entry,
                   CYGDAT_DEVS_USB_UC3C_DEVTAB_BASENAME "2",
                   0,
-                  &usbs_uc3c_ep2_devtab_functions,
-                  &usbs_uc3c_devtab_dummy_init,
+                  &usbs_kinetis_ep2_devtab_functions,
+                  &usbs_kinetis_devtab_dummy_init,
                   0,
-                  (void*) &usbs_uc3c_ep2);
+                  (void*) &ep2);
 #endif
 
-#ifdef CYGVAR_DEVS_USB_UC3C_EP3_DEVTAB_ENTRY
-CHAR_DEVIO_TABLE(usbs_uc3c_ep3_devtab_functions,
+#ifdef CYGVAR_DEVS_USB_KINETIS_EP3_DEVTAB_ENTRY
+CHAR_DEVIO_TABLE(usbs_kinetis_ep3_devtab_functions,
                  &usbs_devtab_cwrite,
                  &usbs_devtab_cread,
                  &cyg_devio_select,
                  &usbs_devtab_get_config,
                  &usbs_devtab_set_config);
 
-CHAR_DEVTAB_ENTRY(usbs_uc3c_ep3_devtab_entry,
+CHAR_DEVTAB_ENTRY(usbs_kinetis_ep3_devtab_entry,
                   CYGDAT_DEVS_USB_UC3C_DEVTAB_BASENAME "3",
                   0,
-                  &usbs_uc3c_ep3_devtab_functions,
-                  &usbs_uc3c_devtab_dummy_init,
+                  &usbs_kinetis_ep3_devtab_functions,
+                  &usbs_kinetis_devtab_dummy_init,
                   0,
-                  (void*) &usbs_uc3c_ep3);
+                  (void*) &ep3);
 #endif
 
-#ifdef CYGVAR_DEVS_USB_UC3C_EP4_DEVTAB_ENTRY
-CHAR_DEVIO_TABLE(usbs_uc3c_ep4_devtab_functions,
+#ifdef CYGVAR_DEVS_USB_KINETIS_EP4_DEVTAB_ENTRY
+CHAR_DEVIO_TABLE(usbs_kinetis_ep4_devtab_functions,
                  &usbs_devtab_cwrite,
                  &usbs_devtab_cread,
                  &cyg_devio_select,
                  &usbs_devtab_get_config,
                  &usbs_devtab_set_config);
 
-CHAR_DEVTAB_ENTRY(usbs_uc3c_ep4_devtab_entry,
+CHAR_DEVTAB_ENTRY(usbs_kinetis_ep4_devtab_entry,
                   CYGDAT_DEVS_USB_UC3C_DEVTAB_BASENAME "4",
                   0,
-                  &usbs_uc3c_ep4_devtab_functions,
-                  &usbs_uc3c_devtab_dummy_init,
+                  &usbs_kinetis_ep4_devtab_functions,
+                  &usbs_kinetis_devtab_dummy_init,
                   0,
-                  (void*) &usbs_uc3c_ep4);
+                  (void*) &ep4);
 #endif
 
-#ifdef CYGVAR_DEVS_USB_UC3C_EP5_DEVTAB_ENTRY
-CHAR_DEVIO_TABLE(usbs_uc3c_ep5_devtab_functions,
+#ifdef CYGVAR_DEVS_USB_KINETIS_EP5_DEVTAB_ENTRY
+CHAR_DEVIO_TABLE(usbs_kinetis_ep5_devtab_functions,
                  &usbs_devtab_cwrite,
                  &usbs_devtab_cread,
                  &cyg_devio_select,
                  &usbs_devtab_get_config,
                  &usbs_devtab_set_config);
 
-CHAR_DEVTAB_ENTRY(usbs_uc3c_ep5_devtab_entry,
+CHAR_DEVTAB_ENTRY(usbs_kinetis_ep5_devtab_entry,
                   CYGDAT_DEVS_USB_UC3C_DEVTAB_BASENAME "5",
                   0,
-                  &usbs_uc3c_ep5_devtab_functions,
-                  &usbs_uc3c_devtab_dummy_init,
+                  &usbs_kinetis_ep5_devtab_functions,
+                  &usbs_kinetis_devtab_dummy_init,
                   0,
-                  (void*) &usbs_uc3c_ep5);
+                  (void*) &ep5);
 #endif
 
-#ifdef CYGVAR_DEVS_USB_UC3C_EP6_DEVTAB_ENTRY
-CHAR_DEVIO_TABLE(usbs_uc3c_ep6_devtab_functions,
+#ifdef CYGVAR_DEVS_USB_KINETIS_EP6_DEVTAB_ENTRY
+CHAR_DEVIO_TABLE(usbs_kinetis_ep6_devtab_functions,
                  &usbs_devtab_cwrite,
                  &usbs_devtab_cread,
                  &cyg_devio_select,
                  &usbs_devtab_get_config,
                  &usbs_devtab_set_config);
 
-CHAR_DEVTAB_ENTRY(usbs_uc3c_ep6_devtab_entry,
+CHAR_DEVTAB_ENTRY(usbs_kinetis_ep6_devtab_entry,
                   CYGDAT_DEVS_USB_UC3C_DEVTAB_BASENAME "6",
                   0,
-                  &usbs_uc3c_ep6_devtab_functions,
-                  &usbs_uc3c_devtab_dummy_init,
+                  &usbs_kinetis_ep6_devtab_functions,
+                  &usbs_kinetis_devtab_dummy_init,
                   0,
-                  (void*) &usbs_uc3c_ep6);
+                  (void*) &ep6);
 #endif
 
-#ifdef CYGVAR_DEVS_USB_UC3C_EP7_DEVTAB_ENTRY
-CHAR_DEVIO_TABLE(usbs_uc3c_ep7_devtab_functions,
+#ifdef CYGVAR_DEVS_USB_KINETIS_EP7_DEVTAB_ENTRY
+CHAR_DEVIO_TABLE(usbs_kinetis_ep7_devtab_functions,
                  &usbs_devtab_cwrite,
                  &usbs_devtab_cread,
                  &cyg_devio_select,
                  &usbs_devtab_get_config,
                  &usbs_devtab_set_config);
 
-CHAR_DEVTAB_ENTRY(usbs_uc3c_ep7_devtab_entry,
+CHAR_DEVTAB_ENTRY(usbs_kinetis_ep7_devtab_entry,
                   CYGDAT_DEVS_USB_UC3C_DEVTAB_BASENAME "7",
                   0,
-                  &usbs_uc3c_ep7_devtab_functions,
-                  &usbs_uc3c_devtab_dummy_init,
+                  &usbs_kinetis_ep7_devtab_functions,
+                  &usbs_kinetis_devtab_dummy_init,
                   0,
-                  (void*) &usbs_uc3c_ep7);
+                  (void*) &ep7);
 #endif

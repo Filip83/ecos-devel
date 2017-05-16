@@ -71,15 +71,13 @@
 #include <cyg/infra/diag.h>
 #include <string.h>
 
-#if 0
+#if 1
 
-#define USB_DEVICE_MAX_EP 16
+
 
 #define UDC_BSS(x)               __attribute__((__aligned__(x)))
 
 #define USB_DEVICE_EP_CTRL_SIZE    8
-
-#define CYGNUM_DEVS_USB_KINETIS_CONFIG_ENDPOINTS    4
 
 
 //Kci configration macros
@@ -89,7 +87,7 @@
 #define FSL_FEATURE_USB_KHCI_VBUS_DETECT_ENABLED    0
 #define USB_DEVICE_CHARGER_DETECT_ENABLE            0
 #define FSL_FEATURE_SOC_USBDCD_COUNT                1
-#define USB_DEVICE_CONFIG_REMOTE_WAKEUP             1
+#define USB_DEVICE_CONFIG_REMOTE_WAKEUP             0
 #define FSL_FEATURE_USB_KHCI_OTG_ENABLED            0
 #define USB_DEVICE_CONFIG_OTG                       0
 #define FSL_FEATURE_USB_KHCI_KEEP_ALIVE_ENABLED     0
@@ -116,11 +114,22 @@ static void usbs_kinetis_endpoint_set_halted(usbs_rx_endpoint * pep,
 static void
 usbs_state_notify (usbs_control_endpoint * pcep);
 
+ usbs_control_return
+usbs_kinetis_control_setup_get_status(void);
+ 
+  usbs_control_return
+usbs_kinetis_control_setup_get_status(void);
+  
+  usbs_control_return
+usbs_kinetis_control_setup();
+
+usb_status_t USB_DeviceKhciCancel(usb_device_khci_state_struct_t *khciState, cyg_uint8 ep);
+
 //Endpoints control banks buffer
-UDC_BSS(512) static uint8_t s_UsbDeviceKhciBdtBuffer[1][512U];
+UDC_BSS(512) static cyg_uint8 s_UsbDeviceKhciBdtBuffer[1][512U];
 
 // Driver data sructrue
-static usb_device_khci_state_struct_t kinetis_usb_device
+static usb_device_khci_state_struct_t kinetis_usb_device =
 {
     bdt:                        &s_UsbDeviceKhciBdtBuffer,
     registerBase:               USB0,
@@ -270,7 +279,7 @@ usbs_kinetis_pep_to_number(const usbs_rx_endpoint * pep)
 {
     int epn;
 
-    for(epn=0; epn < UC3C_USB_ENDPOINTS; epn++) {
+    for(epn=0; epn < CYGNUM_DEVS_USB_KINETIS_CONFIG_ENDPOINTS; epn++) {
         if (pep == usbs_kinetis_endpoints[epn])
             return epn;
     }
@@ -297,10 +306,10 @@ usbs_kinetis_pep_to_number(const usbs_rx_endpoint * pep)
  * @return A USB error code or kStatus_USB_Success.
  */
 static usb_status_t USB_DeviceKhciEndpointTransfer(
-        usb_device_khci_state_struct_t *khciState, uint8_t endpoint, 
-        uint8_t direction, uint8_t *buffer, uint32_t length)
+        usb_device_khci_state_struct_t *khciState, cyg_uint8 endpoint, 
+        cyg_uint8 direction, cyg_uint8 *buffer, cyg_uint32 length)
 {
-    uint32_t index = ((uint32_t)endpoint << 1U) | (uint32_t)direction;
+    cyg_uint32 index = ((cyg_uint32)endpoint << 1U) | (cyg_uint32)direction;
     cyg_uint32 irq;
 
     /* Enter critical */
@@ -310,12 +319,12 @@ static usb_status_t USB_DeviceKhciEndpointTransfer(
     khciState->endpointState[index].stateUnion.stateBitField.transferring = 1U;
 
     /* Add the data buffer address to the BDT. */
-    USB_KHCI_BDT_SET_ADDRESS((uint32_t)khciState->bdt, endpoint, direction,
+    USB_KHCI_BDT_SET_ADDRESS((cyg_uint32)khciState->bdt, endpoint, direction,
                 khciState->endpointState[index].stateUnion.stateBitField.bdtOdd, 
-                (uint32_t)buffer);
+                (cyg_uint32)buffer);
 
     /* Change the BDT control field to start the transfer. */
-    USB_KHCI_BDT_SET_CONTROL((uint32_t)khciState->bdt, endpoint, direction,
+    USB_KHCI_BDT_SET_CONTROL((cyg_uint32)khciState->bdt, endpoint, direction,
             khciState->endpointState[index].stateUnion.stateBitField.bdtOdd,
             USB_LONG_TO_LITTLE_ENDIAN(USB_KHCI_BDT_BC(length) | 
                                       USB_KHCI_BDT_OWN        | 
@@ -349,12 +358,12 @@ static void USB_DeviceKhciPrimeNextSetup(usb_device_khci_state_struct_t *khciSta
      * that the setup packet would wake up the USB.
      */
     khciState->endpointState[(USB_ENDPOINT_DESCRIPTOR_ATTR_CONTROL << 1U) | USB_OUT].transferBuffer =
-        (uint8_t *)(khciState->bdt + 0x200U - 0x10U) +
+        (cyg_uint8 *)(khciState->bdt + 0x200U - 0x10U) +
         khciState->endpointState[(USB_ENDPOINT_DESCRIPTOR_ATTR_CONTROL << 1U) | USB_OUT].stateUnion.stateBitField.bdtOdd *
             USB_SETUP_PACKET_SIZE;
 #else
     khciState->endpointState[(USB_ENDPOINT_DESCRIPTOR_ATTR_CONTROL << 1U) | USB_OUT].transferBuffer =
-        (uint8_t *)&khciState->setupPacketBuffer[0] +
+        (cyg_uint8 *)&khciState->setupPacketBuffer[0] +
         khciState->endpointState[(USB_ENDPOINT_DESCRIPTOR_ATTR_CONTROL << 1U) | USB_OUT].stateUnion.stateBitField.bdtOdd *
             USB_SETUP_PACKET_SIZE;
 #endif
@@ -384,7 +393,8 @@ static void USB_DeviceKhciPrimeNextSetup(usb_device_khci_state_struct_t *khciSta
  */
 static void USB_DeviceKhciSetDefaultState(usb_device_khci_state_struct_t *khciState)
 {
-    uint8_t interruptFlag;
+    cyg_uint8 interruptFlag;
+    cyg_uint8 count;
 
     /* Clear the error state register */
     khciState->registerBase->ERRSTAT = 0xFFU;
@@ -396,15 +406,15 @@ static void USB_DeviceKhciSetDefaultState(usb_device_khci_state_struct_t *khciSt
     khciState->registerBase->ADDR = 0U;
 
     /* Clear the endpoint state and disable the endpoint */
-    for (uint8_t count = 0U; count < CYGNUM_DEVS_USB_KINETIS_CONFIG_ENDPOINTS; count++)
+    for (count = 0U; count < CYGNUM_DEVS_USB_KINETIS_CONFIG_ENDPOINTS; count++)
     {
-        USB_KHCI_BDT_SET_CONTROL((uint32_t)khciState->bdt, count, USB_OUT, 0U, 0U);
-        USB_KHCI_BDT_SET_CONTROL((uint32_t)khciState->bdt, count, USB_OUT, 1U, 0U);
-        USB_KHCI_BDT_SET_CONTROL((uint32_t)khciState->bdt, count, USB_IN, 0U, 0U);
-        USB_KHCI_BDT_SET_CONTROL((uint32_t)khciState->bdt, count, USB_IN, 1U, 0U);
+        USB_KHCI_BDT_SET_CONTROL((cyg_uint32)khciState->bdt, count, USB_OUT, 0U, 0U);
+        USB_KHCI_BDT_SET_CONTROL((cyg_uint32)khciState->bdt, count, USB_OUT, 1U, 0U);
+        USB_KHCI_BDT_SET_CONTROL((cyg_uint32)khciState->bdt, count, USB_IN, 0U, 0U);
+        USB_KHCI_BDT_SET_CONTROL((cyg_uint32)khciState->bdt, count, USB_IN, 1U, 0U);
 
-        khciState->endpointState[((uint32_t)count << 1U) | USB_OUT].stateUnion.state = 0U;
-        khciState->endpointState[((uint32_t)count << 1U) | USB_IN].stateUnion.state = 0U;
+        khciState->endpointState[((cyg_uint32)count << 1U) | USB_OUT].stateUnion.state = 0U;
+        khciState->endpointState[((cyg_uint32)count << 1U) | USB_IN].stateUnion.state = 0U;
         khciState->registerBase->ENDPOINT[count].ENDPT = 0x00U;
     }
     khciState->isDmaAlignBufferInusing = 0U;
@@ -453,11 +463,11 @@ static void USB_DeviceKhciSetDefaultState(usb_device_khci_state_struct_t *khciSt
 static usb_status_t USB_DeviceKhciEndpointInit(usb_device_khci_state_struct_t *khciState,
                                                usb_device_endpoint_init_struct_t *epInit)
 {
-    uint16_t maxPacketSize = epInit->maxPacketSize;
-    uint8_t endpoint = (epInit->endpointAddress & USB_ENDPOINT_NUMBER_MASK);
-    uint8_t direction = (epInit->endpointAddress & USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_MASK) >>
+    cyg_uint16 maxPacketSize = epInit->maxPacketSize;
+    cyg_uint8 endpoint = (epInit->endpointAddress & USB_ENDPOINT_NUMBER_MASK);
+    cyg_uint8 direction = (epInit->endpointAddress & USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_MASK) >>
                         USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_SHIFT;
-    uint8_t index = ((uint8_t)((uint32_t)endpoint << 1U)) | (uint8_t)direction;
+    cyg_uint8 index = ((cyg_uint8)((cyg_uint32)endpoint << 1U)) | (cyg_uint8)direction;
 
     /* Make the endpoint max packet size align with USB Specification 2.0. */
     if (USB_ENDPOINT_DESCRIPTOR_ATTR_ISOCHRONOUS == epInit->transferType)
@@ -512,12 +522,12 @@ static usb_status_t USB_DeviceKhciEndpointInit(usb_device_khci_state_struct_t *k
  * @return A USB error code or kStatus_USB_Success.
  */
 static usb_status_t USB_DeviceKhciEndpointDeinit(
-        usb_device_khci_state_struct_t *khciState, uint8_t ep)
+        usb_device_khci_state_struct_t *khciState, cyg_uint8 ep)
 {
-    uint8_t endpoint = (ep & USB_ENDPOINT_NUMBER_MASK);
-    uint8_t direction =
+    cyg_uint8 endpoint = (ep & USB_ENDPOINT_NUMBER_MASK);
+    cyg_uint8 direction =
         (ep & USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_MASK) >> USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_SHIFT;
-    uint8_t index = ((uint8_t)((uint32_t)endpoint << 1U)) | (uint8_t)direction;
+    cyg_uint8 index = ((cyg_uint8)((cyg_uint32)endpoint << 1U)) | (cyg_uint8)direction;
 
     /* Cancel the transfer of the endpoint */
     USB_DeviceKhciCancel(khciState, ep);
@@ -542,12 +552,12 @@ static usb_status_t USB_DeviceKhciEndpointDeinit(
  * @return A USB error code or kStatus_USB_Success.
  */
 static usb_status_t USB_DeviceKhciEndpointStall(
-                usb_device_khci_state_struct_t *khciState, uint8_t ep)
+                usb_device_khci_state_struct_t *khciState, cyg_uint8 ep)
 {
-    uint8_t endpoint = ep & USB_ENDPOINT_NUMBER_MASK;
-    uint8_t direction =
+    cyg_uint8 endpoint = ep & USB_ENDPOINT_NUMBER_MASK;
+    cyg_uint8 direction =
         (ep & USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_MASK) >> USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_SHIFT;
-    uint8_t index = ((uint8_t)((uint32_t)endpoint << 1U)) | (uint8_t)direction;
+    cyg_uint8 index = ((cyg_uint8)((cyg_uint32)endpoint << 1U)) | (cyg_uint8)direction;
 
     /* Cancel the transfer of the endpoint */
     USB_DeviceKhciCancel(khciState, ep);
@@ -558,9 +568,9 @@ static usb_status_t USB_DeviceKhciEndpointStall(
     /* Set endpoint stall in BDT. And then if the host send a IN/OUT tanscation, the device will response a STALL state.
      */
     USB_KHCI_BDT_SET_CONTROL(
-        (uint32_t)khciState->bdt, endpoint, direction, khciState->endpointState[index].stateUnion.stateBitField.bdtOdd,
+        (cyg_uint32)khciState->bdt, endpoint, direction, khciState->endpointState[index].stateUnion.stateBitField.bdtOdd,
         USB_LONG_TO_LITTLE_ENDIAN(
-            (uint32_t)(USB_KHCI_BDT_BC(khciState->endpointState[index].stateUnion.stateBitField.maxPacketSize) |
+            (cyg_uint32)(USB_KHCI_BDT_BC(khciState->endpointState[index].stateUnion.stateBitField.maxPacketSize) |
                        USB_KHCI_BDT_DTS | USB_KHCI_BDT_STALL | USB_KHCI_BDT_OWN)));
 
     khciState->registerBase->CTL &= ~USB_CTL_TXSUSPENDTOKENBUSY_MASK;
@@ -580,13 +590,14 @@ static usb_status_t USB_DeviceKhciEndpointStall(
  * @return A USB error code or kStatus_USB_Success.
  */
 static usb_status_t USB_DeviceKhciEndpointUnstall(
-            usb_device_khci_state_struct_t *khciState, uint8_t ep)
+            usb_device_khci_state_struct_t *khciState, cyg_uint8 ep)
 {
-    uint32_t control;
-    uint8_t endpoint = ep & USB_ENDPOINT_NUMBER_MASK;
-    uint8_t direction =
+    cyg_uint32 control;
+    cyg_uint8 i;
+    cyg_uint8 endpoint = ep & USB_ENDPOINT_NUMBER_MASK;
+    cyg_uint8 direction =
         (ep & USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_MASK) >> USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_SHIFT;
-    uint8_t index = ((uint8_t)((uint32_t)endpoint << 1U)) | (uint8_t)direction;
+    cyg_uint8 index = ((cyg_uint8)((cyg_uint32)endpoint << 1U)) | (cyg_uint8)direction;
 
     /* Clear the endpoint stall state */
     khciState->endpointState[index].stateUnion.stateBitField.stalled = 0U;
@@ -594,15 +605,15 @@ static usb_status_t USB_DeviceKhciEndpointUnstall(
     khciState->endpointState[index].stateUnion.stateBitField.data0 = 0U;
 
     /* Clear stall state in BDT */
-    for (uint8_t i = 0U; i < 2U; i++)
+    for (i = 0U; i < 2U; i++)
     {
-        control = USB_KHCI_BDT_GET_CONTROL((uint32_t)khciState->bdt, endpoint, direction, i);
+        control = USB_KHCI_BDT_GET_CONTROL((cyg_uint32)khciState->bdt, endpoint, direction, i);
         if (control & USB_KHCI_BDT_STALL)
         {
             USB_KHCI_BDT_SET_CONTROL(
-                (uint32_t)khciState->bdt, endpoint, direction, i,
+                (cyg_uint32)khciState->bdt, endpoint, direction, i,
                 USB_LONG_TO_LITTLE_ENDIAN(
-                    (uint32_t)(USB_KHCI_BDT_BC(khciState->endpointState[index].stateUnion.stateBitField.maxPacketSize) |
+                    (cyg_uint32)(USB_KHCI_BDT_BC(khciState->endpointState[index].stateUnion.stateBitField.maxPacketSize) |
                                USB_KHCI_BDT_DTS | USB_KHCI_BDT_DATA01(0U))));
         }
     }
@@ -668,11 +679,11 @@ usb_status_t USB_DeviceKhciDeinit(usb_device_khci_state_struct_t *khciState)
  * callback).
  */
 usb_status_t USB_DeviceKhciSend(usb_device_khci_state_struct_t *khciState,
-                                uint8_t endpointAddress,
-                                uint8_t *buffer,
-                                uint32_t length)
+                                cyg_uint8 endpointAddress,
+                                cyg_uint8 *buffer,
+                                cyg_uint32 length)
 {
-    uint32_t index = ((endpointAddress & USB_ENDPOINT_NUMBER_MASK) << 1U) | USB_IN;
+    cyg_uint32 index = ((endpointAddress & USB_ENDPOINT_NUMBER_MASK) << 1U) | USB_IN;
     usb_status_t error = kStatus_USB_Error;
 
     /* Save the tansfer information */
@@ -694,8 +705,8 @@ usb_status_t USB_DeviceKhciSend(usb_device_khci_state_struct_t *khciState,
     if (0U == khciState->isResetting)
     {
         error = USB_DeviceKhciEndpointTransfer(khciState, endpointAddress & USB_ENDPOINT_NUMBER_MASK, USB_IN,
-                                               (uint8_t *)((uint32_t)khciState->endpointState[index].transferBuffer +
-                                                           (uint32_t)khciState->endpointState[index].transferDone),
+                                               (cyg_uint8 *)((cyg_uint32)khciState->endpointState[index].transferBuffer +
+                                                           (cyg_uint32)khciState->endpointState[index].transferDone),
                                                length);
     }
 
@@ -729,11 +740,11 @@ usb_status_t USB_DeviceKhciSend(usb_device_khci_state_struct_t *khciState,
  * callback).
  */
 usb_status_t USB_DeviceKhciRecv(usb_device_khci_state_struct_t *khciState,
-                                uint8_t endpointAddress,
-                                uint8_t *buffer,
-                                uint32_t length)
+                                cyg_uint8 endpointAddress,
+                                cyg_uint8 *buffer,
+                                cyg_uint32 length)
 {
-    uint32_t index = ((endpointAddress & USB_ENDPOINT_NUMBER_MASK) << 1U) | USB_OUT;
+    cyg_uint32 index = ((endpointAddress & USB_ENDPOINT_NUMBER_MASK) << 1U) | USB_OUT;
     usb_status_t error = kStatus_USB_Error;
 
     if ((0U == length) && 
@@ -759,11 +770,11 @@ usb_status_t USB_DeviceKhciRecv(usb_device_khci_state_struct_t *khciState,
             length = khciState->endpointState[index].stateUnion.stateBitField.maxPacketSize;
         }
 
-        buffer = (uint8_t *)((uint32_t)buffer + (uint32_t)khciState->endpointState[index].transferDone);
+        buffer = (cyg_uint8 *)((cyg_uint32)buffer + (cyg_uint32)khciState->endpointState[index].transferDone);
 
         if ((khciState->dmaAlignBuffer) && (0U == khciState->isDmaAlignBufferInusing) &&
             (USB_DEVICE_CONFIG_KHCI_DMA_ALIGN_BUFFER_LENGTH >= length) &&
-            ((length & 0x03U) || (((uint32_t)buffer) & 0x03U)))
+            ((length & 0x03U) || (((cyg_uint32)buffer) & 0x03U)))
         {
             khciState->endpointState[index].stateUnion.stateBitField.dmaAlign = 0U;
             buffer = khciState->dmaAlignBuffer;
@@ -790,11 +801,11 @@ usb_status_t USB_DeviceKhciRecv(usb_device_khci_state_struct_t *khciState,
  *
  * @return A USB error code or kStatus_USB_Success.
  */
-usb_status_t USB_DeviceKhciCancel(usb_device_khci_state_struct_t *khciState, uint8_t ep)
+usb_status_t USB_DeviceKhciCancel(usb_device_khci_state_struct_t *khciState, cyg_uint8 ep)
 {
     usbs_rx_endpoint * pep = (usbs_rx_endpoint*)
-            usbs_uc3c_endpoints[(ep & USB_ENDPOINT_NUMBER_MASK)];
-    uint8_t index = ((ep & USB_ENDPOINT_NUMBER_MASK) << 1U) | 
+            usbs_kinetis_endpoints[(ep & USB_ENDPOINT_NUMBER_MASK)];
+    cyg_uint8 index = ((ep & USB_ENDPOINT_NUMBER_MASK) << 1U) | 
                     ((ep & USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_MASK) >>
                            USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_SHIFT);
 
@@ -803,7 +814,7 @@ usb_status_t USB_DeviceKhciCancel(usb_device_khci_state_struct_t *khciState, uin
     {
         if (pep->complete_fn) 
         {
-            (*pep->complete_fn) (pep->complete_data, returncode);
+            (*pep->complete_fn) (pep->complete_data, -EPIPE);
         }
     }
     return kStatus_USB_Success;
@@ -822,8 +833,8 @@ usb_status_t USB_DeviceKhciCancel(usb_device_khci_state_struct_t *khciState, uin
  */
 usb_status_t USB_DeviceKhciControl(usb_device_khci_state_struct_t *khciState, usb_device_control_type_t type, void *param)
 {
-    uint16_t *temp16;
-    uint8_t *temp8;
+    cyg_uint16 *temp16;
+    cyg_uint8 *temp8;
 #if (defined(USB_DEVICE_CHARGER_DETECT_ENABLE) && (USB_DEVICE_CHARGER_DETECT_ENABLE > 0U)) && \
     (defined(FSL_FEATURE_SOC_USBDCD_COUNT) && (FSL_FEATURE_SOC_USBDCD_COUNT > 0U))
     usb_device_dcd_state_struct_t *dcdState;
@@ -874,46 +885,48 @@ usb_status_t USB_DeviceKhciControl(usb_device_khci_state_struct_t *khciState, us
         case kUSB_DeviceControlEndpointDeinit:
             if (param)
             {
-                temp8 = (uint8_t *)param;
+                temp8 = (cyg_uint8 *)param;
                 error = USB_DeviceKhciEndpointDeinit(khciState, *temp8);
             }
             break;
         case kUSB_DeviceControlEndpointStall:
             if (param)
             {
-                temp8 = (uint8_t *)param;
+                temp8 = (cyg_uint8 *)param;
                 error = USB_DeviceKhciEndpointStall(khciState, *temp8);
             }
             break;
         case kUSB_DeviceControlEndpointUnstall:
             if (param)
             {
-                temp8 = (uint8_t *)param;
+                temp8 = (cyg_uint8 *)param;
                 error = USB_DeviceKhciEndpointUnstall(khciState, *temp8);
             }
             break;
+#if 0
         case kUSB_DeviceControlGetDeviceStatus:
             if (param)
             {
-                temp16 = (uint16_t *)param;
+                temp16 = (cyg_uint16 *)param;
                 *temp16 = (USB_DEVICE_CONFIG_SELF_POWER << (USB_REQUEST_STANDARD_GET_STATUS_DEVICE_SELF_POWERED_SHIFT))
 #if ((defined(USB_DEVICE_CONFIG_REMOTE_WAKEUP)) && (USB_DEVICE_CONFIG_REMOTE_WAKEUP > 0U))
-                          | ((uint16_t)(((uint32_t)deviceHandle->remotewakeup)
+                          | ((cyg_uint16)(((cyg_uint32)deviceHandle->remotewakeup)
                                         << (USB_REQUEST_STANDARD_GET_STATUS_DEVICE_REMOTE_WARKUP_SHIFT)))
 #endif
                     ;
                 error = kStatus_USB_Success;
             }
             break;
+#endif
         case kUSB_DeviceControlGetEndpointStatus:
             if (param)
             {
                 usb_device_endpoint_status_struct_t *endpointStatus = (usb_device_endpoint_status_struct_t *)param;
 
-                if (((endpointStatus->endpointAddress) & USB_ENDPOINT_NUMBER_MASK) < USB_DEVICE_CONFIG_ENDPOINTS)
+                if (((endpointStatus->endpointAddress) & USB_ENDPOINT_NUMBER_MASK) < CYGNUM_DEVS_USB_KINETIS_CONFIG_ENDPOINTS)
                 {
                     endpointStatus->endpointStatus =
-                        (uint16_t)(
+                        (cyg_uint16)(
                             khciState
                                 ->endpointState[(((endpointStatus->endpointAddress) & USB_ENDPOINT_NUMBER_MASK) << 1U) |
                                                 (((endpointStatus->endpointAddress) &
@@ -929,7 +942,7 @@ usb_status_t USB_DeviceKhciControl(usb_device_khci_state_struct_t *khciState, us
         case kUSB_DeviceControlSetDeviceAddress:
             if (param)
             {
-                temp8 = (uint8_t *)param;
+                temp8 = (cyg_uint8 *)param;
                 khciState->registerBase->ADDR = (*temp8);
                 error = kStatus_USB_Success;
             }
@@ -954,28 +967,31 @@ usb_status_t USB_DeviceKhciControl(usb_device_khci_state_struct_t *khciState, us
             break;
 #endif /* USB_DEVICE_CONFIG_LOW_POWER_MODE */
         case kUSB_DeviceControlSetDefaultStatus:
-            for (uint8_t count = 0U; count < CYGNUM_DEVS_USB_KINETIS_CONFIG_ENDPOINTS; count++)
+        {
+            cyg_uint8 count;
+            for (count = 0U; count < CYGNUM_DEVS_USB_KINETIS_CONFIG_ENDPOINTS; count++)
             {
                 USB_DeviceKhciEndpointDeinit(khciState, (count | (USB_IN << 0x07U)));
                 USB_DeviceKhciEndpointDeinit(khciState, (count | (USB_OUT << 0x07U)));
             }
             USB_DeviceKhciSetDefaultState(khciState);
             error = kStatus_USB_Success;
+        }
             break;
         case kUSB_DeviceControlGetSpeed:
             if (param)
             {
-                temp8 = (uint8_t *)param;
+                temp8 = (cyg_uint8 *)param;
                 *temp8 = USB_SPEED_FULL;
                 error = kStatus_USB_Success;
             }
             break;
 #if (defined(USB_DEVICE_CONFIG_OTG) && (USB_DEVICE_CONFIG_OTG))
         case kUSB_DeviceControlGetOtgStatus:
-            *((uint8_t *)param) = khciState->otgStatus;
+            *((cyg_uint8 *)param) = khciState->otgStatus;
             break;
         case kUSB_DeviceControlSetOtgStatus:
-            khciState->otgStatus = *((uint8_t *)param);
+            khciState->otgStatus = *((cyg_uint8 *)param);
             break;
 #endif
         case kUSB_DeviceControlSetTestMode:
@@ -1021,18 +1037,18 @@ usb_status_t USB_DeviceKhciControl(usb_device_khci_state_struct_t *khciState, us
  */
 static void USB_DeviceKhciInterruptTokenDone(usb_device_khci_state_struct_t *khciState)
 {
-    uint32_t control;
-    uint32_t length;
-    uint32_t remainingLength;
-    uint8_t *bdtBuffer;
+    cyg_uint32 control;
+    cyg_uint32 length;
+    cyg_uint32 remainingLength;
+    cyg_uint8 *bdtBuffer;
     cyg_uint8 *buffer;
     cyg_uint32 size;
-    uint8_t endpoint;
-    uint8_t direction;
-    uint8_t bdtOdd;
-    uint8_t isSetup;
-    uint8_t index;
-    uint8_t stateRegister = khciState->registerBase->STAT;
+    cyg_uint8 endpoint;
+    cyg_uint8 direction;
+    cyg_uint8 bdtOdd;
+    cyg_uint8 isSetup;
+    cyg_uint8 index;
+    cyg_uint8 stateRegister = khciState->registerBase->STAT;
 
     /* Get the endpoint number to identify which one triggers the token done interrupt. */
     endpoint = (stateRegister & USB_STAT_ENDP_MASK) >> USB_STAT_ENDP_SHIFT;
@@ -1047,20 +1063,20 @@ static void USB_DeviceKhciInterruptTokenDone(usb_device_khci_state_struct_t *khc
     khciState->registerBase->ISTAT = kUSB_KhciInterruptTokenDone;
 
     /* Get the Control field of the BDT element according to the endpoint number, the direction and finished BDT ODD. */
-    control = USB_KHCI_BDT_GET_CONTROL((uint32_t)khciState->bdt, endpoint, direction, bdtOdd);
+    control = USB_KHCI_BDT_GET_CONTROL((cyg_uint32)khciState->bdt, endpoint, direction, bdtOdd);
 
     /* Get the buffer field of the BDT element according to the endpoint number, the direction and finished BDT ODD. */
-    bdtBuffer = (uint8_t *)USB_KHCI_BDT_GET_ADDRESS((uint32_t)khciState->bdt, endpoint, direction, bdtOdd);
+    bdtBuffer = (cyg_uint8 *)USB_KHCI_BDT_GET_ADDRESS((cyg_uint32)khciState->bdt, endpoint, direction, bdtOdd);
 
     /* Get the transferred length. */
     length = ((USB_LONG_FROM_LITTLE_ENDIAN(control)) >> 16U) & 0x3FFU;
 
     /* Get the transferred length. */
-    isSetup = (USB_KHCI_BDT_DEVICE_SETUP_TOKEN == ((uint8_t)(((USB_LONG_FROM_LITTLE_ENDIAN(control)) >> 2U) & 0x0FU))) ?
+    isSetup = (USB_KHCI_BDT_DEVICE_SETUP_TOKEN == ((cyg_uint8)(((USB_LONG_FROM_LITTLE_ENDIAN(control)) >> 2U) & 0x0FU))) ?
                   1U :
                   0U;
 
-    index = ((uint8_t)((uint32_t)endpoint << 1U)) | (uint8_t)direction;
+    index = ((cyg_uint8)((cyg_uint32)endpoint << 1U)) | (cyg_uint8)direction;
 
     if (0U == khciState->endpointState[index].stateUnion.stateBitField.transferring)
     {
@@ -1118,13 +1134,13 @@ static void USB_DeviceKhciInterruptTokenDone(usb_device_khci_state_struct_t *khc
                     if (USB_SHORT_FROM_LITTLE_ENDIAN(setup_packet->wLength) >
                         khciState->endpointState[index].transferLength)
                     {
-                        (void)USB_DeviceKhciEndpointTransfer(khciState, endpoint, USB_IN, (uint8_t *)NULL, 0U);
+                        (void)USB_DeviceKhciEndpointTransfer(khciState, endpoint, USB_IN, (cyg_uint8 *)NULL, 0U);
                         return;
                     }
                 }
                 else if (khciState->endpointState[index].stateUnion.stateBitField.zlt)
                 {
-                    (void)USB_DeviceKhciEndpointTransfer(khciState, endpoint, USB_IN, (uint8_t *)NULL, 0U);
+                    (void)USB_DeviceKhciEndpointTransfer(khciState, endpoint, USB_IN, (cyg_uint8 *)NULL, 0U);
                     return;
                 }
                 else
@@ -1145,7 +1161,7 @@ static void USB_DeviceKhciInterruptTokenDone(usb_device_khci_state_struct_t *khc
         if ((USB_ENDPOINT_DESCRIPTOR_ATTR_CONTROL == endpoint) && (0U == length))
         {
             /*message.length = 0U;
-            message.buffer = (uint8_t *)NULL;*/
+            message.buffer = (cyg_uint8 *)NULL;*/
             size = 0;
             buffer = (cyg_uint8*)NULL;
             //Nevím co tady
@@ -1154,14 +1170,15 @@ static void USB_DeviceKhciInterruptTokenDone(usb_device_khci_state_struct_t *khc
         {
             if (0U == khciState->endpointState[index].stateUnion.stateBitField.dmaAlign)
             {
-                uint8_t *buffer = (uint8_t *)USB_LONG_FROM_LITTLE_ENDIAN(
-                    USB_KHCI_BDT_GET_ADDRESS((uint32_t)khciState->bdt, endpoint, USB_OUT,
+                cyg_uint8 *buffer = (cyg_uint8 *)USB_LONG_FROM_LITTLE_ENDIAN(
+                    USB_KHCI_BDT_GET_ADDRESS((cyg_uint32)khciState->bdt, endpoint, USB_OUT,
                                              khciState->endpointState[index].stateUnion.stateBitField.bdtOdd));
-                uint8_t *transferBuffer =
+                cyg_uint8 *transferBuffer =
                     khciState->endpointState[index].transferBuffer + khciState->endpointState[index].transferDone;
                 if (buffer != transferBuffer)
                 {
-                    for (uint32_t i = 0U; i < length; i++)
+                    cyg_uint32 i;
+                    for (i = 0U; i < length; i++)
                     {
                         transferBuffer[i] = buffer[i];
                     }
@@ -1190,12 +1207,11 @@ static void USB_DeviceKhciInterruptTokenDone(usb_device_khci_state_struct_t *khc
                 size = khciState->endpointState[index].transferDone;
                 if (isSetup)
                 {
-                    static ep0_low_level_status_t status = UDD_EPCTRL_SETUP;
                     ep0.buffer_size = 0;
                     ep0.fill_buffer_fn = 0;
                     ep0.complete_fn = 0;
                     memcpy(ep0.control_buffer, bdtBuffer, 8);
-                    usbs_kinetis_control_setup(status);
+                    usbs_kinetis_control_setup();
                     //message.buffer = bdtBuffer;
                 }
                 else
@@ -1222,7 +1238,7 @@ static void USB_DeviceKhciInterruptTokenDone(usb_device_khci_state_struct_t *khc
             // user's buffer, and perform completion.
             usbs_control_return result;
             
-            CYG_ASSERT( (usbs_control_return (*)(usbs_control_endpoint*, int))0 != ep0.common.complete_fn, \
+            CYG_ASSERT((usbs_control_return (*)(usbs_control_endpoint*, int))0 != ep0.common.complete_fn, \
                         "A completion function should be provided for OUT control messages");
             CYG_ASSERT(size == ep0.buffer_size, "Inconsistency between buffer and transfer sizes");
             memcpy(ep0.buffer, buffer, size);
@@ -1233,12 +1249,12 @@ static void USB_DeviceKhciInterruptTokenDone(usb_device_khci_state_struct_t *khc
         }
         else
         {
-            CYG_ASSERT("IN Token for ep0 is unexpected.\n");
+            CYG_ASSERT(true, "IN Token for ep0 is unexpected.\n");
         }
     }
     else
     {
-        usbs_rx_endpoint *pep = (usbs_rx_endpoint *) usbs_kinetis_endpoints[epn];
+        usbs_rx_endpoint *pep = (usbs_rx_endpoint *) usbs_kinetis_endpoints[endpoint];
 
         CYG_ASSERT (UC3C_USB_ENDPOINTS > epn && epn, "Invalid end point");
         CYG_ASSERT (pep->complete_fn, "No complete_fn()");
@@ -1260,7 +1276,7 @@ static void USB_DeviceKhciInterruptTokenDone(usb_device_khci_state_struct_t *khc
     }
 #if 0
     message.isSetup = isSetup;
-    message.code = (endpoint) | (uint8_t)(((uint32_t)direction << 0x07U));
+    message.code = (endpoint) | (cyg_uint8)(((cyg_uint32)direction << 0x07U));
 
     /* Notify the up layer the KHCI status changed. */
     USB_DeviceNotificationTrigger(khciState->deviceHandle, &message);
@@ -1316,7 +1332,7 @@ static void USB_DeviceKhciInterruptSleep(usb_device_khci_state_struct_t *khciSta
     khciState->registerBase->USBTRC0 |= USB_USBTRC0_USBRESMEN_MASK;
     khciState->registerBase->USBCTRL |= USB_USBCTRL_SUSP_MASK;
     /* Disable the suspend interrupt */
-    khciState->registerBase->INTEN &= ~((uint32_t)kUSB_KhciInterruptSleep);
+    khciState->registerBase->INTEN &= ~((cyg_uint32)kUSB_KhciInterruptSleep);
 
     /* Clear the suspend interrupt */
     khciState->registerBase->ISTAT = (kUSB_KhciInterruptSleep);
@@ -1342,7 +1358,7 @@ static void USB_DeviceKhciInterruptResume(usb_device_khci_state_struct_t *khciSt
     /* Enable the suspend interrupt */
     khciState->registerBase->INTEN |= kUSB_KhciInterruptSleep;
     /* Disable the resume interrupt */
-    khciState->registerBase->INTEN &= ~((uint32_t)kUSB_KhciInterruptResume);
+    khciState->registerBase->INTEN &= ~((cyg_uint32)kUSB_KhciInterruptResume);
     khciState->registerBase->USBTRC0 &= ~USB_USBTRC0_USBRESMEN_MASK;
 
     /* Clear the resume interrupt */
@@ -1448,7 +1464,7 @@ static void USB_DeviceKhciInterruptError(usb_device_khci_state_struct_t *khciSta
 {
     khciState->registerBase->ISTAT = (kUSB_KhciInterruptError);
 
-    CYG_ASSERT("USB Error Interrupt. Halted!!!\n");
+    CYG_ASSERT(false,"USB Error Interrupt. Halted!!!\n");
     /* Notify up layer the USB error detected. */
     /* There is no appropriate message to high level driver*/
     ep0.state = USBS_STATE_DETACHED;
@@ -1463,6 +1479,7 @@ static void USB_DeviceKhciInterruptError(usb_device_khci_state_struct_t *khciSta
  * @param deviceHandle    The device handle got from USB_DeviceInit.
  *
  */
+static cyg_uint32 intr_status;
 cyg_uint32
 usbs_kinetis_isr (cyg_vector_t vector, cyg_addrword_t data)
 {
@@ -1482,7 +1499,7 @@ usbs_kinetis_isr (cyg_vector_t vector, cyg_addrword_t data)
  void
 usbs_kinetis_dsr (cyg_vector_t vector, cyg_ucount32 count, cyg_addrword_t data)
 {
-    uint8_t status;
+    cyg_uint8 status;
     usb_device_khci_state_struct_t *khciState;
     CYG_ASSERT(CYGNUM_HAL_INTERRUPT_USB0 == vector, "USB ISR should only be invoked for USB interrupts");
     CYG_ASSERT(0 == data, "The Kinetis ISR needs no global data pointer");
@@ -1582,7 +1599,7 @@ usbs_kinetis_dsr (cyg_vector_t vector, cyg_ucount32 count, cyg_addrword_t data)
              * for the IRC48M output clock is outside the available TRIM_FINE adjustment range for the IRC48M
              * module.
              */
-            CYG_ASSERT("IRC48M Error.\n");
+            CYG_ASSERT(false,"IRC48M Error.\n");
         }
         khciState->registerBase->CLK_RECOVER_INT_STATUS = status;
     }
@@ -1604,7 +1621,7 @@ usbs_kinetis_endpoint_start (usbs_rx_endpoint * pep)
     CYG_ASSERT (pep->complete_fn, "No complete_fn()");
 
     cyg_drv_dsr_lock ();
-    if (ep0.common.state != USBS_STATE_CONFIGURED) {
+    if (ep0.state != USBS_STATE_CONFIGURED) {
         /* If not configured it means there is nothing to do */
         cyg_drv_dsr_unlock ();
 
@@ -1752,9 +1769,9 @@ void usbs_kinetis_init (void)
 #endif
 
     /* Set BDT buffer address */
-    khciState->registerBase->BDTPAGE1 = (uint8_t)((((uint32_t)khciState->bdt) >> 8U) & 0xFFU);
-    khciState->registerBase->BDTPAGE2 = (uint8_t)((((uint32_t)khciState->bdt) >> 16U) & 0xFFU);
-    khciState->registerBase->BDTPAGE3 = (uint8_t)((((uint32_t)khciState->bdt) >> 24U) & 0xFFU);
+    khciState->registerBase->BDTPAGE1 = (cyg_uint8)((((cyg_uint32)khciState->bdt) >> 8U) & 0xFFU);
+    khciState->registerBase->BDTPAGE2 = (cyg_uint8)((((cyg_uint32)khciState->bdt) >> 16U) & 0xFFU);
+    khciState->registerBase->BDTPAGE3 = (cyg_uint8)((((cyg_uint32)khciState->bdt) >> 24U) & 0xFFU);
 
 #if (defined(USB_DEVICE_CONFIG_DETACH_ENABLE) && (USB_DEVICE_CONFIG_DETACH_ENABLE > 0U)) && \
     (defined(FSL_FEATURE_USB_KHCI_VBUS_DETECT_ENABLED) && (FSL_FEATURE_USB_KHCI_VBUS_DETECT_ENABLED > 0U))
@@ -1780,8 +1797,9 @@ void usbs_kinetis_init (void)
     
     usbs_ep_alloc();
 
+    // TODO set interrupt priority properly
     cyg_drv_interrupt_create (CYGNUM_HAL_INTERRUPT_USB0,
-                            CYGNUM_DEVS_USB_ISR_PRIO,  
+                            1,  
                             khciState,  // data
                             &usbs_kinetis_isr,
                             &usbs_kinetis_dsr,
@@ -1799,10 +1817,11 @@ static void
 usbs_state_notify (usbs_control_endpoint * pcep)
 {
     static int old_state = USBS_STATE_CHANGE_POWERED;
+    int i;
     int state = pcep->state & USBS_STATE_MASK;
 
     if (pcep->state != old_state) {
-        for(int i = 0; i < CYGNUM_DEVS_USB_KINETIS_CONFIG_ENDPOINTS; i++)
+        for(i = 0; i < CYGNUM_DEVS_USB_KINETIS_CONFIG_ENDPOINTS; i++)
             USB_DeviceKhciCancel(&kinetis_usb_device, i);
         switch (state) {
             case USBS_STATE_DETACHED:
@@ -1878,123 +1897,150 @@ usbs_parse_host_get_command (usbs_control_endpoint * pcep)
 }
 
 // Handle a get status setup message on the control end point
- usb_status_t
+ usbs_control_return
 usbs_kinetis_control_setup_get_status(void)
 {
-    usb_status_t status = kStatus_USB_Error;
+    usbs_control_return status = USBS_CONTROL_RETURN_UNKNOWN;
+    usb_device_endpoint_status_struct_t ep_status;
     usb_devreq *req = (usb_devreq *)ep0.control_buffer;
     cyg_uint8 recipient = req->type & USB_DEVREQ_RECIPIENT_MASK;
+    
+    ep_status.endpointAddress = req->index_lo;
+    
     cyg_uint16 word = 0;
 
     switch (recipient) {
     case USB_DEVREQ_RECIPIENT_DEVICE:
     case USB_DEVREQ_RECIPIENT_INTERFACE:
-        status = kStatus_USB_Success;
+        // Nothing to do
       break;
     case USB_DEVREQ_RECIPIENT_ENDPOINT:
-        if ((ep0.state == USBS_STATE_CONFIGURED) &&
-            (req->index_lo > 0) &&
-            (req->index_lo < CYGNUM_DEVS_USB_KINETIS_CONFIG_ENDPOINTS)) {
-            
-            word = (cyg_uint16)kinetis_usb_device.endpointState[(((req->index_lo) & USB_ENDPOINT_NUMBER_MASK) << 1U) |
-                                                (((req->index_lo) &
-                                                  USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_MASK) >>
-                                                 USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_SHIFT)]
-                                .stateUnion.stateBitField.stalled == 1U) ?
-                            kUSB_DeviceEndpointStateStalled :
-                            kUSB_DeviceEndpointStateIdle;
-            status = kStatus_USB_Success;
+        if(USB_DeviceKhciControl(&kinetis_usb_device, 
+                kUSB_DeviceControlGetEndpointStatus, &ep_status) != 
+                kStatus_USB_Success)
+        {
+            status = USBS_CONTROL_RETURN_STALL;
+        }
+        else
+        {
+            word = ep_status.endpointStatus;
+            status = USBS_CONTROL_RETURN_HANDLED;
         }
       break;
     default:
-        status = kStatus_USB_InvalidRequest;
+        status = USBS_CONTROL_RETURN_STALL;
     }
 
-    *((cyg_uint16*)uep0.control_buffer) = word;
+    *((cyg_uint16*)ep0.control_buffer) = word;
     ep0.buffer_size = sizeof (word);
     return status;
   }
 
 // Handle a get status set feature message on the control endpoint
-usb_status_t
+usbs_control_return
 usbs_kinetis_control_setup_set_feature(void)
 {
-    usb_status_t status;
+    usbs_control_return status;
+    usb_device_endpoint_status_struct_t ep_status;
     usb_devreq *req = (usb_devreq *)ep0.control_buffer;
     cyg_uint8 recipient = req->type & USB_DEVREQ_RECIPIENT_MASK;
+    
+    ep_status.endpointAddress = req->index_lo;
  
-    status = kStatus_USB_InvalidRequest;
+    status = USBS_CONTROL_RETURN_UNKNOWN;
 
     switch(recipient) {
     case USB_DEVREQ_RECIPIENT_DEVICE:
+        status = USBS_CONTROL_RETURN_STALL;
         break;
     case USB_DEVREQ_RECIPIENT_INTERFACE:
         // Nothing to do
         break;
     case USB_DEVREQ_RECIPIENT_ENDPOINT:
         /* Set or Clear the endpoint featrue. */
-        if (USB_REQUEST_STANDARD_FEATURE_SELECTOR_ENDPOINT_HALT == setup->wValue)
+        if(USB_DeviceKhciControl(&kinetis_usb_device, 
+                kUSB_DeviceControlGetEndpointStatus, &ep_status) != 
+                kStatus_USB_Success)
         {
-            /* Set or Clear the control endpoint status(halt or not). */
-
-            USB_DeviceKhciControl(&kinetis_usb_device,
-                    kUSB_DeviceControlEndpointStall, req->index_lo);
-
+            status = USBS_CONTROL_RETURN_STALL;
         }
         else
         {
+            if(ep_status.endpointStatus == kUSB_DeviceEndpointStateIdle)
+            {
+                USB_DeviceKhciControl(&kinetis_usb_device,
+                        kUSB_DeviceControlEndpointStall, req->index_lo);
+                status = USBS_CONTROL_RETURN_HANDLED;
+            }
+            else
+            {
+                status = USBS_CONTROL_RETURN_STALL;
+            }
         }
         break;
     default:
-        status = kStatus_USB_InvalidRequest  ;
+        status = USBS_CONTROL_RETURN_STALL;
     }
     return status;
 }
 
 // Handle a get status clear feature message on the control endpoint
-usb_status_t
+usbs_control_return
 usbs_kinetis_control_setup_clear_feature(void)
 {
-    usb_status_t status;
+    usbs_control_return status;
+    usb_device_endpoint_status_struct_t ep_status;
     usb_devreq *req = (usb_devreq *)ep0.control_buffer;
     cyg_uint8 recipient = req->type & USB_DEVREQ_RECIPIENT_MASK;
 
-    status = kStatus_USB_InvalidRequest;
+    ep_status.endpointAddress = req->index_lo;
+ 
+    status = USBS_CONTROL_RETURN_UNKNOWN;
 
     switch (recipient) {
     case USB_DEVREQ_RECIPIENT_DEVICE:
-        status = kStatus_USB_InvalidRequest;
+        status = USBS_CONTROL_RETURN_STALL;
         break;
     case USB_DEVREQ_RECIPIENT_INTERFACE:
         // Nothing to do
         break;
     case USB_DEVREQ_RECIPIENT_ENDPOINT:
         /* Set or Clear the endpoint featrue. */
-        if (USB_REQUEST_STANDARD_FEATURE_SELECTOR_ENDPOINT_HALT == setup->wValue)
+        if(USB_DeviceKhciControl(&kinetis_usb_device, 
+                kUSB_DeviceControlGetEndpointStatus, &ep_status) != 
+                kStatus_USB_Success)
         {
-            /* Set or Clear the control endpoint status(halt or not). */
-
-            USB_DeviceKhciControl(&kinetis_usb_device,
-                    kUSB_DeviceControlEndpointUnstall, req->index_lo);
-
+            status = USBS_CONTROL_RETURN_STALL;
         }
         else
         {
+            if(ep_status.endpointStatus == kUSB_DeviceEndpointStateStalled)
+            {
+                USB_DeviceKhciControl(&kinetis_usb_device,
+                        kUSB_DeviceControlEndpointUnstall, req->index_lo);
+                status = USBS_CONTROL_RETURN_HANDLED;
+            }
+            else
+            {
+                status = USBS_CONTROL_RETURN_STALL;
+            }
         }
       break;
     default:
-        status = kStatus_USB_InvalidRequest;
+        status = USBS_CONTROL_RETURN_STALL;
     }
     return status;
 }
 
 // Handle a setup message from the host
-usb_status_t
-usbs_kinetis_control_setup(usb_status_t status)
+usbs_control_return
+usbs_kinetis_control_setup()
 {
     // Data are in control_buffer
     usb_devreq *req = (usb_devreq *) ep0.control_buffer;
+    usbs_control_return status;
     cyg_uint8   protocol;
+    cyg_uint8   usb_address;
     cyg_uint16 length;
     cyg_bool dev_to_host;
     usbs_control_return usbcode;
@@ -2005,7 +2051,7 @@ usbs_kinetis_control_setup(usb_status_t status)
 
     CYG_TRACE0( true, "Control Setup\n" );
 
-    status = UDD_EPCTRL_SETUP;
+    status = USBS_CONTROL_RETURN_STALL;
 
     protocol = req->type & (USB_DEVREQ_TYPE_MASK);
 
@@ -2021,7 +2067,7 @@ usbs_kinetis_control_setup(usb_status_t status)
                 USB_DeviceKhciControl(&kinetis_usb_device,
                         kUSB_DeviceControlSetDeviceAddress,&usb_address);
                 ep0.state = USBS_STATE_ADDRESSED;
-                usbs_sate_noftify(&ep0);
+                usbs_state_notify(&ep0);
               break;
             case USB_DEVREQ_SET_FEATURE:
                 status = usbs_kinetis_control_setup_set_feature();
@@ -2053,7 +2099,7 @@ usbs_kinetis_control_setup(usb_status_t status)
                 {
                     if((ep0.buffer_size + pos) < USB_SETUP_PACKET_SIZE)
                     {
-                        (*ep0.fill_buffer_fn) (&rp0);
+                        (*ep0.fill_buffer_fn) (&ep0);
                         memcpy(kinetis_usb_device.setupPacketBuffer + pos,
                                ep0.buffer,ep0.buffer_size);
                         pos += ep0.buffer_size;
@@ -2075,7 +2121,7 @@ usbs_kinetis_control_setup(usb_status_t status)
             handled = false;
     }
     
-    if (status == kStatus_USB_InvalidRequest)
+    if (status == USBS_CONTROL_RETURN_STALL)
     {
         cyg_uint8 epn = 0;
         USB_DeviceKhciControl(&kinetis_usb_device,
