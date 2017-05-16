@@ -416,10 +416,10 @@ usbs_serial_create_str_descriptor(char descr[], const char *str)
 static usbs_control_return 
 usbs_serial_ms_vendor_handler(usbs_control_endpoint* ep0, void* data)
 {
-  int length;
+  //int length;
   usbs_control_return result = USBS_CONTROL_RETURN_STALL;//USBS_CONTROL_RETURN_UNKNOWN;
   usb_devreq      *req = (usb_devreq *) ep0->control_buffer;
-  length      = (req->length_hi << 8) | req->length_lo;
+  //length      = (req->length_hi << 8) | req->length_lo;
 
   DBG("USB Serial ACM Class Handler: ");
           
@@ -427,7 +427,7 @@ usbs_serial_ms_vendor_handler(usbs_control_endpoint* ep0, void* data)
     
     case 1 :
       DBG("ACM Request: Set Line Coding\n");
-      ep0->buffer = bos_platform;
+      ep0->buffer = (unsigned char*)bos_platform;
       ep0->buffer_size = 0x9e;
       result = USBS_CONTROL_RETURN_HANDLED;
       break; 
@@ -438,13 +438,13 @@ usbs_serial_ms_vendor_handler(usbs_control_endpoint* ep0, void* data)
       result = USBS_CONTROL_RETURN_HANDLED;
       if(req->index_lo == 0x04)
       {
-        ep0->buffer = bos_platform_10;
+        ep0->buffer = (unsigned char*)bos_platform_10;
         ep0->buffer_size = 0x28;
       }
       else if(req->index_lo == 0x05 || req->index_lo == 0x00)
       {
           //diag_printf("ext\n");
-        ep0->buffer = bos_platforme_10;
+        ep0->buffer = (unsigned char*)bos_platforme_10;
         ep0->buffer_size = 0x92;
       }
       break; 
