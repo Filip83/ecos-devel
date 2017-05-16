@@ -71,7 +71,7 @@
 #include <cyg/hal/freescale_edma.h>
 #include <cyg/io/ser_freescale_uart.h>
 
-#define CYGPKG_DEVS_EHCI_SERIAL_FREESCALE
+//#define CYGPKG_DEVS_EHCI_SERIAL_FREESCALE
 #ifdef  CYGPKG_DEVS_EHCI_SERIAL_FREESCALE
 
 
@@ -494,32 +494,6 @@ freescale_ehci_serial_set_config(ehci_serial_channel *chan, cyg_uint32 key,
             return -EINVAL;
     }
     break;
-
-    case CYG_IO_SET_CONFIG_SERIAL_HW_RX_FLOW_THROTTLE:
-    {
-        // RX flow control involves just the RTS line. Most of the
-        // work is done by the hardware depending on the state of
-        // the fifo. This option serves mainly to drop RTS if
-        // higher-level code is running out of buffer space, even
-        // if the fifo is not yet full.
-        freescale_ehci_serial_info * const freescale_chan = (freescale_ehci_serial_info *) chan->dev_priv;
-   
-        cyg_uint32 *f = (cyg_uint32 *)xbuf;
-        unsigned char mask=0;
-        if ( *len < sizeof(*f) )
-            return -EINVAL;
-
-        /*if ( chan->config.flags & CYGNUM_SERIAL_FLOW_RTSCTS_RX )
-            mask = AVR32_USART_RTSDIS_MASK;
-        else
-            mask = AVR32_USART_RTSEN_MASK;
-
-        dev->cr = mask; */
-    }
-        break;
-        
-    case CYG_IO_SET_CONFIG_SERIAL_HW_FLOW_CONFIG:
-      break;
     default:
         return -EINVAL;
     }

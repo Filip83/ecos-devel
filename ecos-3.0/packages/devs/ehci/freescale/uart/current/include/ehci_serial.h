@@ -41,7 +41,7 @@ typedef struct
 #  define EHCI_SERIAL_CALLBACKS(_l,_receive,_send,_csr_status)  \
 ehci_serial_callbacks_t _l = {                                  \
     _receive,                                                   \
-    _send                                                       \  
+    _send                                                       \
 };
 #else
 #define EHCI_SERIAL_CALLBACKS(_l,_init,_receive,_send,_csr_status)   \
