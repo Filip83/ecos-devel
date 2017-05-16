@@ -223,12 +223,12 @@
 #define PCF2129A_SPI_FRAME_SIZE                         8
 #define PCF2129A_SPI_CLOCK_POL                          0
 #define PCF2129A_SPI_CLOCK_PHASE                        0
-#define CYGHWR_DEVS_RTC_PCF2129A_DEV0_SPEED             1000000
+#define CYGHWR_DEVS_RTC_PCF2129A_DEV0_SPEED             1000000l
 #define CYGHWR_DEVS_RTC_PCF2129A_DEV0_CS_DLY            0
 #define CYGHWR_DEVS_RTC_PCF2129A_DEV0_CS_DLY            0
 #define CYGHWR_DEVS_RTC_PCF2129A_DEV0_CS_DLY            0
 #define CYGHWR_DEVS_RTC_PCF2129A_DEV0_CS_DLY_UN         0
-#define PCF2129A_SPI_DBR_DEV0                           1000
+#define PCF2129A_SPI_DBR_DEV0                           0l
 
 
 
@@ -237,12 +237,12 @@
 #define LCD_SPI_FRAME_SIZE                              8
 #define LCD_SPI_CLOCK_POL                               0
 #define LCD_SPI_CLOCK_PHASE                             0
-#define CYGHWR_DEVS_LCD_DEV1_SPEED                      16000000
+#define CYGHWR_DEVS_LCD_DEV1_SPEED                      16000000l
 #define CYGHWR_DEVS_LCD_DEV1_CS_DLY                     0
 #define CYGHWR_DEVS_LCD_DEV1_CS_DLY                     0
 #define CYGHWR_DEVS_LCD_DEV1_CS_DLY                     0
 #define CYGHWR_DEVS_LCD_DEV1_CS_DLY_UN                  0
-#define LCD_SPI_DBR_DEV1                                1000
+#define LCD_SPI_DBR_DEV1                                0l
 
 
 // FM25W SPI FRAM
@@ -250,12 +250,12 @@
 #define FM25VXX_SPI_FRAME_SIZE                          8
 #define FM25VXX_SPI_CLOCK_POL                           0
 #define FM25VXX_SPI_CLOCK_PHASE                         0
-#define CYGHWR_DEVS_FRAM_FM25VXX_DEV2_SPEED             16000000
+#define CYGHWR_DEVS_FRAM_FM25VXX_DEV2_SPEED             16000000l
 #define CYGHWR_DEVS_FRAM_FM25VXX_DEV2_CS_DLY            0
 #define CYGHWR_DEVS_FRAM_FM25VXX_DEV2_CS_DLY            0
 #define CYGHWR_DEVS_FRAM_FM25VXX_DEV2_CS_DLY            0
 #define CYGHWR_DEVS_FRAM_FM25VXX_DEV2_CS_DLY_UN         0
-#define FM25VXX_SPI_DBR_DEV2                            1000
+#define FM25VXX_SPI_DBR_DEV2                            0l
 #define FRAM_FM25WXX_BASE_ADDRESS			0x20000000
 
 // Analog board ADC config SPI
@@ -263,24 +263,24 @@
 #define AD7124_SPI_FRAME_SIZE                           8
 #define AD7124_SPI_CLOCK_POL                            0
 #define AD7124_SPI_CLOCK_PHASE                          1
-#define CYGHWR_DEVS_ADC_AD7124_DEV0_SPEED               2000000
+#define CYGHWR_DEVS_ADC_AD7124_DEV0_SPEED               2000000l
 #define CYGHWR_DEVS_ADC_AD7124_DEV0_CS_DLY              0
 #define CYGHWR_DEVS_ADC_AD7124_DEV0_CS_DLY              0
 #define CYGHWR_DEVS_ADC_AD7124_DEV0_CS_DLY              0
 #define CYGHWR_DEVS_ADC_AD7124_DEV0_CS_DLY_UN           0
-#define AD7124_SPI_DBR_DEV0                             1000
+#define AD7124_SPI_DBR_DEV0                             0l
   
 // Analog board DAC SPI
 #define CYGHWR_DEVS_DAC_TLV320_DEV1_SPI_CS              1
 #define TLV320_SPI_FRAME_SIZE                           8
 #define TLV320_SPI_CLOCK_POL                            0
 #define TLV320_SPI_CLOCK_PHASE                          1
-#define CYGHWR_DEVS_DAC_TLV320_DEV1_SPEED               2000000
+#define CYGHWR_DEVS_DAC_TLV320_DEV1_SPEED               2000000l
 #define CYGHWR_DEVS_DAC_TLV320_DEV1_CS_DLY              0
 #define CYGHWR_DEVS_DAC_TLV320_DEV1_CS_DLY              0
 #define CYGHWR_DEVS_DAC_TLV320_DEV1_CS_DLY              0
 #define CYGHWR_DEVS_DAC_TLV320_DEV1_CS_DLY_UN           0
-#define TLV320_SPI_DBR_DEV1                             1000
+#define TLV320_SPI_DBR_DEV1                             0l
 
 externC cyg_uint64 _hw_error;
 #define SET_HW_ERRROR(_code_) _hw_error |= _code_
