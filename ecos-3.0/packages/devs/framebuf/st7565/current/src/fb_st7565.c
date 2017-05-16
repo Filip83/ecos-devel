@@ -212,7 +212,7 @@ cyg_st7565_fb_ioctl(struct cyg_fb* fb, cyg_ucount16 key, void* data, size_t* len
             break;
         case CYG_FB_IOCTL_CONTRAST_GET:
         {
-            cyg_fb_ioctl_contrast* contrast = (cyg_fb_ioctl_backlight*)data;
+            cyg_fb_ioctl_contrast* contrast = (cyg_fb_ioctl_contrast*)data;
             CYG_ASSERT(*len == sizeof(cyg_fb_ioctl_contrast), 
                     "data argument should be a cyg_fb_ioctl_contrast structure");
             contrast->fbco_current = fb_data->contrast;
@@ -222,7 +222,7 @@ cyg_st7565_fb_ioctl(struct cyg_fb* fb, cyg_ucount16 key, void* data, size_t* len
             break;
         case CYG_FB_IOCTL_CONTRAST_SET:
         {
-            cyg_fb_ioctl_contrast* contrast = (cyg_fb_ioctl_backlight*)data;
+            cyg_fb_ioctl_contrast* contrast = (cyg_fb_ioctl_contrast*)data;
             CYG_ASSERT(*len == sizeof(cyg_fb_ioctl_contrast), 
                     "data argument should be a cyg_fb_ioctl_contrast structure");
             cyg_uint8 tx_data[2];
@@ -257,7 +257,7 @@ cyg_st7565_fb_synch(struct cyg_fb* fb, cyg_ucount16 when)
         DISP_COLUMN_ADDRESS_LSB,
         DISP_PAGE_ADDRESS_SET
     };
-    #if LCD_DIG_LEVEL > 0
+    #if LCD_DIAG_LEVEL > 0
     diag_printf("fb ST7565 draw\n");
     #endif
     
@@ -372,7 +372,7 @@ void cyg_st7565_fb_write_block_fn(cyg_fb* fb, cyg_ucount16 x, cyg_ucount16 y,
     {
         for(by = 0, h = height; h && (y + by) < fb->fb_height; by++, h--)
         {    
-            cyg_fb_colour colour = cyg_fb_linear_read_pixel_1BE_inl(source,stride,bx,by);
+            cyg_fb_colour colour = cyg_fb_linear_read_pixel_1BE_inl((void*)source,stride,bx,by);
             cyg_fb_linear_write_pixel_paged_1LE_inl(fb->fb_base, fb->fb_width, 
                     x + bx, y + by, colour);
         }
