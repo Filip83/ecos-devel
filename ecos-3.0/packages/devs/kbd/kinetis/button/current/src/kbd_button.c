@@ -335,7 +335,6 @@ kbd_get_config(cyg_io_handle_t handle,
 static bool
 kbd_init(struct cyg_devtab_entry *tab)
 {
-    int i;
     cyg_uint32 regval;
     cyg_kbd_kinetis_t *kbd_dev = &cyg_kbd_kinetis;
     // set first line to scan
