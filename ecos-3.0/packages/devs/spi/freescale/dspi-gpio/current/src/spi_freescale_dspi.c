@@ -1036,10 +1036,10 @@ static void dspi_transaction_transfer(cyg_spi_device* device, cyg_bool polled,
                     !((cyg_uint32) rx_data & 1),
                     "DSPI: Misaligned data in 16-bit transfer.");
     }
-    dspi_set_npcs(device);
+    dspi_set_npcs(dspi_device);
     spi_transaction_do (device, false, polled, count, tx_data, rx_data, drop_cs);
     if(drop_cs)
-        dspi_drop_cs(device);
+        dspi_drop_cs(dspi_device);
 }
 
 //-----------------------------------------------------------------------------
