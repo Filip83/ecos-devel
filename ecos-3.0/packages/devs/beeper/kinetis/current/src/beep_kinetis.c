@@ -43,7 +43,7 @@
 // Contributors:
 // Date:         2016-11-28
 // Purpose:
-// Description:  Beeper driver for AVR32
+// Description:  Beeper driver for Kinetis
 //
 //####DESCRIPTIONEND####
 //
@@ -68,7 +68,16 @@
 
 #include <pkgconf/devs_beep_kinetis.h>
 
-/** Declaration and initialization of button keyborad data structure.
+/*******************************************************************************
+ * The beeper use FTM timer in compare mode. Where output is toogle on compare *
+ * event. The comparret event is set in the midle of timer count interval.     *
+ * The timer counts half the configured period and is reset. The duration of   *
+ * beping is genertated in compare interupt by counting appropriate number of  *
+ * those interrupt. If specified number of those interrupts occure the beeping *
+ * id disabled. 
+ */
+
+/** Declaration and initialization of beeper data structure.
 *
 */
 static cyg_beep_kinetis_t cyg_beep_kinetis =
@@ -153,26 +162,36 @@ beep_set_config(cyg_io_handle_t handle,
             if(*len == -1)
             {
                 priv->cnt = 0;
-                regval = priv->timer_cmp_value;
-    
-                HAL_WRITE_UINT16(base + CYGHWR_DEV_FREESCALE_FTM_COV +
-                        8*CYGNUM_DEVS_BEEP_CHANNEL, regval);
                 
                 priv->cnt_beep_count = priv->time_to_cnt*
                         CYGDAT_DEVS_BEEP_DEFAULT_TIME;
                 
-                // read status register to clear status falgs
+                // read status register
                 HAL_READ_UINT32(base + CYGHWR_DEV_FREESCALE_FTM_C0SC +
                         CYGNUM_DEVS_BEEP_CHANNEL, regval); 
+                // Enable channel interrupt
                 regval |= CYGHWR_DEV_FREESCALE_FTM_CNSC_CHIE;
-                HAL_READ_UINT32(base + CYGHWR_DEV_FREESCALE_FTM_C0SC +
+                // and clear interrupt status flgag
+                regval &= ~CYGHWR_DEV_FREESCALE_FTM_CNSC_CHF;
+                HAL_WRITE_UINT32(base + CYGHWR_DEV_FREESCALE_FTM_C0SC +
                         CYGNUM_DEVS_BEEP_CHANNEL, regval); 
+                
+                // Reset timer count value
+                regval =  0;
+                HAL_WRITE_UINT32(base + CYGHWR_DEV_FREESCALE_FTM_CNT, regval);
+                // set overflow value
+                regval =  priv->timer_cmp_value;
+                HAL_WRITE_UINT32(base + CYGHWR_DEV_FREESCALE_FTM_MOD, regval);
                 
                 // Clock source system clock divided by 1 slo by i vice
                 regval = (1 << 3) | 0;
                 HAL_WRITE_UINT8(base + CYGHWR_DEV_FREESCALE_FTM_SC, regval);
+                
+                // set beeping state
                 priv->beeping = true;
+                // and unmask interrupt in interrupt conteroller
                 cyg_drv_interrupt_unmask(priv->interrupt_number);
+                cyg_drv_interrupt_acknowledge(priv->interrupt_number);
                 
             }
             else if(*len == sizeof(cyg_uint32))
@@ -181,26 +200,34 @@ beep_set_config(cyg_io_handle_t handle,
                 
                 priv->cnt = 0;
                 
-                regval = priv->timer_cmp_value;
-    
-                HAL_WRITE_UINT16(base + CYGHWR_DEV_FREESCALE_FTM_COV +
-                        CYGNUM_DEVS_BEEP_CHANNEL, regval);
-                
                 priv->cnt_beep_count = priv->time_to_cnt*(*time);
                 
-                // read status register to clear status falgs
-                HAL_READ_UINT32(base + CYGHWR_DEV_FREESCALE_FTM_C0SC + 
+                // read status register
+                HAL_READ_UINT32(base + CYGHWR_DEV_FREESCALE_FTM_C0SC +
                         CYGNUM_DEVS_BEEP_CHANNEL, regval); 
+                // Enable channel interrupt
                 regval |= CYGHWR_DEV_FREESCALE_FTM_CNSC_CHIE;
-                HAL_READ_UINT32(base + CYGHWR_DEV_FREESCALE_FTM_C0SC + 
+                // and clear interrupt status flgag
+                regval &= ~CYGHWR_DEV_FREESCALE_FTM_CNSC_CHF;
+                HAL_WRITE_UINT32(base + CYGHWR_DEV_FREESCALE_FTM_C0SC +
                         CYGNUM_DEVS_BEEP_CHANNEL, regval); 
+                
+                // Reset timer count value
+                regval =  0;
+                HAL_WRITE_UINT32(base + CYGHWR_DEV_FREESCALE_FTM_CNT, regval);
+                // set overflow value
+                regval =  priv->timer_cmp_value;
+                HAL_WRITE_UINT32(base + CYGHWR_DEV_FREESCALE_FTM_MOD, regval);
                 
                 // Clock source system clock divided by 1 slo by i vice
                 regval = (1 << 3) | 0;
                 HAL_WRITE_UINT8(base + CYGHWR_DEV_FREESCALE_FTM_SC, regval);
+                
+                // set beeping state
                 priv->beeping = true;
+                // and unmask interrupt in interrupt conteroller
                 cyg_drv_interrupt_unmask(priv->interrupt_number);
-                priv->beeping = true;
+                cyg_drv_interrupt_acknowledge(priv->interrupt_number);
             }
             else
                 ret = EINVAL;
@@ -262,12 +289,13 @@ beep_init(struct cyg_devtab_entry *tab)
     // Configure pin mux
     hal_set_pin_function(CYGHWR_IO_FREESCALE_BEEP_PIN);
     
+    // Disable FTM write protection
     regval = CYGHWR_DEV_FREESCALE_FTM_MODE_WPDIS;
     HAL_WRITE_UINT8(base + CYGHWR_DEV_FREESCALE_FTM_MODE, regval);
     
-    // Clock source system clock divided by 1 slo by i vice
-    regval = (1 << 3) | 0;
-    HAL_WRITE_UINT8(base + CYGHWR_DEV_FREESCALE_FTM_SC, regval);
+    // Set timer initial value
+    regval =  0;
+    HAL_WRITE_UINT16(base + CYGHWR_DEV_FREESCALE_FTM_CNTIN, regval);
     
     // Enable toogle on compare event
     regval = CYGHWR_DEV_FREESCALE_FTM_CNSC_MSA | 
@@ -276,20 +304,14 @@ beep_init(struct cyg_devtab_entry *tab)
     HAL_WRITE_UINT8(base + CYGHWR_DEV_FREESCALE_FTM_C0SC + 
             CYGNUM_DEVS_BEEP_CHANNEL, regval);
     
-    // Maxk output event 
-    /*-regval = CYGHWR_DEV_FREESCALE_FTM_OUTMASK_CH0OM;
-    
-    HAL_WRITE_UINT8(base + CYGHWR_DEV_FREESCALE_FTM_OUTMASK, regval);*/
-    
-    // Souce clock is PBA/2
-    // On compare pin value is toogle
     beep_dev->timer_cmp_value = 
-            (hal_get_peripheral_clock())/(CYGDAT_DEVS_BEEP_DEFAULT_FREQUENCY);
+            (hal_get_peripheral_clock())/(2*CYGDAT_DEVS_BEEP_DEFAULT_FREQUENCY);
     
     beep_dev->time_to_cnt = (2*CYGDAT_DEVS_BEEP_DEFAULT_FREQUENCY*1e-3);
     
-    regval = beep_dev->timer_cmp_value;
+    regval = beep_dev->timer_cmp_value >> 2;
     
+    // Set comparre value to toggle output
     HAL_WRITE_UINT16(base + CYGHWR_DEV_FREESCALE_FTM_COV +
             CYGNUM_DEVS_BEEP_CHANNEL, regval);
     
@@ -320,12 +342,14 @@ cyg_uint32 kinetis_beep_ISR(cyg_vector_t vector, cyg_addrword_t data)
     
     HAL_READ_UINT32(base + CYGHWR_DEV_FREESCALE_FTM_C0SC, regval);
     
+    // Chek if channel interrupt
     if(regval & CYGHWR_DEV_FREESCALE_FTM_CNSC_CHF)
     {
         if(priv->cnt == priv->cnt_beep_count)
         {
-            // Disable channel interrupt
+            // Disable channel interrupt and clear interrupt status falg
             regval &= ~CYGHWR_DEV_FREESCALE_FTM_CNSC_CHIE;
+            regval &= ~CYGHWR_DEV_FREESCALE_FTM_CNSC_CHF;
             HAL_WRITE_UINT32(base + CYGHWR_DEV_FREESCALE_FTM_C0SC +
                     CYGNUM_DEVS_BEEP_CHANNEL, regval);
             
@@ -337,14 +361,19 @@ cyg_uint32 kinetis_beep_ISR(cyg_vector_t vector, cyg_addrword_t data)
             cyg_drv_interrupt_mask(priv->interrupt_number);
         }
         else
+        {
             priv->cnt++;
+            // Clear interrupt falg
+            regval &= ~CYGHWR_DEV_FREESCALE_FTM_CNSC_CHF;
+            HAL_WRITE_UINT32(base + CYGHWR_DEV_FREESCALE_FTM_C0SC +
+                        CYGNUM_DEVS_BEEP_CHANNEL, regval);
+        } 
     }
     else
     {
         CYG_FAIL("Beeper unexpected interrupt.\n");
     }
 	
-    
     cyg_drv_interrupt_acknowledge(priv->interrupt_number);
     return CYG_ISR_HANDLED;
 }
