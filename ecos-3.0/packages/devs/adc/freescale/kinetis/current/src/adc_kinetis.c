@@ -68,7 +68,8 @@
 #include <cyg/io/adc.h>
 #include <cyg/hal/hal_endian.h>
 
-#include <pkgconf/devs_adc_kinetis.h>
+#include <pkgconf/devs_adc_kinetis_adc.h>
+#define CYGHWR_DEVS_ADC_KINETIS
 #if defined(CYGHWR_DEVS_ADC_KINETIS)
 
 #include "adc_hdr.h"
@@ -129,6 +130,9 @@ static Cyg_ErrNo kinetis_adc_lookup(struct cyg_devtab_entry **tab,
 static void kinetis_adc_enable( cyg_adc_channel *chan );
 static void kinetis_adc_disable( cyg_adc_channel *chan );
 static void kinetis_adc_set_rate( cyg_adc_channel *chan, cyg_uint32 rate );
+static void kinetis_adc_set_gain( cyg_adc_channel *chan, cyg_uint32 gain);
+static void kinetis_adc_set_polarity( cyg_adc_channel *chan, cyg_uint32 polarity);
+static void kinetis_adc_set_mode( cyg_adc_channel *chan, cyg_uint32 mode);
 static cyg_uint32 kinetis_adc_isr(cyg_vector_t vector, cyg_addrword_t data);
 static void kinetis_adc_dsr(cyg_vector_t vector,
                             cyg_ucount32 count,
@@ -181,7 +185,6 @@ static void kinetis_adc_calibration(kinetis_adc_info *info)
     tmp32 = base->CLM0 + base->CLM1 + base->CLM2 + base->CLM3 + base->CLM4 + base->CLMS;
     tmp32 = 0x8000U | (tmp32 >> 1U);
     base->MG = tmp32;
-
 }
 
 //==========================================================================
@@ -305,14 +308,14 @@ static void kinetis_adc_enable(cyg_adc_channel *chan)
 
     kinetis_adc_info *info      = chan->device->dev_priv;
 
-    volatile kinetis_adcifb_t *base = info->adc_base;
+    volatile cyghwer_io_kinetis_adc_t *base = info->adc_base;
 
-    uint32_t sc1 = ADC_SC1_ADCH(CYGDAT_DEVS_ADC_KINETIS_CHANNEL_SOURCE); /* Set the channel number. */
+    /* Enable chanell and sample */
+    cyg_uint32 sc1 = ADC_SC1_ADCH(CYGDAT_DEVS_ADC_KINETIS_CHANNEL0_SOURCE); /* Set the channel number. */
 
     sc1 |= ADC_SC1_AIEN_MASK;
     base->SC1[0] = sc1;
     cyg_drv_interrupt_unmask(info->adc_vector);
-    /* Enable chanell and sample */
 }
 
 
@@ -325,7 +328,7 @@ static void kinetis_adc_disable(cyg_adc_channel *chan)
 {
     kinetis_adc_info *info  = chan->device->dev_priv;
 
-    volatile kinetis_adcifb_t *base = info->adc_base;
+    volatile cyghwer_io_kinetis_adc_t *base = info->adc_base;
 }
 
 
@@ -341,8 +344,7 @@ static void kinetis_adc_set_rate( cyg_adc_channel *chan, cyg_uint32 rate)
 {
     cyg_adc_device   *device = chan->device;
     kinetis_adc_info *info   = (kinetis_adc_info *)device->dev_priv;
-    volatile kinetis_adcifb_t *base = info->adc_base;
-
+    volatile cyghwer_io_kinetis_adc_t *base = info->adc_base;
 }
 
 //-----------------------------------------------------------------------------
@@ -370,7 +372,6 @@ kinetis_adc_set_mode( cyg_adc_channel *chan, cyg_uint32 mode)
 {
 }
 
-
 //==========================================================================
 // This function is the ISR attached to the ADC device's interrupt vector.
 // It is responsible for reading samples from the channels and passing them
@@ -382,7 +383,7 @@ static cyg_uint32 kinetis_adc_isr(cyg_vector_t vector, cyg_addrword_t data)
 {
     cyg_adc_device   *device = (cyg_adc_device *) data;
     kinetis_adc_info *info   = (kinetis_adc_info *)device->dev_priv;
-    volatile kinetis_adcifb_t *base = info->adc_base;
+    volatile cyghwer_io_kinetis_adc_t *base = info->adc_base;
     cyg_uint32        res = 0;
 
     cyg_uint32    result = base->R[0];
@@ -393,8 +394,6 @@ static cyg_uint32 kinetis_adc_isr(cyg_vector_t vector, cyg_addrword_t data)
     res |= CYG_ISR_HANDLED
         |  cyg_adc_receive_sample(info->channel[0], result&0xffff);
 
-
-    adc_dev->icr = AVR32_ADCIFB_ICR_DRDY_MASK;
 
     return 0;
 }
@@ -412,7 +411,7 @@ static void kinetis_adc_dsr(cyg_vector_t vector,
 {
     cyg_adc_device *device         = (cyg_adc_device *) data;
     kinetis_adc_info *info           = device->dev_priv;
-    volatile kinetis_adcifb_t *adc_dev = info->adc_base;
+    volatile cyghwer_io_kinetis_adc_t *adc_dev = info->adc_base;
     cyg_uint8      active_channels = 1;
     cyg_uint8      chan_no         = 0;
 
@@ -432,4 +431,4 @@ static void kinetis_adc_dsr(cyg_vector_t vector,
 
 #endif // CYGHWR_DEVS_ADC_KINETIS
 //---------------------------------------------------------------------------
-// eof adc_adcifb.c
+// eof adc_kinetis.c
