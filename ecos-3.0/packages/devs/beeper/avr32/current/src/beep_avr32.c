@@ -61,7 +61,7 @@
 #include <cyg/infra/cyg_ass.h>
 #include <cyg/infra/diag.h>
 
-#include <cyg/io/beep_avr32.h>
+#include <cyg/io/beep.h>
 #include <cyg/hal/gpio.h>
 #include <cyg/hal/avr32/io.h>
 #include <cyg/io/devtab.h>
