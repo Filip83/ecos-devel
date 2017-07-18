@@ -127,7 +127,10 @@ static void avr32_adc_dsr(cyg_vector_t vector,
 CYG_ADC_FUNCTIONS( avr32_adc_funs,
                    avr32_adc_enable,
                    avr32_adc_disable,
-                   avr32_adc_set_rate );
+                   avr32_adc_set_rate,
+                   NULL,
+                   NULL,
+                   NULL);
 
 
 #include CYGDAT_DEVS_ADC_AVR32_ADCIFB_INL // Instantiate ADCs
