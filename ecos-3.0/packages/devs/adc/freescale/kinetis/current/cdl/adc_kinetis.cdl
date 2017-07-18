@@ -50,7 +50,7 @@
 
 cdl_package CYGPKG_DEVS_ADC_KINETIS_ADC {
     display     "ADC hardware device driver for kinetis family of controllers"
-    active_if   CYGINT_DEVS_ADC_KINETIS
+#    active_if   CYGINT_DEVS_FREESCALE_ADC0
     implements  CYGHWR_DEVS_ADC_KINETIS
     parent      CYGPKG_IO_ADC
     description "
@@ -61,7 +61,7 @@ cdl_package CYGPKG_DEVS_ADC_KINETIS_ADC {
     compile     -library=libextras.a adc_kinetis.c
 
     define_proc {
-      puts $::cdl_system_header "#define CYGDAT_DEVS_ADC_KINETIS_INL <cyg/io/adc_adcifb.inl>"
+      puts $::cdl_system_header "#define CYGDAT_DEVS_ADC_KINETIS_INL <cyg/io/adc_kinetis.inl>"
     }
 
     cdl_option CYGNUM_DEVS_ADC_KINETIS_ENABLE_LOW_POWER {
