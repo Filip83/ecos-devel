@@ -56,7 +56,7 @@
 // Declare ADC
 #ifdef CYGPKG_DEVS_ADC_KINETIS_ADC
 
-static kinetis_adc_info kinetis_adc_info =
+static kinetis_adc_info kinetis_adc0_info =
 {
     .adc_base         = CYGADR_DEVS_ADC_BASE,
     .adc_vector       = CYGNUM_HAL_INTERRUPT_ADC0,
@@ -68,7 +68,7 @@ static kinetis_adc_info kinetis_adc_info =
 
 CYG_ADC_DEVICE( kinetis_adc_device,
                 &kinetis_adc_funs,
-                &kinetis_adc_info,
+                &kinetis_adc0_info,
                 CYGNUM_DEVS_ADC_KINETIS_DEFAULT_RATE);
 
 #define KINETIS_ADC_CHANNEL( __chan )                                     \
