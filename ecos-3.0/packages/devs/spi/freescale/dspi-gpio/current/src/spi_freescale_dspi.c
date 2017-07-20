@@ -969,9 +969,9 @@ dspi_set_npcs(cyg_spi_freescale_dspi_device_t *dev)
 {
     cyg_spi_freescale_dspi_device_t* dspi_device =
           (cyg_spi_freescale_dspi_device_t*) dev;
-    int val = dev->chip_sel;
+    int val = dev->dev_num;
     
-    if(dspi_device == &cyg_spi_dspi_bus0)
+    if(dspi_device->spi_device.spi_bus == ((cyg_spi_bus*)&cyg_spi_dspi_bus0))
     {
         if(val == 0)
             CYGHWR_IO_GPIO_PIN_CS_RTC_SET;
@@ -980,7 +980,7 @@ dspi_set_npcs(cyg_spi_freescale_dspi_device_t *dev)
         else
             CYGHWR_IO_GPIO_PIN_CS_FRAM_SET;
     }
-    else if(dspi_device == &cyg_spi_dspi_bus1)
+    else if(dspi_device->spi_device.spi_bus == ((cyg_spi_bus*)&cyg_spi_dspi_bus1))
     {
         if(val == 0)
             CYGHWR_IO_GPIO_PIN_CS_ADC_SET;
@@ -994,8 +994,8 @@ dspi_drop_cs(cyg_spi_freescale_dspi_device_t *dev)
 {
     cyg_spi_freescale_dspi_device_t* dspi_device =
           (cyg_spi_freescale_dspi_device_t*) dev;
-    int val = dev->chip_sel;
-    if(dspi_device == &cyg_spi_dspi_bus0)
+    int val = dev->dev_num;
+    if(dspi_device->spi_device.spi_bus == ((cyg_spi_bus*)&cyg_spi_dspi_bus0))
     {
         if(val == 0)
             CYGHWR_IO_GPIO_PIN_CS_RTC_CLR;
@@ -1004,7 +1004,7 @@ dspi_drop_cs(cyg_spi_freescale_dspi_device_t *dev)
         else
             CYGHWR_IO_GPIO_PIN_CS_FRAM_CLR;
     }
-    else if(dspi_device == &cyg_spi_dspi_bus1)
+    else if(dspi_device->spi_device.spi_bus == ((cyg_spi_bus*)&cyg_spi_dspi_bus1))
     {
         if(val == 0)
             CYGHWR_IO_GPIO_PIN_CS_ADC_CLR;
