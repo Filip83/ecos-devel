@@ -84,6 +84,7 @@ typedef cyg_uint8 cyg_kbd_key_t;
 */
 typedef struct cyg_kbd_kinetis_s
 {
+    cyg_uint32        scan_interval;    /**< Interval in which keys are scaned. */
     cyg_uint32        repeat_interval;	/**< Interval between keyboard scans. */ 
     cyg_uint32	      push_cnt;		/**< Interval counter to count start of scan interval. */ 
     cyg_uint16        last_scan_code;	/**< Latest scan code. */ 
