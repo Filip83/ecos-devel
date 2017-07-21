@@ -378,7 +378,8 @@ const CYG_FLASH_FUNS (
 // Add the flash driver to the HAL TABLE cyg_flashdev
 
 cyg_kinetis_flash_dev hal_kinetis_flash_priv;
-static const cyg_flash_block_info_t cyg_flash_kinetis_block_info[1] = {{
+#if 0
+static /*const*/ cyg_flash_block_info_t cyg_flash_kinetis_block_info[1] = {{
     CYGNUM_DEVS_KINETIS_FLASH_BLOCK_SIZE,
     (CYGMEM_REGION_flash_SIZE) / CYGNUM_DEVS_KINETIS_FLASH_BLOCK_SIZE }};
 
@@ -390,6 +391,20 @@ CYG_FLASH_DRIVER(hal_kinetis_flash,
                  1,                             //number of block info
                  cyg_flash_kinetis_block_info,
                  &hal_kinetis_flash_priv);
+#else
+static /*const*/ cyg_flash_block_info_t cyg_flash_kinetis_block_info[1] = {{
+    CYGNUM_DEVS_KINETIS_FLASH_BLOCK_SIZE,
+    (0x10000) / CYGNUM_DEVS_KINETIS_FLASH_BLOCK_SIZE }};
+
+CYG_FLASH_DRIVER(hal_kinetis_flash,
+                 &cyg_kinetis_flash_funs,
+                 0,
+                 0x70000,
+                 (0x80000 - 1),
+                 1,                             //number of block info
+                 cyg_flash_kinetis_block_info,
+                 &hal_kinetis_flash_priv);
+#endif
 
 // ----------------------------------------------------------------------------
 // End of kinetis_flash.c
