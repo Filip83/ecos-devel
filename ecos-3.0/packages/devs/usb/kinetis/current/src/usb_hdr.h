@@ -23,10 +23,17 @@
 #define SWAP4BYTE_CONST(n) \
     ((((n)&0x000000FFU) << 24U) | (((n)&0x0000FF00U) << 8U) | (((n)&0x00FF0000U) >> 8U) | (((n)&0xFF000000U) >> 24U))
 
+#if 0
 #define USB_SHORT_TO_LITTLE_ENDIAN(n) SWAP2BYTE_CONST(n)
 #define USB_LONG_TO_LITTLE_ENDIAN(n) SWAP4BYTE_CONST(n)
 #define USB_SHORT_FROM_LITTLE_ENDIAN(n) SWAP2BYTE_CONST(n)
 #define USB_LONG_FROM_LITTLE_ENDIAN(n) SWAP2BYTE_CONST(n)
+#else
+#define USB_SHORT_TO_LITTLE_ENDIAN(n) n
+#define USB_LONG_TO_LITTLE_ENDIAN(n) n
+#define USB_SHORT_FROM_LITTLE_ENDIAN(n) n
+#define USB_LONG_FROM_LITTLE_ENDIAN(n) n
+#endif 
 
 #if !defined(MIN)
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
@@ -577,7 +584,7 @@ typedef struct _usb_device_khci_state_struct
     usb_device_struct_t *deviceHandle; /*!< Device handle used to identify the device object belongs to */
 #endif
     cyg_uint8 *bdt;                      /*!< BDT buffer address */
-    USB_Type *registerBase;            /*!< The base address of the register */
+    volatile USB_Type *registerBase;            /*!< The base address of the register */
     cyg_uint8 setupPacketBuffer[USB_SETUP_PACKET_SIZE * 2]; /*!< The setup request buffer */
     cyg_uint8 *dmaAlignBuffer; /*!< This buffer is used to fix the transferBuffer or transferLength does
                                not align to 4-bytes when the function USB_DeviceKhciRecv is called.
@@ -599,7 +606,7 @@ typedef struct _usb_device_khci_state_struct
 #if (defined(USB_DEVICE_CONFIG_OTG) && (USB_DEVICE_CONFIG_OTG))
     cyg_uint8 otgStatus;
 #endif
-} usb_device_khci_state_struct_t;
+} __attribute__((__aligned__(4))) usb_device_khci_state_struct_t;
 
 /*! @brief USB error code */
 typedef enum _usb_status

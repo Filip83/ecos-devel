@@ -1,6 +1,6 @@
 //==========================================================================
 //
-//      usbs_kinetis.c
+//      usbs_kci_kinetis.c
 //
 //      Driver for the Freescale Kinetis USB device
 //
