@@ -90,27 +90,31 @@ cdl_package CYGPKG_DEVS_KBD_BUTTON_KINETIS {
     }
 
     cdl_option CYGNUM_DEVS_KBD_BUTTON_SCAN_INTERVAL {
-        display "Keyboard scan interval"
+        display "Keyboard scanning interval in ms"
         flavor data
-        default_value { 7 }
+        default_value { 20 }
         description "
-            This option defines keyboard scan interval in ms."
-    }
-
-    cdl_option CYGNUM_DEVS_KBD_BUTTON_PIT_CNT {
-        display "PIT cnt value to generate scan interval"
-        flavor data
-        default_value 1280/CYGNUM_DEVS_KBD_BUTTON_SCAN_INTERVAL 
+            This option defines keyboard scanning interval in ms. 
+            This option needs to be smaller if a glitch counter is used. "
     }
 
     cdl_option CYGNUM_DEVS_KBD_BUTTON_GLITCH_CNT {
-        display "Keyboard scan interval"
+        display "Glitch counter value"
         flavor data
         legal_values     1 to 10
         default_value { 3 }
         description "
-            The number samples of keyboard state to decide the key
-            is relay pusshed."
+            This option defines glitch counter value. The value of 
+            a button pin must be stable (same) for this number of scanning
+            intervals."
+    }
+
+    cdl_option CYGNUM_DEVS_KBD_BUTTON_DEFAULT_FIRST_KEYPRESS_CNT {
+        display "First keypress interval"
+        flavor data
+        default_value { 5 }
+        description "
+            Add somting meaningfull." 
     }
 
     cdl_option CYGNUM_DEVS_KBD_BUTTON_CALLBACK_MODE {
@@ -146,17 +150,13 @@ cdl_package CYGPKG_DEVS_KBD_BUTTON_KINETIS {
             are interpreted acording linux_keyboard.h."
     }
 
-    cdl_option CYGNUM_DEVS_KBD_BUTTON_INTERRUPTS_EDGE {
-        display "Edge on which pin interrupt is gnerated"
-        flavor data
-        legal_values   {"FALLING_EDGE" "RISING_EDGE"} 
-        default_value { "FALLING_EDGE" }
-    }
-
     cdl_option CYGNUM_DEVS_KBD_BUTTON_ACTIVE_VALUE {
-        display "Value of active pin state"
+        display "The binary value of a pressed button"
         flavor data
-        calculated  (CYGNUM_DEVS_KBD_BUTTON_INTERRUPTS_EDGE == FALLING_EDGE) ? 0:1  
+        legal_values   0 to 1
+        default_value { 0 }
+        description "
+            Self explanatory description."
     }
 
     cdl_option CYGNUM_IO_KBD_BUTTON_INT_PRIORITY {

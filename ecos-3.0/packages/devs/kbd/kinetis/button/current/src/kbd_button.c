@@ -73,22 +73,25 @@
 
 #define MAX_EVENTS CYGNUM_DEVS_KBD_BUTTON_EVENT_BUFFER_SIZE
 
-
-#if CYGNUM_DEVS_KBD_BUTTON_INTERRUPTS_EDGE == RISING_EDGE
+#if CYGNUM_DEVS_KBD_BUTTON_ACTIVE_VALUE == 1
 #define PORT_IRQC_EDGE  (0x09l)
 #else
 #define PORT_IRQC_EDGE  (0x0al)
 #endif
 
+
+/*
+#define PORT_IRQC_EDGE  (0x0al)
 #define PIT    ((cyghwr_hal_kinteis_pit_t *)CYGHWR_HAL_KINETIS_PIT_BASE)
 
-
+#undef CYGNUM_DEVS_KBD_BUTTON_ACTIVE_VALUE
+#define CYGNUM_DEVS_KBD_BUTTON_ACTIVE_VALUE 0*/
 /** Declaration and initialization of button keyborad data structure.
 *
 */
 static cyg_kbd_kinetis_t cyg_kbd_kinetis =
 {
-    .repeat_interval        = 5,
+    .repeat_interval        = CYGNUM_DEVS_KBD_BUTTON_FIRST_KEYPRESS_CNT,
     .push_cnt		    = 0,
     .last_scan_code         = 0,
     .scan_code		    = 0,
@@ -101,7 +104,7 @@ static cyg_kbd_kinetis_t cyg_kbd_kinetis =
     .interrupt_prio         = CYGNUM_IO_KBD_BUTTON_INT_PRIORITY,
     .kb_pins_isr[0].kbd_pin_interrupt		= NULL,
     .kb_pins_isr[0].kbd_pin_interrupt_handle	= NULL,
-    .kb_pins_isr[0].kbd_pin_interrupt_number	= CYGNUM_DEVS_KBD_BUTTON_INTERRUPT_NUM,
+    .kb_pins_isr[0].kbd_pin_interrupt_number	= CYGNUM_HAL_INTERRUPT_PORTC,
 #ifndef CYGNUM_DEVS_KBD_BUTTON_CALLBACK_MODE
     .num_events                                 = 0,
     .event_put                                  = 0,
@@ -218,7 +221,7 @@ kbd_read(cyg_io_handle_t handle,
         }
     }
     cyg_scheduler_unlock(); // Allow DSRs again
-    diag_dump_buf(buffer, tot);
+    //diag_dump_buf(buffer, tot);
     *len -= tot;
     return ENOERR;
 #else
@@ -343,25 +346,32 @@ kbd_init(struct cyg_devtab_entry *tab)
     //Configure pin interupt
     regval = CYGHWR_HAL_KINETIS_PIN_CFG(C,CYGHWR_DEVS_KB0_PIN,1,
                           PORT_IRQC_EDGE,CYGHWR_HAL_KINETIS_PORT_PCR_ISF_M);
-    CYGHWR_IO_FREESCALE_UART_PIN(regval);
+    hal_set_pin_function(regval);
     
     regval = CYGHWR_HAL_KINETIS_PIN_CFG(C,CYGHWR_DEVS_KB1_PIN,1,
                           PORT_IRQC_EDGE,CYGHWR_HAL_KINETIS_PORT_PCR_ISF_M);
-    CYGHWR_IO_FREESCALE_UART_PIN(regval);
+    hal_set_pin_function(regval);
     
     regval = CYGHWR_HAL_KINETIS_PIN_CFG(C,CYGHWR_DEVS_KB2_PIN,1,
                           PORT_IRQC_EDGE,CYGHWR_HAL_KINETIS_PORT_PCR_ISF_M);
-    CYGHWR_IO_FREESCALE_UART_PIN(regval);
+    hal_set_pin_function(regval);
     
     regval = CYGHWR_HAL_KINETIS_PIN_CFG(C,CYGHWR_DEVS_KB3_PIN,1,
                           PORT_IRQC_EDGE,CYGHWR_HAL_KINETIS_PORT_PCR_ISF_M);
-    CYGHWR_IO_FREESCALE_UART_PIN(regval);
+    hal_set_pin_function(regval);
     
     // Configure GPIO pins used by keyboard
     CYGHWR_HAL_KINETIS_GPIO_PIN_DDR_IN(C,CYGHWR_DEVS_KB0_PIN);
     CYGHWR_HAL_KINETIS_GPIO_PIN_DDR_IN(C,CYGHWR_DEVS_KB1_PIN);
     CYGHWR_HAL_KINETIS_GPIO_PIN_DDR_IN(C,CYGHWR_DEVS_KB2_PIN);
     CYGHWR_HAL_KINETIS_GPIO_PIN_DDR_IN(C,CYGHWR_DEVS_KB3_PIN);
+    
+    // Eneable PIT clock
+    CYGHWR_IO_CLOCK_ENABLE(CYGHWR_HAL_KINETIS_SIM_SCGC_PIT);
+    PIT->MCR = 0;
+    // Default scan intrval is 20 ms
+    kbd_dev->scan_interval = hal_get_peripheral_clock()/1000*
+            CYGNUM_DEVS_KBD_BUTTON_SCAN_INTERVAL;
 
     // Init keyboard timer interrupt 
     cyg_drv_interrupt_create(kbd_dev->interrupt_number,
@@ -387,6 +397,10 @@ kbd_init(struct cyg_devtab_entry *tab)
 #ifndef CYGNUM_DEVS_KBD_BUTTON_CALLBACK_MODE
     cyg_selinit(&kbd_dev->kbd_select_info);
 #endif
+    CYGHWR_HAL_KINETIS_PORTC_P->isfr = -1;
+    cyg_drv_interrupt_acknowledge(kbd_dev->kb_pins_isr[0].kbd_pin_interrupt_number);
+    cyg_drv_interrupt_unmask(kbd_dev->kb_pins_isr[0].kbd_pin_interrupt_number);
+    
     kbd_dev->is_open = true;
     return true;
 }
@@ -417,10 +431,15 @@ static void avr32_button_kbd_start_scan(cyg_kbd_kinetis_t *kbd_dev)
     kbd_dev->scan_line  = 0;
     kbd_dev->glitch_cnt = 0;
     kbd_dev->scan_code  = 0;
-    PIT->CHANNEL[0].TFLG = CYGHWR_HAL_KINETIS_PIT_TFLG_TIF;
-    PIT->CHANNEL[0].LDVAL = CYGNUM_DEVS_KBD_BUTTON_PIT_CNT;
+    
+    PIT->CHANNEL[0].TFLG  = CYGHWR_HAL_KINETIS_PIT_TFLG_TIF;
+    PIT->CHANNEL[0].LDVAL = kbd_dev->scan_interval;
     PIT->CHANNEL[0].TCTRL = CYGHWR_HAL_KINETIS_PIT_TCTRL_TIE |
                            CYGHWR_HAL_KINETIS_PIT_TCTRL_TEN;
+    
+    cyg_drv_interrupt_acknowledge(kbd_dev->interrupt_number);
+    cyg_drv_interrupt_unmask(kbd_dev->interrupt_number);
+    
 }
 
 /** Keyboard timer interrupt.
@@ -436,9 +455,9 @@ static cyg_uint32
 kinetis_button_kbd_timer_ISR(cyg_vector_t vector, cyg_addrword_t data)
 {
     cyg_kbd_kinetis_t *kbd_dev = (cyg_kbd_kinetis_t*)data;
-    cyg_uint32           ret = CYG_ISR_HANDLED;
+    cyg_uint32           ret   = CYG_ISR_HANDLED;
     
-	// is pir0 interrupt
+    // is pir0 interrupt
     if(PIT->CHANNEL[0].TFLG)
     {
         // Clear pir0 interupt
@@ -466,6 +485,7 @@ kinetis_button_kbd_timer_ISR(cyg_vector_t vector, cyg_addrword_t data)
             scan_code |= 0x0008;
         }
 
+#if CYGNUM_DEVS_KBD_BUTTON_GLITCH_CNT > 1
         kbd_dev->glitch_cnt++;
         
         if(kbd_dev->scan_code == 0)
@@ -482,14 +502,20 @@ kinetis_button_kbd_timer_ISR(cyg_vector_t vector, cyg_addrword_t data)
         if(kbd_dev->glitch_cnt == CYGNUM_DEVS_KBD_BUTTON_GLITCH_CNT)
         {
             // Disable timer interrupt
-            //PIT->CHANNEL[0].TCTRL &= ~CYGHWR_HAL_KINETIS_PIT_TCTRL_TIE;
             cyg_drv_interrupt_mask(kbd_dev->interrupt_number);
-            cyg_drv_interrupt_acknowledge(kbd_dev->interrupt_number);
             kbd_dev->glitch_cnt = 0;
             ret |= CYG_ISR_CALL_DSR;
         }
+#else
+        kbd_dev->scan_code = scan_code;
+        // Disable timer interrupt
+        cyg_drv_interrupt_mask(kbd_dev->interrupt_number);
+        kbd_dev->glitch_cnt = 0;
+        ret |= CYG_ISR_CALL_DSR;
+#endif
     }
     
+    cyg_drv_interrupt_acknowledge(kbd_dev->interrupt_number);
     return ret;
 }
 
@@ -508,7 +534,6 @@ kinetis_button_kbd_timer_DSR(cyg_vector_t vector, cyg_ucount32 count, cyg_addrwo
     cyg_kbd_kinetis_t *kbd_dev = (cyg_kbd_kinetis_t*)data;
     
     // If scan code is non zero do some stuff
-    // This DSR is called every ca. 0.0390625s
     if(kbd_dev->scan_code != 0)
     {
         // If the repeat interval for pushed button is reached
@@ -520,7 +545,7 @@ kinetis_button_kbd_timer_DSR(cyg_vector_t vector, cyg_ucount32 count, cyg_addrwo
             // use longer interval
             if(kbd_dev->scan_code != kbd_dev->last_scan_code)
             {
-                kbd_dev->push_cnt = 25;
+                kbd_dev->push_cnt = kbd_dev->repeat_interval << 1;
                 if(kbd_dev->enabled)
                 {
                     #ifndef CYGNUM_DEVS_KBD_BUTTON_CALLBACK_MODE
@@ -585,7 +610,7 @@ kinetis_button_kbd_timer_DSR(cyg_vector_t vector, cyg_ucount32 count, cyg_addrwo
         }
 		
         // Enable timer interrupt
-        //PIT->CHANNEL[0].TCTRL |= CYGHWR_HAL_KINETIS_PIT_TCTRL_TIE;
+        cyg_drv_interrupt_acknowledge(kbd_dev->interrupt_number);
         cyg_drv_interrupt_unmask(kbd_dev->interrupt_number);
     }
     else
@@ -599,6 +624,7 @@ kinetis_button_kbd_timer_DSR(cyg_vector_t vector, cyg_ucount32 count, cyg_addrwo
         PIT->CHANNEL[0].TCTRL = 0;
     
         CYGHWR_HAL_KINETIS_PORTC_P->isfr = -1;
+        cyg_drv_interrupt_acknowledge(kbd_dev->kb_pins_isr[0].kbd_pin_interrupt_number);
         cyg_drv_interrupt_unmask(kbd_dev->kb_pins_isr[0].kbd_pin_interrupt_number);
     }
 
@@ -615,8 +641,9 @@ kinetis_button_kbd_timer_DSR(cyg_vector_t vector, cyg_ucount32 count, cyg_addrwo
 cyg_uint32 kinetis_button_kbd_pin_ISR(cyg_vector_t vector, cyg_addrword_t data)
 {
     cyg_kbd_kinetis_t *kbd_dev = (cyg_kbd_kinetis_t*)data;
-    cyg_drv_interrupt_mask(kbd_dev->kb_pins_isr[0].kbd_pin_interrupt_number);
+   
     cyg_drv_interrupt_acknowledge(kbd_dev->kb_pins_isr[0].kbd_pin_interrupt_number);
+    cyg_drv_interrupt_mask(kbd_dev->kb_pins_isr[0].kbd_pin_interrupt_number);
     
     CYGHWR_HAL_KINETIS_PORTC_P->isfr = -1;
 	
