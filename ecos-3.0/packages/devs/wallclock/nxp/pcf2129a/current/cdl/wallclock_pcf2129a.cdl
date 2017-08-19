@@ -1,6 +1,6 @@
 # ====================================================================
 #
-#      wallclock_dPCF2129A.cdl
+#      wallclock_PCF2129A.cdl
 #
 #      eCos configuration data for NXP PCF2129A
 #
@@ -72,12 +72,12 @@ cdl_package CYGPKG_DEVICES_WALLCLOCK_NXP_PCF2129A {
         display "PCF2129A SPI, I2C interface select."
         flavor bool
         default_value 0
-        description   "If this option is enabled PFC2129A use
-                I2C interface SPI otherwise."
+        description   "If this option is enabled PFC2129A use I2C interface
+                       if disabled SPI interface.."
     }
 
     cdl_component CYGPKG_DEVICES_WALLCLOCK_NXP_PCF2129A_OPTIONS {
-        display "DS1307 wallclock build options"
+        display "PFC2129A wallclock build options"
         flavor  none
         description   "
 	    Package specific build options including control over
@@ -106,5 +106,17 @@ cdl_package CYGPKG_DEVICES_WALLCLOCK_NXP_PCF2129A {
                 building the wallclock device. These flags are removed from
                 the set of global flags if present."
         }
+
+        cdl_option CYGPKG_DEVICES_WALLCLOCK_NXP_PCF2129A_DEBUG_LEVEL {
+                display "Driver debug output level"
+                flavor  data
+                legal_values {0 1}
+                default_value 0
+                description   "
+                     This option specifies the level of debug data output by
+                     the NXP PCF2129A device driver. A value of 0 signifies
+                     no debug data output; 1 signifies normal debug data
+                     output."
+            }
     }
 }

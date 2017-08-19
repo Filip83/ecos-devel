@@ -66,6 +66,7 @@
 #if defined(CYGNUM_DEVS_WALLOCK_NXP_PCF2129A_INTERFACE) && \
             CYGNUM_DEVS_WALLOCK_NXP_PCF2129A_INTERFACE == 1
 #include <cyg/io/i2c.h>
+externC cyg_i2c_device cyg_i2c_wallclock_pcf2129a;
 #else
 #include <cyg/io/spi.h>
 #include <cyg/io/spi_freescale_dspi.h>
@@ -73,7 +74,7 @@ externC cyg_spi_device cyg_spi_wallclock_pcf2129a;
 #endif
 
 
-#if 1
+#if CYGPKG_DEVICES_WALLCLOCK_NXP_PCF2129A_DEBUG_LEVEL == 0
 # define DEBUG(_format_, ...)
 #else
 # define DEBUG(_format_, ...) diag_printf(_format_, ## __VA_ARGS__)
@@ -123,25 +124,6 @@ externC cyg_spi_device cyg_spi_wallclock_pcf2129a;
 #define PCF_SPI_WRITE           0x20
 #define PCF_SPI_READ            0x20 | 0x80
 
-// The DS1307 chip is accessed via I2C (2-wire protocol). This can be
-// implemented in one of two ways. If the platform supports the generic
-// I2C API then it should also export a cyg_i2c_device structure
-// cyg_i2c_wallclock_pcf2129a, and this can be manipulated via the
-// usual cyg_i2c_tx() and cyg_i2c_rx() functions. Alternatively (and
-// primarily for older ports predating the generic I2C package)
-// the platform HAL can provide the following two macros/functions:
-//
-// void DS_GET(cyg_uint8 *regs)
-//    Reads the entire set of registers (8 bytes) into *regs
-// void DS_PUT(cyg_uint8 *regs)
-//    Updated the entire set of registers (8 bytes) from *regs
-//
-// Using this method, the data in the registers is guaranteed to be
-// stable (if the access function manipulates the registers in an
-// single operation)
-//
-// If the platform HAL implements the CDL interface
-// CYGINT_DEVICES_WALLCLOCK_DALLAS_DS1307_I2C then the I2C API will be used.
 
 static void
 pcf_write_registers(cyg_uint8 register_offset, cyg_uint8 cnt, cyg_uint8* regs)
@@ -157,7 +139,7 @@ pcf_write_registers(cyg_uint8 register_offset, cyg_uint8 cnt, cyg_uint8* regs)
 #else
     tx_data[0] = PCF_SPI_WRITE | (register_offset&0x1f);
     cyg_spi_transaction_begin(&cyg_spi_wallclock_pcf2129a);
-    cyg_spi_transaction_transfer(&cyg_spi_wallclock_pcf2129a,false,cnt + 1,
+    cyg_spi_transaction_transfer(&cyg_spi_wallclock_pcf2129a,true,cnt + 1,
             tx_data,NULL,true);
     cyg_spi_transaction_end(&cyg_spi_wallclock_pcf2129a);
 #endif
@@ -183,10 +165,10 @@ pcf_read_registers(cyg_uint8 register_offset, cyg_uint8 cnt, cyg_uint8* regs)
 #else
     tx_data[0] = PCF_SPI_READ | (register_offset&0x1f);
     cyg_spi_transaction_begin(&cyg_spi_wallclock_pcf2129a);
-    cyg_spi_transaction_transfer(&cyg_spi_wallclock_pcf2129a,false,1,
+    cyg_spi_transaction_transfer(&cyg_spi_wallclock_pcf2129a,true,1,
             tx_data,NULL,false);
     
-    cyg_spi_transaction_transfer(&cyg_spi_wallclock_pcf2129a,false,cnt,
+    cyg_spi_transaction_transfer(&cyg_spi_wallclock_pcf2129a,true,cnt,
             NULL,regs,true);
     cyg_spi_transaction_end(&cyg_spi_wallclock_pcf2129a);
 #endif
@@ -198,24 +180,21 @@ DS_GET(cyg_uint8* regs)
 {
     cyg_bool    ok = true;
 
+    // Now fetch the data
+    // if transfer not correst report, continue otherwise
     if (pcf_read_registers(PCF_CONTROL1,10,regs) != 0) 
     {
-        // The device has not responded to the address byte.
+        // The device has not responded.
         ok = false;
 	SET_HW_ERRROR(HW_ERROR_RTC_NO_RESPONSE);
         DEBUG("Cannto conntect to PCF2129A\n");
     } 
     else 
     {
-        // Now fetch the data
-        /*cyg_i2c_transaction_rx(&cyg_i2c_wallclock_pcf2129a, true, 
-                regs, 9, true, true);*/
-
         // Verify that there are reasonable default settings. The
         // register values can be used as array indices so bogus
         // values can lead to bus errors or similar problems.
         
-        // Years: 00 - 99, with 70-99 interpreted as 1970 onwards.
         if ((regs[PCF_YEAR] & 0x0F) > 0x09)
         {
             ok = false;
@@ -241,8 +220,6 @@ DS_GET(cyg_uint8* regs)
         {
             ok = false;
         }
-        // Ignore the DOW field. The wallclock code does not need it, and
-        // it is hard to calculate.
         // Minutes: 0 - 59
         if (((regs[PCF_MINUTES] & 0x0F) > 0x09) ||
             (regs[PCF_MINUTES] > 0x59)) 
@@ -314,7 +291,6 @@ set_pcf_hwclock(cyg_uint32 year, cyg_uint32 month, cyg_uint32 mday,
     cyg_uint8 regs[PCF_REGS_SIZE];
 
     // Set up the registers
-    //regs[PCF_CONTROL]    = 0x00;
     regs[PCF_YEAR]       = TO_BCD((cyg_uint8)(year % 100));
     regs[PCF_MONTH]      = TO_BCD((cyg_uint8)month);
     regs[PCF_DAYS]       = TO_BCD((cyg_uint8)mday);
@@ -405,7 +381,7 @@ Cyg_WallClock::init_hw_seconds(void)
 #ifdef CYGSEM_WALLCLOCK_SET_GET_MODE
     init_pcf_hwclock();
 #else
-    // This is our base: 1970-01-01 00:00:00
+    // This is our base: 2013-01-01 00:00:00
     // Set the HW clock - if for nothing else, just to be sure it's in a
     // legal range. Any arbitrary base could be used.
     // After this the hardware clock is only read.

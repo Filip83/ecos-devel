@@ -1,3 +1,7 @@
+2017-08-19  Filip 
+	* src/PCF2129A.cxx: Mofified to enable/disable debug output. 
+	* cdl/wallclock_PCF2129A.cdl: Modifed some description fields added
+          options to enable/disable debug output.
 
 2017-04-20  Filip 
         * ChangeLog: Inserted corect values
