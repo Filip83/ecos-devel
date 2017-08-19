@@ -197,7 +197,7 @@ cdl_package CYGPKG_DEVS_ADC_KINETIS_ADC {
         default_value 0
         description   "
              This option specifies the level of debug data output by
-             the AVR32UC3C ADC device driver. A value of 0 signifies
+             the Kinetis ADC device driver. A value of 0 signifies
              no debug data output; 1 signifies normal debug data
              output. If an overrun occurred then this can only be
              detected by debug output messages."
