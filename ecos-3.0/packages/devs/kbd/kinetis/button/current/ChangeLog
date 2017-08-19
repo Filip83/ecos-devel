@@ -1,3 +1,7 @@
+2017-09-08  Filip  <filip.gnu@gmail.com>
+
+	* Added some options to better configure this driver.
+
 2017-03-27  Filip  <filip.gnu@gmail.com>
 
 	* Button keyboard driver for Kinetis.
