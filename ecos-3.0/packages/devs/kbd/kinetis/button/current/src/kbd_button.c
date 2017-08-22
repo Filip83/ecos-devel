@@ -73,6 +73,8 @@
 
 #define MAX_EVENTS CYGNUM_DEVS_KBD_BUTTON_EVENT_BUFFER_SIZE
 
+#define PIT    ((cyghwr_hal_kinteis_pit_t *)CYGHWR_HAL_KINETIS_PIT_BASE)
+
 #if CYGNUM_DEVS_KBD_BUTTON_ACTIVE_VALUE == 1
 #define PORT_IRQC_EDGE  (0x09l)
 #else
@@ -82,7 +84,7 @@
 
 /*
 #define PORT_IRQC_EDGE  (0x0al)
-#define PIT    ((cyghwr_hal_kinteis_pit_t *)CYGHWR_HAL_KINETIS_PIT_BASE)
+
 
 #undef CYGNUM_DEVS_KBD_BUTTON_ACTIVE_VALUE
 #define CYGNUM_DEVS_KBD_BUTTON_ACTIVE_VALUE 0*/
@@ -91,7 +93,7 @@
 */
 static cyg_kbd_kinetis_t cyg_kbd_kinetis =
 {
-    .repeat_interval        = CYGNUM_DEVS_KBD_BUTTON_FIRST_KEYPRESS_CNT,
+    .repeat_interval        = CYGNUM_DEVS_KBD_BUTTON_DEFAULT_FIRST_KEYPRESS_CNT,
     .push_cnt		    = 0,
     .last_scan_code         = 0,
     .scan_code		    = 0,
