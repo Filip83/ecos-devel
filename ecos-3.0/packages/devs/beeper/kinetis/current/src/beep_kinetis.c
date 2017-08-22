@@ -61,7 +61,7 @@
 #include <cyg/infra/cyg_ass.h>
 #include <cyg/infra/diag.h>
 
-#include <cyg/io/beep_kinetis.h>
+#include <cyg/io/beep.h>
 #include <cyg/hal/hal_endian.h>
 
 #include <cyg/io/devtab.h>
