@@ -210,7 +210,7 @@ typedef struct usbs_control_endpoint {
     // for coping with complicated IN requests, but this is only
     // allowed if they actually handle the request.
     unsigned char       control_buffer[8];
-
+    unsigned char       transaction_buffer[2];
     // This callback will be invoked by the USB code following a
     // change in USB state, e.g. to SUSPENDED mode. Higher-level code
     // should install a suitable function. There is some callback data

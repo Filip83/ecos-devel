@@ -1,3 +1,9 @@
+2017-08-22  Filip <filip.gnu@gmail.com>
+
+        * nclude/usbs.h: To the usbs_control_endpoint structure item 
+          transaction_buffer was added. This buffer can be used for
+          status responses etc.
+
 2016-12-08  Filip <filip.gnu@gmail.com>
 
         * src/usbs.c, include/usbs.h: Added support to handle BOS descriptor 
