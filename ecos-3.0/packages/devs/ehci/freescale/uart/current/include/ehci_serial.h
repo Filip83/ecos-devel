@@ -37,23 +37,24 @@ typedef struct
 #endif
 } ehci_serial_callbacks_t;
 
+#if 0
 #if defined(CYGOPT_IO_EHCI_SERIAL_SUPPORT_LINE_STATUS)
-#  define EHCI_SERIAL_CALLBACKS(_l,_receive,_send,_csr_status)  \
-ehci_serial_callbacks_t _l = {                                  \
-    _receive,                                                   \
-    _send                                                       \
+#  define EHCI_SERIAL_CALLBACKS(_l,_receive,_send,_csr_status)      \
+ehci_serial_callbacks_t _l = {                                      \
+    _receive,                                                       \
+    _send                                                           \
 };
 #else
-#define EHCI_SERIAL_CALLBACKS(_l,_init,_receive,_send,_csr_status)   \
-ehci_serial_callbacks_t _l = {                                 \
-    _init,                                                     \
-    _receive,                                                  \
-    _send,                                                     \
-    _csr_status                                                \
+#define EHCI_SERIAL_CALLBACKS(_l,_init,_receive,_send,_csr_status)  \
+ehci_serial_callbacks_t _l = {                                      \
+    _init,                                                          \
+    _receive,                                                       \
+    _send,                                                          \
+    _csr_status                                                     \
 };
 #endif
-    
-extern ehci_serial_callbacks_t cyg_io_ehci_serial_callbacks;
+#endif
+
    
 // Private data which describes this channel
 struct ehci_serial_channel 
@@ -61,18 +62,19 @@ struct ehci_serial_channel
     ehci_serial_funs        *funs;
     ehci_serial_callbacks_t *callbacks;
     void                    *dev_priv;  // Whatever is needed by actual device routines
-    cyg_serial_info_t       config;    // Current configuration
+    cyg_serial_info_t       config;     // Current configuration
     bool                    init;
 };
 
 // Initialization macro for serial channel
-#define EHCI_SERIAL_CHANNEL(_l,                                              \
+#define EHCI_SERIAL_CHANNEL(_l,                                         \
                        _funs,                                           \
                        _dev_priv,                                       \
                        _baud, _stop, _parity, _word_length, _flags)     \
-ehci_serial_channel _l = {                                                   \
+ehci_serial_callbacks_t cyg_io_ehci_serial_callbacks = {0};             \
+ehci_serial_channel _l = {                                              \
     &_funs,                                                             \
-    &cyg_io_ehci_serial_callbacks,                                           \
+    &cyg_io_ehci_serial_callbacks,                                      \
     &(_dev_priv),                                                       \
     CYG_SERIAL_INFO_INIT(_baud, _stop, _parity, _word_length, _flags),  \
 };
@@ -89,16 +91,12 @@ struct ehci_serial_funs
 };
 
 #define EHCI_SERIAL_FUNS(_l,_receive,_send,_set_config,_close)  \
-ehci_serial_funs _l = {                                   \
-  _receive,                                              \
-  _send,                                                 \
-  _set_config,                                           \
-  _close                                                 \
+ehci_serial_funs _l = {                                         \
+  _receive,                                                     \
+  _send,                                                        \
+  _set_config,                                                  \
+  _close                                                        \
 };
-
-extern cyg_devio_table_t cyg_io_ehci_serial_devio;
-
-
 
 #ifdef __cplusplus
 }
