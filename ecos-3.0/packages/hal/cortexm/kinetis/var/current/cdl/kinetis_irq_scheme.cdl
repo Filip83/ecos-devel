@@ -205,7 +205,7 @@
             cdl_option CYGNUM_DEVS_ADC_KINETIS_ISR_PRI_SP {
                 display       "ADC bus interrupt priority"
                 flavor        data
-                active_if     CYGHWR_DEVS_ADC_KINETIS
+#                active_if     CYGHWR_DEVS_ADC_KINETIS
                 default_value 0x90
                 legal_values  { 0 0x10 0x20 0x30 0x40 0x50 0x60 0x70 0x80 
                     0x90  0xA0 0xB0 0xC0 0xD0 0xE0 }
