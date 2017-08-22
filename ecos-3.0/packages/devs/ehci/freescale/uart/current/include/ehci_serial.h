@@ -71,7 +71,7 @@ struct ehci_serial_channel
                        _funs,                                           \
                        _dev_priv,                                       \
                        _baud, _stop, _parity, _word_length, _flags)     \
-ehci_serial_callbacks_t cyg_io_ehci_serial_callbacks = {0};             \
+externC ehci_serial_callbacks_t cyg_io_ehci_serial_callbacks;                   \
 ehci_serial_channel _l = {                                              \
     &_funs,                                                             \
     &cyg_io_ehci_serial_callbacks,                                      \

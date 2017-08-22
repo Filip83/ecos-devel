@@ -231,7 +231,7 @@ static EHCI_SERIAL_FUNS(
     );
 
 
-static EHCI_SERIAL_CHANNEL(
+EHCI_SERIAL_CHANNEL(
         freescale_ehci_serial_channel,
         freescale_ehci_serial_funs,
         freescale_ehci_serial_info_s,
@@ -292,118 +292,110 @@ freescale_ehci_serial_config_port(ehci_serial_channel *chan,
     cyg_uint32                      baud_rate;
     cyg_uint32                      dma_chan_i;
 
-    if(freescale_ehci_serial_channel.callbacks->ehci_init != NULL)
-    {
-		// if baudrate lower than 21 use standard baud rate
-		// otherwise specified value
-		if(new_config->baud > 21)
-			baud_rate = new_config->baud;
-		else
-			baud_rate = select_baud[new_config->baud];
-
-		if(!baud_rate) return false;    // Invalid baud rate selected
-
-		// Bring clock to the service
-		CYGHWR_IO_CLOCK_ENABLE(uart_chan->clock);
-		// Configure PORT pins
-		CYGHWR_IO_FREESCALE_UART_PIN(uart_chan->pins_p->rx);
-		CYGHWR_IO_FREESCALE_UART_PIN(uart_chan->pins_p->tx);
-		CYGHWR_IO_FREESCALE_UART_PIN(uart_chan->pins_p->rts);
-		CYGHWR_IO_FREESCALE_UART_PIN(uart_chan->pins_p->cts);
-
-		CYGHWR_IO_FREESCALE_UART_BAUD_SET(uart_base, baud_rate);
-
-		if(new_config->word_length != 8)
-			return false;
-
-		switch(new_config->parity) {
-		case CYGNUM_SERIAL_PARITY_NONE:
-			regval = 0;
-			break;
-		case CYGNUM_SERIAL_PARITY_EVEN:
-			regval = CYGHWR_DEV_FREESCALE_UART_C1_PE;
-			break;
-		case CYGNUM_SERIAL_PARITY_ODD:
-			regval = CYGHWR_DEV_FREESCALE_UART_C1_PE |
-					 CYGHWR_DEV_FREESCALE_UART_C1_PT;
-			break;
-		default: return false;
-		}
-
-		HAL_WRITE_UINT8(uart_base + CYGHWR_DEV_FREESCALE_UART_C1, regval);
-
-		/* Set tx/rx FIFO watermark */
-		regval = 1;
-		HAL_WRITE_UINT8(uart_base + CYGHWR_DEV_FREESCALE_UART_TWFIFO, regval);
-		HAL_WRITE_UINT8(uart_base + CYGHWR_DEV_FREESCALE_UART_RWFIFO, regval);
-
-		/* Enable tx/rx FIFO fifo size 32 datawords */
-		regval = 0xcc;
-		HAL_WRITE_UINT8(uart_base + CYGHWR_DEV_FREESCALE_UART_PFIFO, regval);
-
-		/* Flush FIFO */
-		regval = CYGHWR_DEV_FREESCALE_UART_CFIFO_TXFLUSH |
-				 CYGHWR_DEV_FREESCALE_UART_CFIFO_RXFLUSH;
-
-		HAL_WRITE_UINT8(uart_base + CYGHWR_DEV_FREESCALE_UART_CFIFO, regval);
-
-		/* Enable hardware flow control */
-		regval = CYGHWR_DEV_FREESCALE_UART_MODEM_TXCTSE |
-				 CYGHWR_DEV_FREESCALE_UART_MODEM_RXRTSE;
-
-		HAL_WRITE_UINT8(uart_base + CYGHWR_DEV_FREESCALE_UART_MODEM, regval);
-
-		/* Enable DMA requests on RX and TX channel */
-		regval = CYGHWR_DEV_FREESCALE_UART_C5_TDMAS |
-				 CYGHWR_DEV_FREESCALE_UART_C5_RDMAS;
-
-		HAL_WRITE_UINT8(uart_base + CYGHWR_DEV_FREESCALE_UART_C5, regval);
-
-		if((dma_set_p=uart_chan->dma_set_p)) {
-			// Initialize DMA channels
-			hal_freescale_edma_init_chanset(dma_set_p);
-	#if DEBUG_EHCI >= 1
-			hal_freescale_edma_diag(dma_set_p, 0xffff);
-	#endif
-			// Set up DMA transfer control descriptors
-			edma_p = dma_set_p->edma_p;
-			dma_chan_i = dma_set_p->chan_p[EHCI_DMA_CHAN_TX_I].dma_chan_i;
-			hal_freescale_edma_transfer_init(edma_p, dma_chan_i,
-											 uart_chan->tx_dma_tcd_ini_p);
-	#if DEBUG_EHCI >= 1
-			hal_freescale_edma_transfer_diag(edma_p, dma_chan_i, true);
-	#endif
-			dma_chan_i = dma_set_p->chan_p[EHCI_DMA_CHAN_RX_I].dma_chan_i;
-			hal_freescale_edma_transfer_init(edma_p, dma_chan_i,
-											 uart_chan->rx_dma_tcd_ini_p);
-	#if DEBUG_EHCI >= 1
-			hal_freescale_edma_transfer_diag(edma_p, dma_chan_i, true);
-	#endif
-		}
-
-		// Enable the device
-		regval = CYGHWR_DEV_FREESCALE_UART_C2_TE  |
-				 CYGHWR_DEV_FREESCALE_UART_C2_RE  |
-				 CYGHWR_DEV_FREESCALE_UART_C2_TIE |
-				 CYGHWR_DEV_FREESCALE_UART_C2_RIE;
-
-		HAL_WRITE_UINT8(uart_base + CYGHWR_DEV_FREESCALE_UART_C2, regval);
-
-		if(new_config != &chan->config)
-			chan->config = *new_config;
-
-		cyg_drv_interrupt_acknowledge(dma_set_p->chan_p[EHCI_DMA_CHAN_TX_I].isr_num);
-		cyg_drv_interrupt_unmask(dma_set_p->chan_p[EHCI_DMA_CHAN_TX_I].isr_num);
-
-		cyg_drv_interrupt_acknowledge(dma_set_p->chan_p[EHCI_DMA_CHAN_RX_I].isr_num);
-		cyg_drv_interrupt_unmask(dma_set_p->chan_p[EHCI_DMA_CHAN_RX_I].isr_num);
-		return true;
-    }
+    // if baudrate lower than 21 use standard baud rate
+    // otherwise specified value
+    if(new_config->baud > 21)
+            baud_rate = new_config->baud;
     else
-    {
-    	CYG_FAIL("EHCI driver callbacks are NULL!\n");
-    	return false;
+            baud_rate = select_baud[new_config->baud];
+
+    if(!baud_rate) return false;    // Invalid baud rate selected
+
+    // Bring clock to the service
+    CYGHWR_IO_CLOCK_ENABLE(uart_chan->clock);
+    // Configure PORT pins
+    CYGHWR_IO_FREESCALE_UART_PIN(uart_chan->pins_p->rx);
+    CYGHWR_IO_FREESCALE_UART_PIN(uart_chan->pins_p->tx);
+    CYGHWR_IO_FREESCALE_UART_PIN(uart_chan->pins_p->rts);
+    CYGHWR_IO_FREESCALE_UART_PIN(uart_chan->pins_p->cts);
+
+    CYGHWR_IO_FREESCALE_UART_BAUD_SET(uart_base, baud_rate);
+
+    if(new_config->word_length != 8)
+            return false;
+
+    switch(new_config->parity) {
+    case CYGNUM_SERIAL_PARITY_NONE:
+            regval = 0;
+            break;
+    case CYGNUM_SERIAL_PARITY_EVEN:
+            regval = CYGHWR_DEV_FREESCALE_UART_C1_PE;
+            break;
+    case CYGNUM_SERIAL_PARITY_ODD:
+            regval = CYGHWR_DEV_FREESCALE_UART_C1_PE |
+                             CYGHWR_DEV_FREESCALE_UART_C1_PT;
+            break;
+    default: return false;
     }
+
+    HAL_WRITE_UINT8(uart_base + CYGHWR_DEV_FREESCALE_UART_C1, regval);
+
+    /* Set tx/rx FIFO watermark */
+    regval = 1;
+    HAL_WRITE_UINT8(uart_base + CYGHWR_DEV_FREESCALE_UART_TWFIFO, regval);
+    HAL_WRITE_UINT8(uart_base + CYGHWR_DEV_FREESCALE_UART_RWFIFO, regval);
+
+    /* Enable tx/rx FIFO fifo size 32 datawords */
+    regval = 0xcc;
+    HAL_WRITE_UINT8(uart_base + CYGHWR_DEV_FREESCALE_UART_PFIFO, regval);
+
+    /* Flush FIFO */
+    regval = CYGHWR_DEV_FREESCALE_UART_CFIFO_TXFLUSH |
+                     CYGHWR_DEV_FREESCALE_UART_CFIFO_RXFLUSH;
+
+    HAL_WRITE_UINT8(uart_base + CYGHWR_DEV_FREESCALE_UART_CFIFO, regval);
+
+    /* Enable hardware flow control */
+    regval = CYGHWR_DEV_FREESCALE_UART_MODEM_TXCTSE |
+                     CYGHWR_DEV_FREESCALE_UART_MODEM_RXRTSE;
+
+    HAL_WRITE_UINT8(uart_base + CYGHWR_DEV_FREESCALE_UART_MODEM, regval);
+
+    /* Enable DMA requests on RX and TX channel */
+    regval = CYGHWR_DEV_FREESCALE_UART_C5_TDMAS |
+                     CYGHWR_DEV_FREESCALE_UART_C5_RDMAS;
+
+    HAL_WRITE_UINT8(uart_base + CYGHWR_DEV_FREESCALE_UART_C5, regval);
+
+    if((dma_set_p=uart_chan->dma_set_p)) {
+            // Initialize DMA channels
+            hal_freescale_edma_init_chanset(dma_set_p);
+#if DEBUG_EHCI >= 1
+            hal_freescale_edma_diag(dma_set_p, 0xffff);
+#endif
+            // Set up DMA transfer control descriptors
+            edma_p = dma_set_p->edma_p;
+            dma_chan_i = dma_set_p->chan_p[EHCI_DMA_CHAN_TX_I].dma_chan_i;
+            hal_freescale_edma_transfer_init(edma_p, dma_chan_i,
+                                                                             uart_chan->tx_dma_tcd_ini_p);
+#if DEBUG_EHCI >= 1
+            hal_freescale_edma_transfer_diag(edma_p, dma_chan_i, true);
+#endif
+            dma_chan_i = dma_set_p->chan_p[EHCI_DMA_CHAN_RX_I].dma_chan_i;
+            hal_freescale_edma_transfer_init(edma_p, dma_chan_i,
+                                                                             uart_chan->rx_dma_tcd_ini_p);
+#if DEBUG_EHCI >= 1
+            hal_freescale_edma_transfer_diag(edma_p, dma_chan_i, true);
+#endif
+    }
+
+    // Enable the device
+    regval = CYGHWR_DEV_FREESCALE_UART_C2_TE  |
+                     CYGHWR_DEV_FREESCALE_UART_C2_RE  |
+                     CYGHWR_DEV_FREESCALE_UART_C2_TIE |
+                     CYGHWR_DEV_FREESCALE_UART_C2_RIE;
+
+    HAL_WRITE_UINT8(uart_base + CYGHWR_DEV_FREESCALE_UART_C2, regval);
+
+    if(new_config != &chan->config)
+            chan->config = *new_config;
+
+    cyg_drv_interrupt_acknowledge(dma_set_p->chan_p[EHCI_DMA_CHAN_TX_I].isr_num);
+    cyg_drv_interrupt_unmask(dma_set_p->chan_p[EHCI_DMA_CHAN_TX_I].isr_num);
+
+    cyg_drv_interrupt_acknowledge(dma_set_p->chan_p[EHCI_DMA_CHAN_RX_I].isr_num);
+    cyg_drv_interrupt_unmask(dma_set_p->chan_p[EHCI_DMA_CHAN_RX_I].isr_num);
+    return true;
 }
 
 // Function to initialize the device.  Called at bootstrap time.
@@ -523,21 +515,21 @@ freescale_ehci_serial_start_xmit(ehci_serial_channel *chan, const cyg_uint8 *buf
     cyg_uint32                          dma_chan_tx_i = 0;
 
     cyg_drv_dsr_lock();
+    //diag_printf("trstart\n");
+    // enable transmitter
+    dma_set_p            = uart_chan->dma_set_p;
+    edma_p               = dma_set_p->edma_p;
 
-	// enable transmitter
-	dma_set_p            = uart_chan->dma_set_p;
-	edma_p               = dma_set_p->edma_p;
+    // Set up the DMA channels.
+    dma_chan_tx_i = dma_set_p->chan_p[EHCI_DMA_CHAN_TX_I].dma_chan_i;
+    edma_p->tcd[dma_chan_tx_i].saddr = buffer;
+    edma_p->tcd[dma_chan_tx_i].biter.elinkno = len;
+    edma_p->tcd[dma_chan_tx_i].citer.elinkno = len;
+    edma_p->tcd[dma_chan_tx_i].csr |= FREESCALE_EDMA_CSR_INTMAJOR_M |
+                                      FREESCALE_EDMA_CSR_DREQ_M;
 
-	// Set up the DMA channels.
-	dma_chan_tx_i = dma_set_p->chan_p[EHCI_DMA_CHAN_TX_I].dma_chan_i;
-	edma_p->tcd[dma_chan_tx_i].saddr = buffer;
-	edma_p->tcd[dma_chan_tx_i].biter.elinkno = len;
-	edma_p->tcd[dma_chan_tx_i].citer.elinkno = len;
-	edma_p->tcd[dma_chan_tx_i].csr |= FREESCALE_EDMA_CSR_INTMAJOR_M |
-									  FREESCALE_EDMA_CSR_DREQ_M;
-
-	// Enable edma
-	hal_freescale_edma_erq_enable(edma_p, dma_chan_tx_i);
+    // Enable edma
+    hal_freescale_edma_erq_enable(edma_p, dma_chan_tx_i);
 
     cyg_drv_dsr_unlock();
 }
@@ -556,6 +548,7 @@ freescale_ehci_serial_start_recive(ehci_serial_channel *chan, const cyg_uint8 *b
 
     cyg_drv_dsr_lock();
 
+    //diag_printf("rcvstart\n");
     dma_set_p = uart_chan->dma_set_p;
     edma_p = dma_set_p->edma_p;
 
@@ -608,6 +601,8 @@ freescale_ehci_tx_dma_DSR(cyg_vector_t vector, cyg_ucount32 count, cyg_addrword_
 {
     ehci_serial_channel *chan = (ehci_serial_channel *)data;
 
+    //diag_printf("txdsr\n");
+    CYG_ASSERT(chan->callbacks->block_sent_handler != NULL,"EHCI tx compled callback NULL\n");
     (chan->callbacks->block_sent_handler)();
 }
 
@@ -648,6 +643,8 @@ freescale_ehci_rx_dma_DSR(cyg_vector_t vector, cyg_ucount32 count, cyg_addrword_
 {
     ehci_serial_channel *chan = (ehci_serial_channel *)data;
 
+    //diag_printf("rxdsr\n");
+    CYG_ASSERT(chan->callbacks->block_received_handler != NULL,"EHCI rx compled callback NULL\n");
     (chan->callbacks->block_received_handler)();
 }
 
