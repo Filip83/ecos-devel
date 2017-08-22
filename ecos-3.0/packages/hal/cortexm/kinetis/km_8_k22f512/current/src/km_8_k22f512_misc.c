@@ -113,7 +113,8 @@ hal_system_init( void )
             (CYGHWR_HAL_KINETIS_SIM_SCGC5_PORTA_M |   \
              CYGHWR_HAL_KINETIS_SIM_SCGC5_PORTB_M |   \
              CYGHWR_HAL_KINETIS_SIM_SCGC5_PORTC_M |   \
-             CYGHWR_HAL_KINETIS_SIM_SCGC5_PORTD_M)    \
+             CYGHWR_HAL_KINETIS_SIM_SCGC5_PORTD_M |   \
+             CYGHWR_HAL_KINETIS_SIM_SCGC5_PORTE_M)    \
 
 
 static inline void CYGOPT_HAL_KINETIS_MISC_FLASH_SECTION_ATTR
@@ -126,11 +127,11 @@ hal_misc_init(void)
     sim_p->scgc5 |= CYGHWR_HAL_KINETIS_SIM_SCGC5_PORT_M;
 
     // Disable MPU
-    mpu_p->cesr = 0;
+   // mpu_p->cesr = 0;
     
     // Enable miscelciums GPIO pins
-    hal_set_pin_function(CYGHWR_IO_FREESCALE_XTAL_PIN_EXTAL0);
-    hal_set_pin_function(CYGHWR_IO_FREESCALE_XTAL_PIN_XTAL0);
+    //hal_set_pin_function(CYGHWR_IO_FREESCALE_XTAL_PIN_EXTAL0);
+    //hal_set_pin_function(CYGHWR_IO_FREESCALE_XTAL_PIN_XTAL0);
     
     hal_set_pin_function(CYGHWR_IO_FREESCALE_LCD_A0);
     CYGHWR_IO_DIR_LCD_A0;
@@ -151,6 +152,29 @@ hal_misc_init(void)
     hal_set_pin_function(CYGHWR_IO_FRESCALE_PIN_PWOFF);
     CYGHWR_IO_DIR_PIN_PWOFF;
     CYGHWR_IO_CLEAR_PIN_PWOFF;
+    
+    // Configure SPI GPIO pins
+    hal_set_pin_function(CYGHWR_IO_FREESCALE_SPI0_PIN_CS0);
+    CYGHWR_IO_GPIO_PIN_CS_RTC_DIR_OUT;
+    CYGHWR_IO_GPIO_PIN_CS_RTC_CLR;
+    
+    hal_set_pin_function(CYGHWR_IO_FREESCALE_SPI0_PIN_CS1);
+    CYGHWR_IO_GPIO_PIN_CS_LCD_DIR_OUT;
+    CYGHWR_IO_GPIO_PIN_CS_LCD_CLR;
+    
+    hal_set_pin_function(CYGHWR_IO_FREESCALE_SPI0_PIN_CS2);
+    CYGHWR_IO_GPIO_PIN_CS_FRAM_DIR_OUT;
+    CYGHWR_IO_GPIO_PIN_CS_FRAM_CLR;
+    
+    hal_set_pin_function(CYGHWR_IO_FREESCALE_SPI1_PIN_CS0);
+    CYGHWR_IO_GPIO_PIN_CS_ADC_DIR_OUT;
+    CYGHWR_IO_GPIO_PIN_CS_ADC_CLR;
+    
+    hal_set_pin_function(CYGHWR_IO_FREESCALE_SPI1_PIN_CS1);
+    CYGHWR_IO_GPIO_PIN_CS_DAC_DIR_OUT;
+    CYGHWR_IO_GPIO_PIN_CS_DAC_CLR;
+    
+    hal_set_pin_function(CYGHWR_HAL_KINETIS_PIN(C, 3,  5, 0));
 }
 
 
@@ -252,7 +276,7 @@ CYG_DEVS_SPI_FREESCALE_DSPI_DEVICE(
 /**
 * Definition of FLASH drivers structure for FLASH and FRAM
 */
-CYG_DEVS_FLASH_SPI_FM25VXX_DRIVER(fm25wxx_spi_fram,FRAM_FM25WXX_BASE_ADDRESS,&fm25vxx_spi_dev0);
+CYG_DEVS_FLASH_SPI_FM25VXX_DRIVER(fm25wxx_spi_fram, FRAM_FM25WXX_BASE_ADDRESS,&fm25vxx_spi_dev0);
 
 #endif
 
