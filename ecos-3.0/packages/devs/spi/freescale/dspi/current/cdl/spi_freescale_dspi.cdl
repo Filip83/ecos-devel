@@ -65,7 +65,7 @@ cdl_package CYGPKG_DEVS_SPI_FREESCALE_DSPI {
         display "DSPI FIFO size"
         flavor data
         default_value 4
-        legal_values { 4 5 6 7 8 }
+        legal_values { 1 2 4 5 6 7 8 }
     }
 
     cdl_component CYGHWR_DEVS_SPI_FREESCALE_DSPI_CTAR_NUM {
