@@ -1,3 +1,8 @@
+2017-08-27  Filipl <filip.gnu@gmail.com>
+
+        * cdl/spi_freescale_dspi.cdl: Option CYGHWR_DEVS_SPI_FREESCALE_DSPI_FIFO_SIZE
+          can now be 1 and 2 as well.
+
 2013-07-09  Mike Jones <mjones@proclivis.com>
 
 	* src/spi_freescale_dspi.c: Fix: Kinetis DSPI infinite polling
