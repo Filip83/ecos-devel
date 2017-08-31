@@ -13,35 +13,7 @@
 
 #ifndef USB_HDR_H
 #define USB_HDR_H
-#if 1
-#define USB_DEVICE_MAX_EP                           16
-#define CYGNUM_DEVS_USB_KINETIS_CONFIG_ENDPOINTS    4
-#define USB_SETUP_PACKET_SIZE                       256
 
-/* big/little endian */
-#define SWAP2BYTE_CONST(n) ((((n)&0x00FFU) << 8U) | (((n)&0xFF00U) >> 8U))
-#define SWAP4BYTE_CONST(n) \
-    ((((n)&0x000000FFU) << 24U) | (((n)&0x0000FF00U) << 8U) | (((n)&0x00FF0000U) >> 8U) | (((n)&0xFF000000U) >> 24U))
-
-#if 0
-#define USB_SHORT_TO_LITTLE_ENDIAN(n) SWAP2BYTE_CONST(n)
-#define USB_LONG_TO_LITTLE_ENDIAN(n) SWAP4BYTE_CONST(n)
-#define USB_SHORT_FROM_LITTLE_ENDIAN(n) SWAP2BYTE_CONST(n)
-#define USB_LONG_FROM_LITTLE_ENDIAN(n) SWAP2BYTE_CONST(n)
-#else
-#define USB_SHORT_TO_LITTLE_ENDIAN(n) n
-#define USB_LONG_TO_LITTLE_ENDIAN(n) n
-#define USB_SHORT_FROM_LITTLE_ENDIAN(n) n
-#define USB_LONG_FROM_LITTLE_ENDIAN(n) n
-#endif 
-
-#if !defined(MIN)
-#define MIN(a, b) ((a) < (b) ? (a) : (b))
-#endif
-
-#if !defined(MAX)
-#define MAX(a, b) ((a) > (b) ? (a) : (b))
-#endif
 /* ----------------------------------------------------------------------------
    -- USB Peripheral Access Layer
    ---------------------------------------------------------------------------- */
@@ -52,7 +24,7 @@
  */
 
 /** USB - Register Layout Typedef */
-typedef struct {
+typedef volatile struct {
   cyg_uint8 PERID;                              /**< Peripheral ID register, offset: 0x0 */
        cyg_uint8 RESERVED_0[3];
   cyg_uint8 IDCOMP;                             /**< Peripheral ID Complement register, offset: 0x4 */
@@ -517,233 +489,25 @@ typedef struct {
 #define USB_IRQS                                 { USB0_IRQn }
 
 
-/*!
- * @addtogroup usb_device_controller_khci_driver
- * @{
- */
+/* USB module features */
 
-/*******************************************************************************
- * Definitions
- ******************************************************************************/
-
-/*! @brief The maximum value of ISO maximum packet size for FS in USB specification 2.0 */
-#define USB_DEVICE_MAX_FS_ISO_MAX_PACKET_SIZE (1023U)
-
-/*! @brief The maximum value of non-ISO maximum packet size for FS in USB specification 2.0 */
-#define USB_DEVICE_MAX_FS_NONE_ISO_MAX_PACKET_SIZE (64U)
-
-/*! @brief Set BDT buffer address */
-#define USB_KHCI_BDT_SET_ADDRESS(bdt_base, ep, direction, odd, address)                          \
-    *((volatile cyg_uint32 *)((bdt_base & 0xfffffe00U) | (((cyg_uint32)ep & 0x0fU) << 5U) |          \
-                            (((cyg_uint32)direction & 1U) << 4U) | (((cyg_uint32)odd & 1U) << 3U)) + \
-      1U) = address
-
-/*! @brief Set BDT control fields*/
-#define USB_KHCI_BDT_SET_CONTROL(bdt_base, ep, direction, odd, control)                \
-    *(volatile cyg_uint32 *)((bdt_base & 0xfffffe00U) | (((cyg_uint32)ep & 0x0fU) << 5U) | \
-                           (((cyg_uint32)direction & 1U) << 4U) | (((cyg_uint32)odd & 1U) << 3U)) = control
-
-/*! @brief Get BDT buffer address*/
-#define USB_KHCI_BDT_GET_ADDRESS(bdt_base, ep, direction, odd)                                    \
-    (*((volatile cyg_uint32 *)((bdt_base & 0xfffffe00U) | (((cyg_uint32)ep & 0x0fU) << 5U) |          \
-                             (((cyg_uint32)direction & 1U) << 4U) | (((cyg_uint32)odd & 1U) << 3U)) + \
-       1U))
-
-/*! @brief Get BDT control fields*/
-#define USB_KHCI_BDT_GET_CONTROL(bdt_base, ep, direction, odd)                          \
-    (*(volatile cyg_uint32 *)((bdt_base & 0xfffffe00U) | (((cyg_uint32)ep & 0x0fU) << 5U) | \
-                            (((cyg_uint32)direction & 1U) << 4U) | (((cyg_uint32)odd & 1U) << 3U)))
-
-
-/*! @brief Endpoint state structure */
-typedef struct _usb_device_khci_endpoint_state_struct
-{
-    cyg_uint8 *transferBuffer; /*!< Address of buffer containing the data to be transmitted */
-    cyg_uint32 transferLength; /*!< Length of data to transmit. */
-    cyg_uint32 transferDone;   /*!< The data length has been transferred*/
-    union
-    {
-        cyg_uint32 state; /*!< The state of the endpoint */
-        struct
-        {
-            cyg_uint32 maxPacketSize : 10U; /*!< The maximum packet size of the endpoint */
-            cyg_uint32 stalled : 1U;        /*!< The endpoint is stalled or not */
-            cyg_uint32 data0 : 1U;          /*!< The data toggle of the transaction */
-            cyg_uint32 bdtOdd : 1U;         /*!< The BDT toggle of the endpoint */
-            cyg_uint32 dmaAlign : 1U;       /*!< Whether the transferBuffer is DMA aligned or not */
-            cyg_uint32 transferring : 1U;   /*!< The endpoint is transferring */
-            cyg_uint32 zlt : 1U;            /*!< zlt flag */
-        } stateBitField;
-    } stateUnion;
-} usb_device_khci_endpoint_state_struct_t;
-
-/*! @brief KHCI state structure */
-typedef struct _usb_device_khci_state_struct
-{
-#if 0
-    usb_device_struct_t *deviceHandle; /*!< Device handle used to identify the device object belongs to */
-#endif
-    cyg_uint8 *bdt;                      /*!< BDT buffer address */
-    volatile USB_Type *registerBase;            /*!< The base address of the register */
-    cyg_uint8 setupPacketBuffer[USB_SETUP_PACKET_SIZE * 2]; /*!< The setup request buffer */
-    cyg_uint8 *dmaAlignBuffer; /*!< This buffer is used to fix the transferBuffer or transferLength does
-                               not align to 4-bytes when the function USB_DeviceKhciRecv is called.
-                               The macro USB_DEVICE_CONFIG_KHCI_DMA_ALIGN is used to enable or disable this feature.
-                               If the feature is enabled, when the transferBuffer or transferLength does not align to
-                               4-bytes,
-                               the transferLength is not more than USB_DEVICE_CONFIG_KHCI_DMA_ALIGN_BUFFER_LENGTH, and
-                               the flag isDmaAlignBufferInusing is zero, the dmaAlignBuffer is used to receive data
-                               and the flag isDmaAlignBufferInusing is set to 1.
-                               When the transfer is done, the received data, kept in dmaAlignBuffer, is copied
-                               to the transferBuffer, and the flag isDmaAlignBufferInusing is cleared.
-                                */
-    usb_device_khci_endpoint_state_struct_t
-        endpointState[CYGNUM_DEVS_USB_KINETIS_CONFIG_ENDPOINTS * 2]; /*!< Endpoint state structures */
-    cyg_uint8 isDmaAlignBufferInusing;                    /*!< The dmaAlignBuffer is used or not */
-    cyg_uint8 isResetting;                                /*!< Is doing device reset or not */
-    cyg_uint8 controllerId;                               /*!< Controller ID */
-    cyg_uint8 setupBufferIndex;                           /*!< A valid setup buffer flag */
-#if (defined(USB_DEVICE_CONFIG_OTG) && (USB_DEVICE_CONFIG_OTG))
-    cyg_uint8 otgStatus;
-#endif
-} __attribute__((__aligned__(4))) usb_device_khci_state_struct_t;
-
-/*! @brief USB error code */
-typedef enum _usb_status
-{
-    kStatus_USB_Success = 0x00U, /*!< Success */
-    kStatus_USB_Error,           /*!< Failed */
-
-    kStatus_USB_Busy,                       /*!< Busy */
-    kStatus_USB_InvalidHandle,              /*!< Invalid handle */
-    kStatus_USB_InvalidParameter,           /*!< Invalid parameter */
-    kStatus_USB_InvalidRequest,             /*!< Invalid request */
-    kStatus_USB_ControllerNotFound,         /*!< Controller cannot be found */
-    kStatus_USB_InvalidControllerInterface, /*!< Invalid controller interface */
-
-    kStatus_USB_NotSupported,   /*!< Configuration is not supported */
-    kStatus_USB_Retry,          /*!< Enumeration get configuration retry */
-    kStatus_USB_TransferStall,  /*!< Transfer stalled */
-    kStatus_USB_TransferFailed, /*!< Transfer failed */
-    kStatus_USB_AllocFail,      /*!< Allocation failed */
-    kStatus_USB_LackSwapBuffer, /*!< Insufficient swap buffer for KHCI */
-    kStatus_USB_TransferCancel, /*!< The transfer cancelled */
-    kStatus_USB_BandwidthFail,  /*!< Allocate bandwidth failed */
-    kStatus_USB_MSDStatusFail,  /*!< For MSD, the CSW status means fail */
-    kStatus_USB_EHCIAttached,
-    kStatus_USB_EHCIDetached,
-} usb_status_t;
-
-/*! @brief Endpoint initialization structure */
-typedef struct _usb_device_endpoint_init_struct
-{
-    cyg_uint16 maxPacketSize;  /*!< Endpoint maximum packet size */
-    cyg_uint8 endpointAddress; /*!< Endpoint address*/
-    cyg_uint8 transferType;    /*!< Endpoint transfer type*/
-    cyg_uint8 zlt;             /*!< ZLT flag*/
-} usb_device_endpoint_init_struct_t;
-
-/*! @brief Endpoint status structure */
-typedef struct _usb_device_endpoint_status_struct
-{
-    cyg_uint8  endpointAddress; /*!< Endpoint address */
-    cyg_uint16 endpointStatus; /*!< Endpoint status : idle or stalled */
-} usb_device_endpoint_status_struct_t;
-
-/*! @brief Defines endpoint state */
-typedef enum _usb_endpoint_status
-{
-    kUSB_DeviceEndpointStateIdle = 0U, /*!< Endpoint state, idle*/
-    kUSB_DeviceEndpointStateStalled,   /*!< Endpoint state, stalled*/
-} usb_device_endpoint_status_t;
-
-#define USB_KHCI_BDT_DEVICE_OUT_TOKEN (0x01U)
-#define USB_KHCI_BDT_DEVICE_IN_TOKEN (0x09U)
-#define USB_KHCI_BDT_DEVICE_SETUP_TOKEN (0x0DU)
-
-#define USB_KHCI_BDT_OWN (0x80U)
-#define USB_KHCI_BDT_DATA01(x) ((((cyg_uint32)(x)) & 0x01U) << 0x06U)
-#define USB_KHCI_BDT_BC(x) ((((cyg_uint32)(x)) & 0x3FFU) << 0x10U)
-#define UBS_KHCI_BDT_KEEP (0x20U)
-#define UBS_KHCI_BDT_NINC (0x10U)
-#define USB_KHCI_BDT_DTS (0x08U)
-#define USB_KHCI_BDT_STALL (0x04U)
-
-typedef enum _usb_khci_interrupt_type
-{
-    kUSB_KhciInterruptReset = 0x01U,
-    kUSB_KhciInterruptError = 0x02U,
-    kUSB_KhciInterruptSofToken = 0x04U,
-    kUSB_KhciInterruptTokenDone = 0x08U,
-    kUSB_KhciInterruptSleep = 0x10U,
-    kUSB_KhciInterruptResume = 0x20U,
-    kUSB_KhciInterruptAttach = 0x40U,
-    kUSB_KhciInterruptStall = 0x80U,
-} usb_khci_interrupt_type_t;
-
-/* USB standard descriptor endpoint bmAttributes */
-#define USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_MASK (0x80U)
-#define USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_SHIFT (7U)
-#define USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_OUT (0U)
-#define USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_IN (0x80U)
-
-/*! @brief Control type for controller */
-typedef enum _usb_device_control_type
-{
-    kUSB_DeviceControlRun = 0U,          /*!< Enable the device functionality */
-    kUSB_DeviceControlStop,              /*!< Disable the device functionality */
-    kUSB_DeviceControlEndpointInit,      /*!< Initialize a specified endpoint */
-    kUSB_DeviceControlEndpointDeinit,    /*!< De-initialize a specified endpoint */
-    kUSB_DeviceControlEndpointStall,     /*!< Stall a specified endpoint */
-    kUSB_DeviceControlEndpointUnstall,   /*!< Unstall a specified endpoint */
-    kUSB_DeviceControlGetDeviceStatus,   /*!< Get device status */
-    kUSB_DeviceControlGetEndpointStatus, /*!< Get endpoint status */
-    kUSB_DeviceControlSetDeviceAddress,  /*!< Set device address */
-    kUSB_DeviceControlGetSynchFrame,     /*!< Get current frame */
-    kUSB_DeviceControlResume,            /*!< Drive controller to generate a resume signal in USB bus */
-    kUSB_DeviceControlSleepResume,       /*!< Drive controller to generate a LPM resume signal in USB bus */
-    kUSB_DeviceControlSuspend,           /*!< Drive controller to enetr into suspend mode */
-    kUSB_DeviceControlSleep,             /*!< Drive controller to enetr into sleep mode */
-    kUSB_DeviceControlSetDefaultStatus,  /*!< Set controller to default status */
-    kUSB_DeviceControlGetSpeed,          /*!< Get current speed */
-    kUSB_DeviceControlGetOtgStatus,      /*!< Get OTG status */
-    kUSB_DeviceControlSetOtgStatus,      /*!< Set OTG status */
-    kUSB_DeviceControlSetTestMode,       /*!< Drive xCHI into test mode */
-    kUSB_DeviceControlGetRemoteWakeUp,   /*!< Get flag of LPM Remote Wake-up Enabled by USB host. */
-#if (defined(USB_DEVICE_CHARGER_DETECT_ENABLE) && (USB_DEVICE_CHARGER_DETECT_ENABLE > 0U))
-    kUSB_DeviceControlDcdInitModule,
-    kUSB_DeviceControlDcdDeinitModule,
-    kUSB_DeviceControlGetDeviceAttachStatus,
-#endif
-} usb_device_control_type_t;
-#endif /* USB_HDR_H */
-
-/* USB  standard descriptor transfer direction (cannot change the value because iTD use the value directly) */
-#define USB_OUT (0U)
-#define USB_IN (1U)
-
-/*! @brief The setup packet size of USB control transfer. */
-#define USB_SETUP_PACKET_SIZE (8U)
-/*! @brief  USB endpoint mask */
-#define USB_ENDPOINT_NUMBER_MASK (0x0FU)
-
-#define USB_DEVICE_CONFIG_KHCI_DMA_ALIGN_BUFFER_LENGTH  8
-
-/* USB speed (the value cannot be changed because EHCI QH use the value directly)*/
-#define USB_SPEED_FULL (0x00U)
-#define USB_SPEED_LOW (0x01U)
-#define USB_SPEED_HIGH (0x02U)
-
-/* Set up packet structure */
-typedef struct _usb_setup_struct
-{
-    cyg_uint8  bmRequestType;
-    cyg_uint8  bRequest;
-    cyg_uint16 wValue;
-    cyg_uint16 wIndex;
-    cyg_uint16 wLength;
-} usb_setup_struct_t;
-
-
+/* @brief KHCI module instance count */
+#define FSL_FEATURE_USB_KHCI_COUNT (1)
+/* @brief HOST mode enabled */
+#define FSL_FEATURE_USB_KHCI_HOST_ENABLED (1)
+/* @brief OTG mode enabled */
+#define FSL_FEATURE_USB_KHCI_OTG_ENABLED (1)
+/* @brief Size of the USB dedicated RAM */
+#define FSL_FEATURE_USB_KHCI_USB_RAM (0)
+/* @brief Has KEEP_ALIVE_CTRL register */
+#define FSL_FEATURE_USB_KHCI_KEEP_ALIVE_ENABLED (0)
+/* @brief Has the Dynamic SOF threshold compare support */
+#define FSL_FEATURE_USB_KHCI_DYNAMIC_SOF_THRESHOLD_COMPARE_ENABLED (0)
+/* @brief Has the VBUS detect support */
+#define FSL_FEATURE_USB_KHCI_VBUS_DETECT_ENABLED (0)
+/* @brief Has the IRC48M module clock support */
+#define FSL_FEATURE_USB_KHCI_IRC48M_MODULE_CLOCK_ENABLED (1)
+/* @brief Number of endpoints supported */
+#define FSL_FEATURE_USB_ENDPT_COUNT (16)
 
 #endif

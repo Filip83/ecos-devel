@@ -1,3 +1,7 @@
+2017-08-31  Filip <filip.gnu@gmail.com>
+
+        * Driver revorked. It use freescale usb khci driver and modifed dci.
+          Configuratins headers from freescale are used as well. 
 
 2017-04-20  Filip <filip.gnu@gmail.com>
 

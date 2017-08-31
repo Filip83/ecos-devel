@@ -83,7 +83,7 @@ cdl_package CYGPKG_DEVS_USB_KINETIS {
         implements CYGHWR_IO_USB_SLAVE_OUT_ENDPOINTS
         implements CYGHWR_IO_USB_SLAVE_IN_ENDPOINTS
 
-        compile       -library=libextras.a usbc_kinetis.c usbs_kinetis_data.cxx
+        compile       -library=libextras.a  usb_device_khci.c usb_device_dci.c usbs_kinetis.c
 
         description   "
             Enable support for endpoint 0. If this support is disabled
