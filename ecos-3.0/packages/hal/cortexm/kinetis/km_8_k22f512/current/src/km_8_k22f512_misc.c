@@ -174,7 +174,11 @@ hal_misc_init(void)
     CYGHWR_IO_GPIO_PIN_CS_DAC_DIR_OUT;
     CYGHWR_IO_GPIO_PIN_CS_DAC_CLR;
     
-    hal_set_pin_function(CYGHWR_HAL_KINETIS_PIN(C, 3,  5, 0));
+    hal_set_pin_function(CYGHWR_IO_FRESCALE_PIN_ANA_RESET);
+    CYGHWR_IO_DIR_PIN_ANA_RESET;
+    CYGHWR_IO_CLEAR_PIN_ANA_RESET;
+    
+    //hal_set_pin_function(CYGHWR_HAL_KINETIS_PIN(C, 3,  5, 0));
 }
 
 
