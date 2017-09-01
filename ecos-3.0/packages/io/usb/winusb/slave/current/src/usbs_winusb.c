@@ -586,9 +586,9 @@ usbs_winusb_init(usbs_winusb* ser, usbs_tx_endpoint* tx_ep,
 // Start the USB subsystem
 
 void usbs_winusb_start(app_state_change_fn state_change_fn,
-                       unsigned char *mfg_str,
-                       unsigned char *product_str,
-                       unsigned char *sn_str)
+                       char *mfg_str,
+                       char *product_str,
+                       char *sn_str)
 {
   usbs_winusb_init(&usbs_ser0, NULL, NULL);
   

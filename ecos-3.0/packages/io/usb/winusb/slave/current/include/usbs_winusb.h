@@ -146,9 +146,9 @@ void usbs_winusb_state_change_handler(usbs_control_endpoint*, void*,
 
 // Starts the USB subsystem
 void usbs_winusb_start(app_state_change_fn state_change_fn,
-                       unsigned char *mfg_str,
-                       unsigned char *product_str,
-                       unsigned char *sn_str);
+                       char *mfg_str,
+                       char *product_str,
+                       char *sn_str);
 
 #ifdef __cplusplus
 } // extern "C"
