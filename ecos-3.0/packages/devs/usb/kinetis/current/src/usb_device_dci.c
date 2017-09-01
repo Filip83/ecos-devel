@@ -281,10 +281,12 @@ static usb_status_t USB_DeviceTransfer(usb_device_handle handle,
 {
     usb_device_struct_t *deviceHandle = (usb_device_struct_t *)handle;
     usb_status_t error = kStatus_USB_Error;
+#if 0
     uint8_t endpoint = endpointAddress & USB_ENDPOINT_NUMBER_MASK;
     uint8_t direction = (endpointAddress & USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_MASK) >>
                         USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_SHIFT;
-
+#endif
+    
     if (NULL == deviceHandle)
     {
     	CYG_FAIL("Kinetis USB - deviceHandle == NULL\n");
@@ -649,8 +651,10 @@ static usb_status_t USB_DeviceDcdDedicatedChargerDetectNotification(usb_device_s
 static usb_status_t USB_DeviceNotification(usb_device_struct_t *handle, usb_device_callback_message_struct_t *message)
 {
     uint8_t endpoint = message->code & USB_ENDPOINT_NUMBER_MASK;
+#if 0
     uint8_t direction = (message->code & USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_MASK) >>
                         USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_SHIFT;
+#endif
     usb_status_t error = kStatus_USB_Error;
 
     switch (message->code)
@@ -743,28 +747,6 @@ static usb_status_t USB_DeviceNotification(usb_device_struct_t *handle, usb_devi
 						}
 					}
             	}
-#if 0
-                if (handle->endpointCallback[(uint8_t)((uint32_t)endpoint << 1U) | direction].callbackFn)
-                {
-                    usb_device_endpoint_callback_message_struct_t endpointCallbackMessage;
-                    endpointCallbackMessage.buffer = message->buffer;
-                    endpointCallbackMessage.length = message->length;
-                    endpointCallbackMessage.isSetup = message->isSetup;
-                    if (message->isSetup)
-                    {
-                        handle->endpointCallback[0].isBusy = 0U;
-                        handle->endpointCallback[1].isBusy = 0U;
-                    }
-                    else
-                    {
-                        handle->endpointCallback[(uint8_t)((uint32_t)endpoint << 1U) | direction].isBusy = 0U;
-                    }
-                    /* Call endpoint callback */
-                    error = handle->endpointCallback[(uint8_t)((uint32_t)endpoint << 1U) | direction].callbackFn(
-                        handle, &endpointCallbackMessage,
-                        handle->endpointCallback[(uint8_t)((uint32_t)endpoint << 1U) | direction].callbackParam);
-                }
-#endif
             }
             break;
     }
@@ -1117,7 +1099,9 @@ usb_status_t USB_DeviceInitEndpoint(usb_device_handle handle,
 {
     usb_device_struct_t *deviceHandle = (usb_device_struct_t *)handle;
     uint8_t endpoint;
+#if 0
     uint8_t direction;
+#endif
 
     if (!deviceHandle)
     {
@@ -1126,24 +1110,26 @@ usb_status_t USB_DeviceInitEndpoint(usb_device_handle handle,
     }
 
     endpoint = epInit->endpointAddress & USB_ENDPOINT_NUMBER_MASK;
-	direction = (epInit->endpointAddress & USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_MASK) >>
-				USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_SHIFT;
+#if 0
+    direction = (epInit->endpointAddress & USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_MASK) >>
+                            USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_SHIFT;
+#endif
 
-	if (endpoint < USB_DEVICE_CONFIG_ENDPOINTS)
-	{
-		if(endpoint > 0)
-		{
-			deviceHandle->endpoints[endpoint - 1].endpoint.buffer 		= (unsigned char *) 0;
-			deviceHandle->endpoints[endpoint - 1].endpoint.buffer_size 	= 0U;
-			deviceHandle->endpoints[endpoint - 1].endpoint.halted      	= 0U;
-			deviceHandle->endpoints[endpoint - 1].epAddress         	=
-					                                  epInit->endpointAddress;
-		}
-	}
-	else
-	{
-		return kStatus_USB_InvalidParameter;
-	}
+    if (endpoint < USB_DEVICE_CONFIG_ENDPOINTS)
+    {
+        if(endpoint > 0)
+        {
+            deviceHandle->endpoints[endpoint - 1].endpoint.buffer 	= (unsigned char *) 0;
+            deviceHandle->endpoints[endpoint - 1].endpoint.buffer_size 	= 0U;
+            deviceHandle->endpoints[endpoint - 1].endpoint.halted      	= 0U;
+            deviceHandle->endpoints[endpoint - 1].epAddress         	=
+                                                       epInit->endpointAddress;
+        }
+    }
+    else
+    {
+            return kStatus_USB_InvalidParameter;
+    }
 
 
 

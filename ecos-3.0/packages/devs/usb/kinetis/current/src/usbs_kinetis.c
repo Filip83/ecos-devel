@@ -494,7 +494,7 @@ static usbs_tx_endpoint* kinetis_usb_get_txep
 
   // Map from endpoint ID to physical endpoint.
   if (ep_id > 0 && ep_id < 16)
-    txep = &kinetis_usb_device->endpoints [ep_id - 1];
+    txep = (usbs_tx_endpoint*)&kinetis_usb_device->endpoints [ep_id - 1];
 
   // Return endpoint handle or null pointer for invalid endpoint.
   if (txep == NULL) {
@@ -510,11 +510,11 @@ static usbs_tx_endpoint* kinetis_usb_get_txep
 static usbs_rx_endpoint* kinetis_usb_get_rxep
   (usbs_control_endpoint* control_endpoint, cyg_uint8 ep_id)
 {
-	usbs_rx_endpoint* rxep = NULL;
+    usbs_rx_endpoint* rxep = NULL;
 
   // Map from endpoint ID to physical endpoint.
   if (ep_id > 0 && ep_id < 16)
-	  rxep = &kinetis_usb_device->endpoints [ep_id - 1];
+     rxep = (usbs_tx_endpoint*)&kinetis_usb_device->endpoints [ep_id - 1];
 
   // Return endpoint handle or null pointer for invalid endpoint.
   if (rxep == NULL) {
@@ -682,7 +682,7 @@ static usb_status_t USB_DeviceChSetClearFeature(usb_device_struct_t *handle,
         /* Set or Clear the endpoint featrue. */
         if (USB_REQUEST_STANDARD_FEATURE_SELECTOR_ENDPOINT_HALT == setup->wValue)
         {
-        	usbs_rx_endpoint * pep = &handle->endpoints[((uint8_t)setup->wIndex & USB_ENDPOINT_NUMBER_MASK) - 1];
+            usbs_rx_endpoint * pep = &handle->endpoints[((uint8_t)setup->wIndex & USB_ENDPOINT_NUMBER_MASK) - 1].endpoint;
 
             if (USB_CONTROL_ENDPOINT == (setup->wIndex & USB_ENDPOINT_NUMBER_MASK))
             {
@@ -1013,19 +1013,11 @@ usbs_kinetis_dsr (cyg_vector_t vector, cyg_ucount32 count, cyg_addrword_t data)
 cyg_uint32
 usbs_kinetis_isr (cyg_vector_t vector, cyg_addrword_t data)
 {
+    CYG_ASSERT(CYGNUM_HAL_INTERRUPT_USB0 == vector, "USB ISR should only be invoked for USB interrupts");
 
-	usb_device_struct_t *usbdevice = (usb_device_struct_t *)data;
-	usb_device_khci_state_struct_t *khciState = usbdevice->controllerHandle;
-   CYG_ASSERT(CYGNUM_HAL_INTERRUPT_USB0 == vector, "USB ISR should only be invoked for USB interrupts");
-   //CYG_ASSERT(0 == data, "The Kinetis ISR needs no global data pointer");
+    cyg_drv_interrupt_mask(vector);
 
-
-
-   //cyg_drv_interrupt_acknowledge(vector);
-
-   cyg_drv_interrupt_mask(vector);
-
-   return CYG_ISR_HANDLED | CYG_ISR_CALL_DSR;
+    return CYG_ISR_HANDLED | CYG_ISR_CALL_DSR;
 }
 
 // ----------------------------------------------------------------------------
