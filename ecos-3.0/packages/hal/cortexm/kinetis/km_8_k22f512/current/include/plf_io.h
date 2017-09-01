@@ -221,6 +221,11 @@
 #define CYGHWR_IO_SET_PIN_PWOFF      CYGHWR_HAL_KINETIS_GPIO_SET_PIN(C,9)
 #define CYGHWR_IO_CLEAR_PIN_PWOFF    CYGHWR_HAL_KINETIS_GPIO_CLEAR_PIN(C,9)
 
+#define CYGHWR_IO_FRESCALE_PIN_ANA_RESET CYGHWR_HAL_KINETIS_PIN(C, 0,  1, KINETIS_PIN_PD_ENABLE)
+#define CYGHWR_IO_DIR_PIN_ANA_RESET      CYGHWR_HAL_KINETIS_GPIO_PIN_DDR_OUT(C, 0)
+#define CYGHWR_IO_SET_PIN_ANA_RESET      CYGHWR_HAL_KINETIS_GPIO_SET_PIN(C,0)
+#define CYGHWR_IO_CLEAR_PIN_ANA_RESET    CYGHWR_HAL_KINETIS_GPIO_CLEAR_PIN(C,0)
+
 
 // cphol and ncpha configuration see documentation page 660
 // SPI RTC
@@ -266,7 +271,7 @@
 // Analog board ADC config SPI
 #define CYGHWR_DEVS_ADC_AD7124_DEV0_SPI_CS              0
 #define AD7124_SPI_FRAME_SIZE                           8
-#define AD7124_SPI_CLOCK_POL                            0
+#define AD7124_SPI_CLOCK_POL                            1
 #define AD7124_SPI_CLOCK_PHASE                          1
 #define CYGHWR_DEVS_ADC_AD7124_DEV0_SPEED               2000000l
 #define CYGHWR_DEVS_ADC_AD7124_DEV0_CS_DLY              0
