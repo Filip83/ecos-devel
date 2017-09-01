@@ -250,7 +250,7 @@ static bool kinetis_adc_init(struct cyg_devtab_entry *tab)
 #endif
 #endif
         
-#if defined(CYGNUM_DEVS_ADC_KINETIS_ENABLE_ASYNC_CLOCK) &&
+#if defined(CYGNUM_DEVS_ADC_KINETIS_ENABLE_ASYNC_CLOCK) && \
         (CYGNUM_DEVS_ADC_KINETIS_ENABLE_ASYNC_CLOCK == 1)
         reg |= ADC_CFG2_ADACKEN_MASK;
 #endif
