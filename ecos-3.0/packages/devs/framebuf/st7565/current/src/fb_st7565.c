@@ -257,9 +257,9 @@ cyg_st7565_fb_synch(struct cyg_fb* fb, cyg_ucount16 when)
         DISP_COLUMN_ADDRESS_LSB,
         DISP_PAGE_ADDRESS_SET
     };
-    #if LCD_DIAG_LEVEL > 0
+#if defined(LCD_DIAG_LEVEL) && LCD_DIAG_LEVEL > 0
     diag_printf("fb ST7565 draw\n");
-    #endif
+#endif
     
     cyg_spi_transaction_begin((cyg_spi_device*)&lcd_spi_device);
     
