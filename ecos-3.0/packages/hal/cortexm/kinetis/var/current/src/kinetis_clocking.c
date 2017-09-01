@@ -77,12 +77,13 @@ cyg_uint32 hal_kinetis_busclk;
 cyg_uint32 hal_get_cpu_clock(void);
 
 void hal_start_main_clock(void);
+void hal_start_main_clock2(void);
 void hal_set_clock_dividers(void);
 #ifdef CYGHWR_HAL_CORTEXM_KINETIS_RTC
 void hal_start_rtc_clock(void);
 #endif
 
-
+//#define CYGOPT_HAL_CORTEXM_KINETIS_MCG_REF_EXT
 //==========================================================================
 // Setup up system clocks
 //
@@ -101,9 +102,9 @@ hal_start_clocks( void )
     // Real Time Clock
     hal_start_rtc_clock();
 # endif
-    hal_set_clock_dividers();
+    //hal_set_clock_dividers();
     // Main clock - MCG
-    hal_start_main_clock();
+    hal_start_main_clock2();
 #endif
     // Trace clock
 #ifdef CYGHWR_HAL_CORTEXM_KINETIS_TRACECLK_CORE
@@ -206,7 +207,6 @@ hal_start_ext_ref(void)
 # endif // CYGHWR_HAL_CORTEXM_KINETIS_PLLREFSEL_1 || ...
 }
 #endif // CYGOPT_HAL_CORTEXM_KINETIS_MCG_REF_EXT
-
 
 void CYGOPT_HAL_KINETIS_MISC_FLASH_SECTION_ATTR
 hal_start_main_clock(void)
@@ -322,11 +322,82 @@ hal_start_main_clock(void)
        // defined(CYGOPT_HAL_CORTEXM_KINETIS_MCG_MCGOUTCLK_PLL1) ||
        // defined(CYGOPT_HAL_CORTEXM_KINETIS_MCG_MCGOUTCLK_FLL) ||
        // defined(CYGOPT_HAL_CORTEXM_KINETIS_MCG_MCGOUTCLK_EXT_REFCLK)
+    
+    sim_p->clk_div2 = 0;
+    sim_p->sopt2 |=  
+                    CYGHWR_HAL_KINETIS_SIM_SOPT2_USBSRC_M  | (7 << 5);         
+                    
+}
+
+void CYGOPT_HAL_KINETIS_MISC_FLASH_SECTION_ATTR
+hal_start_main_clock2(void)
+{
+    #if 1
+    cyg_uint32 i;
+
+    cyghwr_hal_kinetis_mcg_t *mcg_p = CYGHWR_HAL_KINETIS_MCG_P;
+    cyghwr_hal_kinetis_sim_t *sim_p = CYGHWR_HAL_KINETIS_SIM_P;
+    volatile cyg_uint8 *osc_cr_p = CYGHWR_HAL_KINETIS_OSC_CR_P;
+
+    sim_p->clk_div1 = 0x01230000U;
+    
+
+    //CLOCK_InitOsc0
+    *osc_cr_p = 0x80 | 0 / 2;
+   
+    mcg_p->c2 = CYGHWR_HAL_KINETIS_MCG_C2_RANGE(2) | 4;
+    
+    //CLOCK_CONFIG_SetFllExtRefDiv
+    mcg_p->c1 = 0;
+                
+    //CLOCK_BootToBlpeMode
+    //CLOCK_SetExternalRefClkConfig(oscsel);
+    
+
+    mcg_p->c7 =  0;
+    /* ERR009878 Delay at least 50 micro-seconds for external clock change valid. */
+    i = 1500U;
+    while (i--)
+    {
+        asm ("nop");
+    }
+
+    mcg_p->c1 = CYGHWR_HAL_KINETIS_MCG_C1_CLKS(2);
+
+
+    while (!(mcg_p->status & CYGHWR_HAL_KINETIS_MCG_S_OSCINIT_M))
+    {
+    }
+
+    
+    /* Wait for MCG_S[CLKST] and MCG_S[IREFST]. */
+    while ((mcg_p->status & (CYGHWR_HAL_KINETIS_MCG_S_IREFST_M | CYGHWR_HAL_KINETIS_MCG_S_CLKST_M)) !=
+           (CYGHWR_HAL_KINETIS_MCG_S_CLKST(2)))
+    {
+    }
+
+    /* In FBE now, start to enter BLPE. */
+    mcg_p->c2 |= CYGHWR_HAL_KINETIS_MCG_C2_LP_M;
+    
+    
+
+    //CLOCK_SetSimConfig
+    sim_p->clk_div1 = 0x200000U;
+    sim_p->clk_div2 = 0;
+    sim_p->sopt2 =  (2 << CYGHWR_HAL_KINETIS_SIM_SOPT2_PLLFLLSEL_S) |
+                    CYGHWR_HAL_KINETIS_SIM_SOPT2_USBSRC_M           |
+                    (3 << 16) | (7 << 5);
+    //sim_p->sopt1 =  (2 << CYGHWR_HAL_KINETIS_SIM_SOPT2_PLLFLLSEL_S);
+#endif
+
 }
 
 cyg_uint32 CYGOPT_HAL_KINETIS_MISC_FLASH_SECTION_ATTR
 hal_get_cpu_clock(void)
 {
+#if 1
+    cyg_uint32 freq = 24576000;
+#else
     cyg_uint32 freq;
 #ifdef CYGOPT_HAL_CORTEXM_KINETIS_MCG_MCGOUTCLK_PLL
     cyghwr_hal_kinetis_mcg_t *mcg_p = CYGHWR_HAL_KINETIS_MCG_P;
@@ -352,7 +423,7 @@ hal_get_cpu_clock(void)
     freq = CYGOPT_HAL_CORTEXM_KINETIS_MCGOUT_EXT_RC;
 #else // ifdef CYGOPT_HAL_CORTEXM_KINETIS_MCG_MCGOUTCLK_none
 #endif // CYGOPT_HAL_CORTEXM_KINETIS_MCG_MCGOUTCLK_end
-
+#endif
     return freq;
 }
 
@@ -372,10 +443,10 @@ hal_set_clock_dividers(void)
           CYGHWR_HAL_KINETIS_SIM_CLKDIV1_OUTDIV4(
                 CYGHWR_HAL_CORTEXM_KINETIS_CLKDIV_FLASH-1);
 
-    sim_p->clk_div2 = CYGHWR_HAL_KINETIS_SIM_CLKDIV2_USBDIV(
+    /*sim_p->clk_div2 = CYGHWR_HAL_KINETIS_SIM_CLKDIV2_USBDIV(
                           CYGHWR_HAL_CORTEXM_KINETIS_USBCLK_DIV-1) |
                           (CYGHWR_HAL_CORTEXM_KINETIS_USBCLK_FRAC==2 ?
-                               CYGHWR_HAL_KINETIS_SIM_CLKDIV2_USBFRAC_M : 0);
+                               CYGHWR_HAL_KINETIS_SIM_CLKDIV2_USBFRAC_M : 0);*/
 }
 
 #ifdef CYGHWR_HAL_CORTEXM_KINETIS_RTC
@@ -447,10 +518,18 @@ hal_freescale_uart_setbaud(cyg_uint32 uart_p, cyg_uint32 baud)
 
 void hal_update_clock_var(void)
 {
+#if 1
+    hal_kinetis_sysclk=hal_get_cpu_clock();
+    /*hal_kinetis_busclk=hal_kinetis_sysclk /
+          CYGHWR_HAL_CORTEXM_KINETIS_CLKDIV_PER_BUS;*/
+    hal_kinetis_busclk = hal_kinetis_sysclk;
+    hal_cortexm_systick_clock=hal_kinetis_sysclk;
+#else
     hal_kinetis_sysclk=hal_get_cpu_clock();
     hal_kinetis_busclk=hal_kinetis_sysclk /
           CYGHWR_HAL_CORTEXM_KINETIS_CLKDIV_PER_BUS;
     hal_cortexm_systick_clock=hal_kinetis_sysclk;
+#endif
 }
 
 
