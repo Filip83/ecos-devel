@@ -1,10 +1,10 @@
-#ifndef CYGONCE_USBS_SERIAL_H
-#define CYGONCE_USBS_SERIAL_H
+#ifndef CYGONCE_USBS_WINUSB_H
+#define CYGONCE_USBS_WINUSB_H
 //==========================================================================
 //
-//      include/usbs_serial.h
+//      include/usbs_winusb.h
 //
-//      Description of the USB slave-side serial device support
+//      Description of the USB slave-side winusb device support
 //
 //==========================================================================
 // ####ECOSGPLCOPYRIGHTBEGIN####                                            
@@ -41,11 +41,11 @@
 //==========================================================================
 //#####DESCRIPTIONBEGIN####
 //
-// Author(s):    Frank M. Pagliughi (fmp), SoRo Systems, Inc.
+// Author(s):    Filip
 // Contributors: 
 // Date:         2008-06-02
 // Purpose:
-// Description:  USB slave-side serial support
+// Description:  USB slave-side winusb support
 //
 //
 //####DESCRIPTIONEND####
@@ -55,54 +55,24 @@
 extern "C" {
 #endif
     
-//
-// The primary purpose of the USB slave-side serial code is to provide a 
-// simple USB connection to the host, especially for embedded systems that
-// are upgrading from RS-232 serial connections. The host would see the 
-// device as if through a serial port, and thus the host software would
-// remain unchanged. It would also eliminate the need for a new device
-// driver on the host.
-// 
-// On this side (the eCos USB slave side), the application sees the host
-// through a normal USB slave connection with two Bulk endpoints - one in 
-// the IN direction and one in the OUT direction. This module provides the
-// necessary USB descriptors to enumerate the device for a single serial
-// port, but then the application is free to communicate with the host
-// using any desired API:
-//  - The standard eCos USB slave API
-//  - The low-level File I/O layer (if USB devtab entries configured)
-//  - The C stdio functions (again, if USB devtab entries configured)
-//  - The USB serial API defined here.
-// 
-// The USB serial API is a thin layer over the standard eCos USB functions
-// to provide common synchronous and asynchronous transfers over the assigned
-// Bulk endpoints.
-//
 
 #include <cyg/infra/cyg_type.h>
 #include <cyg/io/usb/usbs.h>
 
 // ----------------------------------------------------------------------------
-// The ACM class requests
-// 
+// Data structure to configure WinUSB driver.
+    
+ typedef void (*app_state_change_fn)(struct usbs_control_endpoint*, 
+                                               void*, usbs_state_change, int);
+ 
 
-#define USBS_SERIAL_SEND_ENCAPSULATED_COMMAND   0x00
-#define USBS_SERIAL_GET_ENCAPSULATED_RESPONSE   0x01
-#define USBS_SERIAL_SET_COMM_FEATURE            0x02
-#define USBS_SERIAL_GET_COMM_FEATURE            0x03
-#define USBS_SERIAL_CLEAR_COMM_FEATURE          0x04
-
-#define USBS_SERIAL_SET_LINE_CODING             0x20
-#define USBS_SERIAL_GET_LINE_CODING             0x21
-#define USBS_SERIAL_SET_CONTROL_LINE_STATE      0x22
-#define USBS_SERIAL_SEND_BREAK                  0x23
 
 // ----------------------------------------------------------------------------
 // Data structure to manage the pair of USB endpoints that comprise a single
-// serial port connection. Each "port" requires one Bulk IN endpoint and one
+// port connection. Each "port" requires one Bulk IN endpoint and one
 // Bulk OUT endpoint.
 
-typedef struct usbs_serial {
+typedef struct usbs_winusb {
     // The communication endpoints. For the first (default) channel, these
     // are normally set by the configuration, but can be changed by the
     // application, if desired.
@@ -117,63 +87,68 @@ typedef struct usbs_serial {
     cyg_sem_t   rx_ready;
     int         rx_result;
 
-} usbs_serial;
+    // Callback to notyfi application about state change
+    app_state_change_fn app_state_change_callback;
+} usbs_winusb;
 
-// The package contains one USB serial device.
-extern usbs_serial usbs_ser0;
+// The package contains one USB winusb device.
+extern usbs_winusb usbs_winusb0;
 
 // It's assumed that there's a single USB slave chip in the system, with a
 // single control endpoint 0. The actual variable is contained in the device
-// driver, but the USB serial code keeps a pointer to it for driver 
+// driver, but the USB winusb code keeps a pointer to it for driver 
 // independence. The application might find it useful for overriding low-level
 // code or callbacks.
-extern usbs_control_endpoint* usbs_serial_ep0;
+extern usbs_control_endpoint* usbs_winusb_ep0;
 
 // ----------------------------------------------------------------------------
-// A C interface to the serial USB code.
+// A C interface to the winusb USB code.
 // The application can use this interface, the standard (low-level) USB slave
 // API, the standard Unix-like I/O API, or C stdio API.
     
-// Initialize support for a particular USB serial "port"
-// This associates a usbs_serial structure with specific endpoints and 
+// Initialize support for a particular USB winusb "port"
+// This associates a usbs_winusb structure with specific endpoints and 
 // initializes the structure for communications.
-void usbs_serial_init(usbs_serial*, usbs_tx_endpoint*, usbs_rx_endpoint*);
+void usbs_winusb_init(usbs_winusb*, usbs_tx_endpoint*, usbs_rx_endpoint*);
 
 // Block the calling thread until the host configures the USB device.
-void usbs_serial_wait_until_configured(void);
+void usbs_winusb_wait_until_configured(void);
 
 // Determines if the USB subsystem is configured
-cyg_bool usbs_serial_is_configured(void);
+cyg_bool usbs_winusb_is_configured(void);
 
 // Start an asynchronous transmit of a single buffer.
-void usbs_serial_start_tx(usbs_serial*, const void* buf, int n);
+void usbs_winusb_start_tx(usbs_winusb*, const void* buf, int n);
 
 // Block the calling thread until the transmit completes.
 // Returns the result code for the transfer
-int usbs_serial_wait_for_tx(usbs_serial*);
+int usbs_winusb_wait_for_tx(usbs_winusb*);
 
 // Blocking, synchronous transmit of a single buffer.
-int usbs_serial_tx(usbs_serial*, const void* buf, int n);
+int usbs_winusb_tx(usbs_winusb*, const void* buf, int n);
 
 // Start an asynchronous receive of a buffer.
-void usbs_serial_start_rx(usbs_serial*, void* buf, int n);
+void usbs_winusb_start_rx(usbs_winusb*, void* buf, int n);
 
 // Block the calling thread until the receive completes.
 // Returns the result code for the transfer
-int usbs_serial_wait_for_rx(usbs_serial*);
+int usbs_winusb_wait_for_rx(usbs_winusb*);
 
 // Blocking, synchronous receive of a single buffer.
-int usbs_serial_rx(usbs_serial*, void* buf, int n);
+int usbs_winusb_rx(usbs_winusb*, void* buf, int n);
 
-// The default USB-serial state change handler paces the functions
-// usbs_serial_wait_until_configured() and usbs_serial_is_configured().
+// The default USB-winusb state change handler paces the functions
+// usbs_winusb_wait_until_configured() and usbs_winusb_is_configured().
 // The application can override the state chain handler, but chain to 
-// this function to keep the full USB-serial system working.
-void usbs_serial_state_change_handler(usbs_control_endpoint*, void*, 
+// this function to keep the full USB-winusb system working.
+void usbs_winusb_state_change_handler(usbs_control_endpoint*, void*, 
                                       usbs_state_change, int);
 
 // Starts the USB subsystem
-void usbs_serial_start(void);
+void usbs_winusb_start(app_state_change_fn state_change_fn,
+                       unsigned char *mfg_str,
+                       unsigned char *product_str,
+                       unsigned char *sn_str);
 
 #ifdef __cplusplus
 } // extern "C"

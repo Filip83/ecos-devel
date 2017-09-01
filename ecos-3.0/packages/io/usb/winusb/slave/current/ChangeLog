@@ -1,3 +1,16 @@
+2017-09-01  Filip <filip.gnu@gmail.com>
+
+        * Modified functions names to not clide with usbs serial driver.
+        
+        * Driver cannot use statatic edpoints and configuration and options
+          for static endpoints was removed.
+
+        * The intial function of thid driver naw takes parameters for change 
+          state callback functions and string descriptors can be passed as 
+          parameters to this function. If pointers to the strings are NULL
+          the default value from driver configuration are taken.
+          
+
 2017-01-05  Filip <filip.gnu@gmail.com>
 
         * Initial commit based on USB serial. Windows descriptor 1.0 and 2.0

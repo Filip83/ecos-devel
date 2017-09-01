@@ -1,8 +1,8 @@
 //==========================================================================
 //
-//      usbs_serial.c
+//      usbs_winusb.c
 //
-//      Support for slave-side USB serial devices.
+//      Support for slave-side USB winusb devices.
 //
 //==========================================================================
 // ####ECOSGPLCOPYRIGHTBEGIN####                                            
@@ -55,39 +55,31 @@
 #include <cyg/hal/drv_api.h>
 #include <cyg/kernel/kapi.h>
 
-#include <pkgconf/io_usb_slave_winusb_serial.h>
-#include <cyg/io/usb/usbs_serial_winusb.h>
+#include <pkgconf/io_usb_slave_winusb.h>
+#include <cyg/io/usb/usbs_winusb.h>
 #include <string.h>
 
-#if defined(CYGBLD_IO_USB_WINUSB_SLAVE_SERIAL_DEBUG)
+#if defined(CYGBLD_IO_USB_WINUSB_SLAVE_DEBUG)
 #define DBG diag_printf
 #else
 #define DBG (1) ? (void)0 : diag_printf
 #endif
 
-#define EP0_MAX_PACKET_SIZE     CYGNUM_IO_USB_WINUSB_SLAVE_SERIAL_EP0_MAX_PACKET_SIZE
+#define EP0_MAX_PACKET_SIZE     CYGNUM_IO_USB_WINUSB_SLAVE_EP0_MAX_PACKET_SIZE
 
-extern usbs_control_endpoint    CYGDAT_IO_USB_WINUSB_SLAVE_SERIAL_EP0;
-
-#if defined(CYGPKG_IO_USB_WINUSB_SLAVE_SERIAL_STATIC_EP)
-extern usbs_tx_endpoint         CYGDAT_IO_USB_WINUSB_SLAVE_SERIAL_TX_EP;
-extern usbs_rx_endpoint         CYGDAT_IO_USB_WINUSB_SLAVE_SERIAL_RX_EP;
-#define TX_EP                   (&CYGDAT_IO_USB_WINUSB_SLAVE_SERIAL_TX_EP)
-#define RX_EP                   (&CYGDAT_IO_USB_WINUSB_SLAVE_SERIAL_RX_EP)
-#define INTR_EP                 (&CYGDAT_IO_USB_WINUSB_SLAVE_SERIAL_INTR_EP)
-#endif
-
-#define TX_EP_NUM               CYGNUM_IO_USB_WINUSB_SLAVE_SERIAL_TX_EP_NUM
-#define RX_EP_NUM               CYGNUM_IO_USB_WINUSB_SLAVE_SERIAL_RX_EP_NUM
-#define INTR_EP_NUM             CYGNUM_IO_USB_WINUSB_SLAVE_SERIAL_INTR_EP_NUM
-#define EP0                     (&CYGDAT_IO_USB_WINUSB_SLAVE_SERIAL_EP0)
+extern usbs_control_endpoint    CYGDAT_IO_USB_WINUSB_SLAVE_EP0;
 
 
-#define VENDOR_ID               CYGNUM_IO_USB_WINUSB_SLAVE_SERIAL_VENDOR_ID
-#define PRODUCT_ID              CYGNUM_IO_USB_WINUSB_SLAVE_SERIAL_PRODUCT_ID
+#define TX_EP_NUM               CYGNUM_IO_USB_WINUSB_SLAVE_TX_EP_NUM
+#define RX_EP_NUM               CYGNUM_IO_USB_WINUSB_SLAVE_RX_EP_NUM
+#define INTR_EP_NUM             CYGNUM_IO_USB_WINUSB_SLAVE_INTR_EP_NUM
+#define EP0                     (&CYGDAT_IO_USB_WINUSB_SLAVE_EP0)
 
-//#define USB_MAX_STR_LEN         256
-#define USB_MAX_STR_LEN         64
+
+#define VENDOR_ID               CYGNUM_IO_USB_WINUSB_SLAVE_VENDOR_ID
+#define PRODUCT_ID              CYGNUM_IO_USB_WINUSB_SLAVE_PRODUCT_ID
+
+#define USB_MAX_STR_LEN         256
 
 #define LO_BYTE_16(word16)      ((cyg_uint8) ((word16) & 0xFF))
 #define HI_BYTE_16(word16)      ((cyg_uint8) (((word16) >> 8) & 0xFF))
@@ -109,12 +101,10 @@ extern usbs_rx_endpoint         CYGDAT_IO_USB_WINUSB_SLAVE_SERIAL_RX_EP;
 
 
 
-#define USBS_SERIAL_DEVICE_CLASS        0
-#define USBS_SERIAL_NUM_IFACE           1
-#define USBS_SERIAL_NUM_ENDP            2
-#define USBS_SERIAL_DATA_IFACE_CLASS    0    // Vendor
-
-
+#define USBS_DEVICE_CLASS        0
+#define USBS_NUM_IFACE           1
+#define USBS_NUM_ENDP            2
+#define USBS_DATA_IFACE_CLASS    0    // Vendor
 
 
 // ----- Configuration Descriptor -----
@@ -123,21 +113,21 @@ static const usb_configuration_descriptor usb_configuration = {
     length:             sizeof(usb_configuration_descriptor),
     type:               USB_CONFIGURATION_DESCRIPTOR_TYPE,
     total_length_lo:    
-        USB_CONFIGURATION_DESCRIPTOR_TOTAL_LENGTH_LO(USBS_SERIAL_NUM_IFACE, 
-                                                     USBS_SERIAL_NUM_ENDP),
+        USB_CONFIGURATION_DESCRIPTOR_TOTAL_LENGTH_LO(USBS_NUM_IFACE, 
+                                                     USBS_NUM_ENDP),
     total_length_hi:    
-        USB_CONFIGURATION_DESCRIPTOR_TOTAL_LENGTH_HI(USBS_SERIAL_NUM_IFACE, 
-                                                     USBS_SERIAL_NUM_ENDP),
-    number_interfaces:  USBS_SERIAL_NUM_IFACE,
+        USB_CONFIGURATION_DESCRIPTOR_TOTAL_LENGTH_HI(USBS_NUM_IFACE, 
+                                                     USBS_NUM_ENDP),
+    number_interfaces:  USBS_NUM_IFACE,
     configuration_id:   1,
     configuration_str:  0,
-#ifdef CYGOPT_IO_USB_WINUSB_SLAVE_SERIAL_BUSPOWERED
+#ifdef CYGOPT_IO_USB_WINUSB_SLAVE_BUSPOWERED
     attributes:         (USB_CONFIGURATION_DESCRIPTOR_ATTR_REQUIRED),
 #else
     attributes:         (USB_CONFIGURATION_DESCRIPTOR_ATTR_REQUIRED |
                          USB_CONFIGURATION_DESCRIPTOR_ATTR_SELF_POWERED),
 #endif
-    max_power:          (CYGNUM_IO_USB_WINUSB_SLAVE_SERIAL_CURRENTDRAW+1)/2	
+    max_power:          (CYGNUM_IO_USB_WINUSB_SLAVE_CURRENTDRAW+1)/2	
 };
 
 // ----- Interface Descriptor -----
@@ -150,7 +140,7 @@ static const usb_interface_descriptor usb_interface[] = {
         interface_id:       0,
         alternate_setting:  0,
         number_endpoints:   2,
-        interface_class:    USBS_SERIAL_DATA_IFACE_CLASS,
+        interface_class:    USBS_DATA_IFACE_CLASS,
         interface_subclass: 0x00,
         interface_protocol: 0x00,
         interface_str:      0x00
@@ -324,7 +314,7 @@ static usbs_enumeration_data usb_enum_data = {
         type:                   USB_DEVICE_DESCRIPTOR_TYPE,
         usb_spec_lo:            0x10, 
         usb_spec_hi:            0x02,
-        device_class:           USBS_SERIAL_DEVICE_CLASS,
+        device_class:           USBS_DEVICE_CLASS,
         device_subclass:        0,
         device_protocol:        0,
         max_packet_size:        EP0_MAX_PACKET_SIZE,
@@ -336,12 +326,12 @@ static usbs_enumeration_data usb_enum_data = {
         device_hi:              0x00,
         manufacturer_str:       MFG_STR_INDEX,
         product_str:            PRODUCT_STR_INDEX,
-        serial_number_str:      SN_STR_INDEX,
+        winusb_number_str:      SN_STR_INDEX,
         number_configurations:  1
     },
 
-    total_number_interfaces:    USBS_SERIAL_NUM_IFACE,
-    total_number_endpoints:     USBS_SERIAL_NUM_ENDP,
+    total_number_interfaces:    USBS_NUM_IFACE,
+    total_number_endpoints:     USBS_NUM_ENDP,
     total_number_strings:       4,
     configurations:             &usb_configuration,
     interfaces:                 usb_interface,
@@ -357,22 +347,22 @@ static usbs_enumeration_data usb_enum_data = {
 // USBS Serial Data
 // --------------------------------------------------------------------------
 
-usbs_control_endpoint* usbs_serial_ep0 = EP0;
+usbs_control_endpoint* usbs_winusb_ep0 = EP0;
 
 // Lock for the state.
-cyg_mutex_t usbs_serial_lock;   
+cyg_mutex_t usbs_winusb_lock;   
 
 // Condition variable for state changes
-cyg_cond_t  usbs_serial_state_cond;
+cyg_cond_t  usbs_winusb_state_cond;
 
-int usbs_serial_state;
+int usbs_winusb_state;
 
-usbs_serial usbs_ser0 = {
+usbs_winusb usbs_ser0 = {
     tx_result:  0,    
     rx_result:  0,    
 };
 
-static void (*usbs_serial_app_state_change_fn)(struct usbs_control_endpoint*, 
+static void (*usbs_winusb_app_state_change_fn)(struct usbs_control_endpoint*, 
                                                void*, usbs_state_change, int) 
 = 0;
 
@@ -380,7 +370,7 @@ static void (*usbs_serial_app_state_change_fn)(struct usbs_control_endpoint*,
 // Create a USB String Descriptor from a C string.
 
 void
-usbs_serial_create_str_descriptor(char descr[], const char *str)
+usbs_winusb_create_str_descriptor(char descr[], const char *str)
 {
     int i, n = strlen(str);
 
@@ -397,44 +387,30 @@ usbs_serial_create_str_descriptor(char descr[], const char *str)
 }
 
 // --------------------------------------------------------------------------
-// ACM Class Handler
+// WINUSB Class Handler
 //
-// For a Windows host, the device must, at least, respond to a SetLineCoding
-// request (0x20), otherwise Windows will report that it's unable to open the 
-// port. This request normally sets the standard serial parameters:
-//          baud rate, # stop bits, parity, and # data bits
-// If we're just making believe that we're a serial port to communicate with
-// the host via USB, then these values don't matter. So we ACK the request,
-// but ignore the parameters.
-// If we were actually creating a USB-serial converter, then we would need to
-// read these values and configure the serial port accordingly.
-// 
-// Similarly, the host can request the current settings through a 
-// GetLineCoding request (0x21). Since we're just faking it, we return some
-// arbitrary values: 38400,1,N,8
+// For a Windows host, the device must, at least, respond to a BOS descriptors.
 
 static usbs_control_return 
-usbs_serial_ms_vendor_handler(usbs_control_endpoint* ep0, void* data)
+usbs_winusb_ms_vendor_handler(usbs_control_endpoint* ep0, void* data)
 {
   //int length;
-  usbs_control_return result = USBS_CONTROL_RETURN_STALL;//USBS_CONTROL_RETURN_UNKNOWN;
+  usbs_control_return result = USBS_CONTROL_RETURN_UNKNOWN;
   usb_devreq      *req = (usb_devreq *) ep0->control_buffer;
-  //length      = (req->length_hi << 8) | req->length_lo;
 
-  DBG("USB Serial ACM Class Handler: ");
+  DBG("USB WinUSB Class Handler: ");
           
   switch (req->request) {
     
     case 1 :
-      DBG("ACM Request: Set Line Coding\n");
+      DBG("WinUSB Request: Get Bos Descriptor\n");
       ep0->buffer = (unsigned char*)bos_platform;
       ep0->buffer_size = 0x9e;
       result = USBS_CONTROL_RETURN_HANDLED;
       break; 
       
     case 2 :
-      DBG("ACM Request: Set Line Coding\n");
-      //diag_printf("bp req %d, %d\n",req->index_lo, length);
+      DBG("WinUSB Request: Get Bos Platform Descriptor\n");
       result = USBS_CONTROL_RETURN_HANDLED;
       if(req->index_lo == 0x04)
       {
@@ -443,14 +419,13 @@ usbs_serial_ms_vendor_handler(usbs_control_endpoint* ep0, void* data)
       }
       else if(req->index_lo == 0x05 || req->index_lo == 0x00)
       {
-          //diag_printf("ext\n");
         ep0->buffer = (unsigned char*)bos_platforme_10;
         ep0->buffer_size = 0x92;
       }
       break; 
       
     default :
-      DBG("*** Unhandled ACM Request: 0x%02X ***\n",
+      DBG("*** Unhandled WinUSB Request: 0x%02X ***\n",
           (unsigned) req->request);
   }
   
@@ -461,10 +436,10 @@ usbs_serial_ms_vendor_handler(usbs_control_endpoint* ep0, void* data)
 // Callback for a USB state change
 
 void
-usbs_serial_state_change_handler(usbs_control_endpoint* ep, void* data,
+usbs_winusb_state_change_handler(usbs_control_endpoint* ep, void* data,
                                  usbs_state_change change, int prev_state)
 {
-#if defined(CYGBLD_IO_USB_WINUSB_SLAVE_SERIAL_DEBUG)
+#if defined(CYGBLD_IO_USB_WINUSB_SLAVE_DEBUG)
   const char *STATE_CHG_STR[] = { "Detached", "Attached", "Powered", "Reset",
                                   "Addressed", "Configured", "Deconfigured",
                                   "Suspended", "Resumed" };
@@ -475,47 +450,48 @@ usbs_serial_state_change_handler(usbs_control_endpoint* ep, void* data,
 #endif
   
   // Called from DSR, cond broadcast should be ok without mutex lock
-  usbs_serial_state = usbs_serial_ep0->state;
-  cyg_cond_broadcast(&usbs_serial_state_cond);
+  usbs_winusb_state = usbs_winusb_ep0->state;
+  cyg_cond_broadcast(&usbs_winusb_state_cond);
   
-  if (usbs_serial_app_state_change_fn)
-    (*usbs_serial_app_state_change_fn)(ep, data, change, prev_state);
+  if (usbs_winusb_app_state_change_fn)
+    (*usbs_winusb_app_state_change_fn)(ep, data, change, prev_state);
+  
+  if(usbs_ser0.app_state_change_callback)
+    (*usbs_ser0.app_state_change_callback)(ep, data, change, prev_state);
 }
 
 // --------------------------------------------------------------------------
 // Block the calling thread until the USB is configured.
  
 void
-usbs_serial_wait_until_configured(void)
+usbs_winusb_wait_until_configured(void)
 {
-  cyg_mutex_lock(&usbs_serial_lock);
-  while (usbs_serial_state != USBS_STATE_CONFIGURED)
-    cyg_cond_wait(&usbs_serial_state_cond);
+  cyg_mutex_lock(&usbs_winusb_lock);
+  while (usbs_winusb_state != USBS_STATE_CONFIGURED)
+    cyg_cond_wait(&usbs_winusb_state_cond);
 
-#if !defined(CYGPKG_IO_USB_WINUSB_SLAVE_SERIAL_STATIC_EP)
-  usbs_ser0.tx_ep = usbs_get_tx_endpoint(usbs_serial_ep0, TX_EP_NUM);
-  usbs_ser0.rx_ep = usbs_get_rx_endpoint(usbs_serial_ep0, RX_EP_NUM);
-#endif
+  usbs_ser0.tx_ep = usbs_get_tx_endpoint(usbs_winusb_ep0, TX_EP_NUM);
+  usbs_ser0.rx_ep = usbs_get_rx_endpoint(usbs_winusb_ep0, RX_EP_NUM);
 
-  cyg_mutex_unlock(&usbs_serial_lock);
+  cyg_mutex_unlock(&usbs_winusb_lock);
 }
 
 // --------------------------------------------------------------------------
 // Determine if the device is currently configured.
 
 cyg_bool
-usbs_serial_is_configured(void)
+usbs_winusb_is_configured(void)
 {
-  return usbs_serial_state == USBS_STATE_CONFIGURED;
+  return usbs_winusb_state == USBS_STATE_CONFIGURED;
 }
 
 // --------------------------------------------------------------------------
 // Callback for when a transmit is complete
 
 static void 
-usbs_serial_tx_complete(void *p, int result)
+usbs_winusb_tx_complete(void *p, int result)
 {
-  usbs_serial* ser = (usbs_serial*) p;
+  usbs_winusb* ser = (usbs_winusb*) p;
   ser->tx_result = result;
   cyg_semaphore_post(&ser->tx_ready);
 }
@@ -524,9 +500,9 @@ usbs_serial_tx_complete(void *p, int result)
 // Callback for when a receive is complete
 
 static void 
-usbs_serial_rx_complete(void *p, int result)
+usbs_winusb_rx_complete(void *p, int result)
 {
-  usbs_serial* ser = (usbs_serial*) p;
+  usbs_winusb* ser = (usbs_winusb*) p;
   ser->rx_result = result;
   cyg_semaphore_post(&ser->rx_ready);
 }
@@ -536,17 +512,17 @@ usbs_serial_rx_complete(void *p, int result)
 // 
  
 void
-usbs_serial_start_tx(usbs_serial* ser, const void* buf, int n)
+usbs_winusb_start_tx(usbs_winusb* ser, const void* buf, int n)
 {
   usbs_start_tx_buffer(ser->tx_ep, (unsigned char*) buf, n,
-                       usbs_serial_tx_complete, ser);
+                       usbs_winusb_tx_complete, ser);
 }
 
 // --------------------------------------------------------------------------
 // Block the caller until the transmit is complete
 
 int
-usbs_serial_wait_for_tx(usbs_serial* ser)
+usbs_winusb_wait_for_tx(usbs_winusb* ser)
 {
   cyg_semaphore_wait(&ser->tx_ready);
   return ser->tx_result;
@@ -556,27 +532,27 @@ usbs_serial_wait_for_tx(usbs_serial* ser)
 // Perform a synchronous transmit and wait for it to complete.
 
 int
-usbs_serial_tx(usbs_serial* ser, const void* buf, int n)
+usbs_winusb_tx(usbs_winusb* ser, const void* buf, int n)
 {
-  usbs_serial_start_tx(ser, buf, n);
-  return usbs_serial_wait_for_tx(ser);
+  usbs_winusb_start_tx(ser, buf, n);
+  return usbs_winusb_wait_for_tx(ser);
 }
 
 // --------------------------------------------------------------------------
 // Start an asynchronous receive of a buffer.
 
 void
-usbs_serial_start_rx(usbs_serial* ser, void* buf, int n)
+usbs_winusb_start_rx(usbs_winusb* ser, void* buf, int n)
 {
   usbs_start_rx_buffer(ser->rx_ep, (unsigned char*) buf, n,
-                       usbs_serial_rx_complete, ser);
+                       usbs_winusb_rx_complete, ser);
 }
 
 // --------------------------------------------------------------------------
 // Block the caller until the receive is complete
 
 int
-usbs_serial_wait_for_rx(usbs_serial* ser)
+usbs_winusb_wait_for_rx(usbs_winusb* ser)
 {
   cyg_semaphore_wait(&ser->rx_ready);
   return ser->rx_result;
@@ -586,17 +562,17 @@ usbs_serial_wait_for_rx(usbs_serial* ser)
 // Perform a synchronous receive and wait for it to complete.
 
 int
-usbs_serial_rx(usbs_serial* ser, void* buf, int n)
+usbs_winusb_rx(usbs_winusb* ser, void* buf, int n)
 {
-  usbs_serial_start_rx(ser, buf, n);
-  return usbs_serial_wait_for_rx(ser);
+  usbs_winusb_start_rx(ser, buf, n);
+  return usbs_winusb_wait_for_rx(ser);
 }
 
 // --------------------------------------------------------------------------
-// Initialize a serial port structure.
+// Initialize a winusb port structure.
 
 void
-usbs_serial_init(usbs_serial* ser, usbs_tx_endpoint* tx_ep, 
+usbs_winusb_init(usbs_winusb* ser, usbs_tx_endpoint* tx_ep, 
                  usbs_rx_endpoint* rx_ep)
 {
   ser->tx_ep = tx_ep;
@@ -609,42 +585,51 @@ usbs_serial_init(usbs_serial* ser, usbs_tx_endpoint* tx_ep,
 // --------------------------------------------------------------------------
 // Start the USB subsystem
 
-void
-usbs_serial_start(void)
+void usbs_winusb_start(app_state_change_fn state_change_fn,
+                       unsigned char *mfg_str,
+                       unsigned char *product_str,
+                       unsigned char *sn_str)
 {
-#if defined(CYGPKG_IO_USB_WINUSB_SLAVE_SERIAL_STATIC_EP)
-  usbs_serial_init(&usbs_ser0, TX_EP, RX_EP);
-#else  
-  usbs_serial_init(&usbs_ser0, NULL, NULL);
-#endif
+  usbs_winusb_init(&usbs_ser0, NULL, NULL);
   
-  cyg_mutex_init(&usbs_serial_lock);
-  cyg_cond_init(&usbs_serial_state_cond, &usbs_serial_lock);
+  cyg_mutex_init(&usbs_winusb_lock);
+  cyg_cond_init(&usbs_winusb_state_cond, &usbs_winusb_lock);
   
   // Make the mfg & product names into USB string descriptors
+  if(mfg_str == NULL)
+    usbs_winusb_create_str_descriptor(mfg_str_descr, 
+                                     CYGDAT_IO_USB_WINUSB_SLAVE_MFG_STR);
+  else
+    usbs_winusb_create_str_descriptor(mfg_str_descr, mfg_str);  
   
-  usbs_serial_create_str_descriptor(mfg_str_descr, 
-                                    CYGDAT_IO_USB_WINUSB_SLAVE_SERIAL_MFG_STR);
-  usbs_serial_create_str_descriptor(product_str_descr, 
-                                    /*(char*)0x80800030*/CYGDAT_IO_USB_WINUSB_SLAVE_SERIAL_PRODUCT_STR);
-  usbs_serial_create_str_descriptor(sn_str_descr, 
-                                    /*(char*)0x80800020*/"0000000000");
+  if(product_str == NULL)
+    usbs_winusb_create_str_descriptor(product_str_descr, 
+                                      CYGDAT_IO_USB_WINUSB_SLAVE_PRODUCT_STR);
+  else
+     usbs_winusb_create_str_descriptor(product_str_descr, product_str); 
+  
+  if(sn_str == NULL)
+    usbs_winusb_create_str_descriptor(sn_str_descr, "0000000000");
+  else
+    usbs_winusb_create_str_descriptor(sn_str_descr, sn_str);
   
   // ----- Set up enumeration & USB callbacks -----
   
-  usbs_serial_state = usbs_serial_ep0->state;
+  usbs_winusb_state = usbs_winusb_ep0->state;
   
-  usbs_serial_ep0->enumeration_data   = &usb_enum_data;
+  usbs_winusb_ep0->enumeration_data   = &usb_enum_data;
   
-  if (usbs_serial_ep0->state_change_fn)
-    usbs_serial_app_state_change_fn = usbs_serial_ep0->state_change_fn;
+  if (usbs_winusb_ep0->state_change_fn)
+    usbs_winusb_app_state_change_fn = usbs_winusb_ep0->state_change_fn;
   
-  usbs_serial_ep0->state_change_fn = usbs_serial_state_change_handler;
+  usbs_winusb_ep0->state_change_fn = usbs_winusb_state_change_handler;
   
-  if (!usbs_serial_ep0->class_control_fn)
-    usbs_serial_ep0->class_control_fn = usbs_serial_ms_vendor_handler;
+  if (!usbs_winusb_ep0->class_control_fn)
+    usbs_winusb_ep0->class_control_fn = usbs_winusb_ms_vendor_handler;
+  
+  usbs_ser0.app_state_change_callback = state_change_fn;
   
   // ----- Start USB subsystem -----
   
-  usbs_start(usbs_serial_ep0);
+  usbs_start(usbs_winusb_ep0);
 }
