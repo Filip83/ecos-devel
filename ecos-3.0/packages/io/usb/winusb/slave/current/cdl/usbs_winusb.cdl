@@ -52,7 +52,7 @@ cdl_package CYGPKG_IO_USB_SLAVE_WINUSB {
     parent      CYGPKG_IO_USB_SLAVE
     requires    { CYGHWR_IO_USB_SLAVE_OUT_ENDPOINTS >= 1 }
     requires    { CYGHWR_IO_USB_SLAVE_IN_ENDPOINTS >= 1 }
-    compile     usbs_serial_winusb.c
+    compile     usbs_winusb.c
     implements  CYGINT_IO_USB_SLAVE_CLIENTS
     
     description "
