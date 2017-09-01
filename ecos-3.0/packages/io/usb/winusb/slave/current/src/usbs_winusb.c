@@ -357,7 +357,7 @@ cyg_cond_t  usbs_winusb_state_cond;
 
 int usbs_winusb_state;
 
-usbs_winusb usbs_ser0 = {
+usbs_winusb usbs_winusb0 = {
     tx_result:  0,    
     rx_result:  0,    
 };
@@ -456,8 +456,8 @@ usbs_winusb_state_change_handler(usbs_control_endpoint* ep, void* data,
   if (usbs_winusb_app_state_change_fn)
     (*usbs_winusb_app_state_change_fn)(ep, data, change, prev_state);
   
-  if(usbs_ser0.app_state_change_callback)
-    (*usbs_ser0.app_state_change_callback)(ep, data, change, prev_state);
+  if(usbs_winusb0.app_state_change_callback)
+    (*usbs_winusb0.app_state_change_callback)(ep, data, change, prev_state);
 }
 
 // --------------------------------------------------------------------------
@@ -470,8 +470,8 @@ usbs_winusb_wait_until_configured(void)
   while (usbs_winusb_state != USBS_STATE_CONFIGURED)
     cyg_cond_wait(&usbs_winusb_state_cond);
 
-  usbs_ser0.tx_ep = usbs_get_tx_endpoint(usbs_winusb_ep0, TX_EP_NUM);
-  usbs_ser0.rx_ep = usbs_get_rx_endpoint(usbs_winusb_ep0, RX_EP_NUM);
+  usbs_winusb0.tx_ep = usbs_get_tx_endpoint(usbs_winusb_ep0, TX_EP_NUM);
+  usbs_winusb0.rx_ep = usbs_get_rx_endpoint(usbs_winusb_ep0, RX_EP_NUM);
 
   cyg_mutex_unlock(&usbs_winusb_lock);
 }
@@ -590,7 +590,7 @@ void usbs_winusb_start(app_state_change_fn state_change_fn,
                        char *product_str,
                        char *sn_str)
 {
-  usbs_winusb_init(&usbs_ser0, NULL, NULL);
+  usbs_winusb_init(&usbs_winusb0, NULL, NULL);
   
   cyg_mutex_init(&usbs_winusb_lock);
   cyg_cond_init(&usbs_winusb_state_cond, &usbs_winusb_lock);
@@ -627,7 +627,7 @@ void usbs_winusb_start(app_state_change_fn state_change_fn,
   if (!usbs_winusb_ep0->class_control_fn)
     usbs_winusb_ep0->class_control_fn = usbs_winusb_ms_vendor_handler;
   
-  usbs_ser0.app_state_change_callback = state_change_fn;
+  usbs_winusb0.app_state_change_callback = state_change_fn;
   
   // ----- Start USB subsystem -----
   
