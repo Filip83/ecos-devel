@@ -30,7 +30,7 @@ extern "C" {
  */
 
 /** I2S - Register Layout Typedef */
-typedef struct cyghwr_hal_kinteis_i2s_s{
+typedef volatile struct cyghwr_hal_kinteis_i2s_s{
    cyg_uint32 TCSR;                              /**< SAI Transmit Control Register, offset: 0x0 */
    cyg_uint32 TCR1;                              /**< SAI Transmit Configuration 1 Register, offset: 0x4 */
    cyg_uint32 TCR2;                              /**< SAI Transmit Configuration 2 Register, offset: 0x8 */
