@@ -86,8 +86,7 @@ extern usbs_rx_endpoint         CYGDAT_IO_USB_SLAVE_SERIAL_RX_EP;
 #define VENDOR_ID               CYGNUM_IO_USB_SLAVE_SERIAL_VENDOR_ID
 #define PRODUCT_ID              CYGNUM_IO_USB_SLAVE_SERIAL_PRODUCT_ID
 
-//#define USB_MAX_STR_LEN         256
-#define USB_MAX_STR_LEN         64
+#define USB_MAX_STR_LEN         256
 
 #define LO_BYTE_16(word16)      ((cyg_uint8) ((word16) & 0xFF))
 #define HI_BYTE_16(word16)      ((cyg_uint8) (((word16) >> 8) & 0xFF))
@@ -230,15 +229,13 @@ static const usb_endpoint_descriptor usb_endpoints[] =
 // ----- String Descriptors -----
 
 static char mfg_str_descr[USB_MAX_STR_LEN],
-            product_str_descr[USB_MAX_STR_LEN],
-	    sn_str_descr[USB_MAX_STR_LEN];
+            product_str_descr[USB_MAX_STR_LEN];
 
 
 static const char* usb_strings[] = {
     "\x04\x03\x09\x04",
     mfg_str_descr,
-    product_str_descr,
-    sn_str_descr
+    product_str_descr
 };
 
 // ----- Enumeration Data w/ Device Descriptor -----
@@ -261,13 +258,13 @@ static usbs_enumeration_data usb_enum_data = {
         device_hi:              0x00,
         manufacturer_str:       MFG_STR_INDEX,
         product_str:            PRODUCT_STR_INDEX,
-        serial_number_str:      SN_STR_INDEX,
+        serial_number_str:      0,
         number_configurations:  1
     },
 
     total_number_interfaces:    USBS_SERIAL_NUM_IFACE,
     total_number_endpoints:     USBS_SERIAL_NUM_ENDP,
-    total_number_strings:       4,
+    total_number_strings:       3,
     configurations:             &usb_configuration,
     interfaces:                 usb_interface,
     endpoints:                  usb_endpoints,
@@ -336,32 +333,40 @@ usbs_serial_create_str_descriptor(char descr[], const char *str)
 
 #ifdef CYGDAT_IO_USB_SLAVE_CLASS_TYPE_ACM
 
+static cyg_uint8 rsp_buf[32] = 
+{
+    BYTE0_32(38400),
+    BYTE1_32(38400),
+    BYTE2_32(38400),
+    BYTE3_32(38400),
+    0, // One stop bit
+    0, // No parity
+    8 // 8 data bits
+};
 static usbs_control_return 
 usbs_serial_acm_class_handler(usbs_control_endpoint* ep0, void* data)
 {
-  usbs_control_return result = USBS_CONTROL_RETURN_HANDLED;//USBS_CONTROL_RETURN_UNKNOWN;
+  usbs_control_return result = USBS_CONTROL_RETURN_UNKNOWN;
   usb_devreq      *req = (usb_devreq *) ep0->control_buffer;
-  static cyg_uint8 rsp_buf[32];
-  cyg_uint32 baud = 38400;  // Arbitrary, fake value to return to the host.
 
   DBG("USB Serial ACM Class Handler: ");
   
   switch (req->request) {
     
-    case USBS_SERIAL_SET_LINE_CODING :
+    case USBS_SERIAL_SET_CONTROL_LINE_STATE:
+      DBG("ACM Request: Set Control Line State\n");
+      result = USBS_CONTROL_RETURN_HANDLED;
+      break;
+      
+    case USBS_SERIAL_SET_LINE_CODING:
       DBG("ACM Request: Set Line Coding\n");
+      ep0->buffer = rsp_buf;
+      ep0->buffer_size = 7;
       result = USBS_CONTROL_RETURN_HANDLED;
       break;
       
     case USBS_SERIAL_GET_LINE_CODING :
       DBG("ACM Request: Get Line Coding\n");
-      rsp_buf[0] = BYTE0_32(baud);
-      rsp_buf[1] = BYTE1_32(baud);
-      rsp_buf[2] = BYTE2_32(baud);
-      rsp_buf[3] = BYTE3_32(baud);
-      rsp_buf[4] = 0; // One stop bit
-      rsp_buf[5] = 0; // No parity
-      rsp_buf[6] = 8; // 8 data bits
       ep0->buffer = rsp_buf;
       ep0->buffer_size = 7;
       result = USBS_CONTROL_RETURN_HANDLED;
@@ -545,9 +550,7 @@ usbs_serial_start(void)
   usbs_serial_create_str_descriptor(mfg_str_descr, 
                                     CYGDAT_IO_USB_SLAVE_SERIAL_MFG_STR);
   usbs_serial_create_str_descriptor(product_str_descr, 
-                                    (char*)0x80800030/*CYGDAT_IO_USB_SLAVE_SERIAL_PRODUCT_STR*/);
-  usbs_serial_create_str_descriptor(sn_str_descr, 
-                                    (char*)0x80800020);
+                                    CYGDAT_IO_USB_SLAVE_SERIAL_PRODUCT_STR);
   
   // ----- Set up enumeration & USB callbacks -----
   

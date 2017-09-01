@@ -1,80 +1,0 @@
-10
-
-dir
-809
-http://opencores.org/ocsvn/openrisc/openrisc/trunk/rtos/ecos-3.0/packages/io/usb/serial/slave/current
-http://opencores.org/ocsvn/openrisc
-
-
-
-2012-03-23T10:11:50.159925Z
-786
-skrzyp
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-04c7f051-eaf3-4997-922d-f29d9d8c0f3f
-
-cdl
-dir
-
-tests
-dir
-
-include
-dir
-
-doc
-dir
-
-src
-dir
-
-ChangeLog
-file
-
-
-
-
-2012-06-05T08:05:36.388272Z
-03a257d34259fe69f8f4b70b34851cf9
-2012-03-23T10:11:50.159925Z
-786
-skrzyp
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-3204
-
-host
-dir
-
