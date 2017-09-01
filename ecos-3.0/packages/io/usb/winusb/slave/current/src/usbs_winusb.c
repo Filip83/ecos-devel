@@ -326,7 +326,7 @@ static usbs_enumeration_data usb_enum_data = {
         device_hi:              0x00,
         manufacturer_str:       MFG_STR_INDEX,
         product_str:            PRODUCT_STR_INDEX,
-        winusb_number_str:      SN_STR_INDEX,
+        serial_number_str:      SN_STR_INDEX,
         number_configurations:  1
     },
 
