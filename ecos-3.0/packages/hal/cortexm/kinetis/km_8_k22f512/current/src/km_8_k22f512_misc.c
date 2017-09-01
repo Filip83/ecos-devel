@@ -121,7 +121,6 @@ static inline void CYGOPT_HAL_KINETIS_MISC_FLASH_SECTION_ATTR
 hal_misc_init(void)
 {
     cyghwr_hal_kinetis_sim_t *sim_p = CYGHWR_HAL_KINETIS_SIM_P;
-    cyghwr_hal_kinetis_mpu_t *mpu_p = CYGHWR_HAL_KINETIS_MPU_P;
 
     // Enable some peripherals' clocks.
     sim_p->scgc5 |= CYGHWR_HAL_KINETIS_SIM_SCGC5_PORT_M;
