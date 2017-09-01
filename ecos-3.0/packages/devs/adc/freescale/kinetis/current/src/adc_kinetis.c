@@ -250,7 +250,8 @@ static bool kinetis_adc_init(struct cyg_devtab_entry *tab)
 #endif
 #endif
         
-#if CYGNUM_DEVS_ADC_KINETIS_ENABLE_ASYNC_CLOCK == 1
+#if defined(CYGNUM_DEVS_ADC_KINETIS_ENABLE_ASYNC_CLOCK) &&
+        (CYGNUM_DEVS_ADC_KINETIS_ENABLE_ASYNC_CLOCK == 1)
         reg |= ADC_CFG2_ADACKEN_MASK;
 #endif
         adc_dev->CFG2 = reg;
@@ -326,9 +327,11 @@ static void kinetis_adc_enable(cyg_adc_channel *chan)
 //==========================================================================
 static void kinetis_adc_disable(cyg_adc_channel *chan)
 {
+#if 0
     kinetis_adc_info *info  = chan->device->dev_priv;
 
     volatile cyghwer_io_kinetis_adc_t *base = info->adc_base;
+#endif
 }
 
 
@@ -342,9 +345,11 @@ static void kinetis_adc_disable(cyg_adc_channel *chan)
 //==========================================================================
 static void kinetis_adc_set_rate( cyg_adc_channel *chan, cyg_uint32 rate)
 {
+#if 0
     cyg_adc_device   *device = chan->device;
     kinetis_adc_info *info   = (kinetis_adc_info *)device->dev_priv;
     volatile cyghwer_io_kinetis_adc_t *base = info->adc_base;
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -411,7 +416,7 @@ static void kinetis_adc_dsr(cyg_vector_t vector,
 {
     cyg_adc_device *device         = (cyg_adc_device *) data;
     kinetis_adc_info *info           = device->dev_priv;
-    volatile cyghwer_io_kinetis_adc_t *adc_dev = info->adc_base;
+    
     cyg_uint8      active_channels = 1;
     cyg_uint8      chan_no         = 0;
 

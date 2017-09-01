@@ -58,7 +58,7 @@
 
 static kinetis_adc_info kinetis_adc0_info =
 {
-    .adc_base         = CYGADR_DEVS_ADC_BASE,
+    .adc_base         = (cyghwer_io_kinetis_adc_t*)CYGADR_DEVS_ADC_BASE,
     .adc_vector       = CYGNUM_HAL_INTERRUPT_ADC0,
     .adc_intprio      = CYGNUM_DEVS_ADC_KINETIS_ISR_PRI,
     .int_handle       = 0,
