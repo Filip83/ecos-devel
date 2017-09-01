@@ -1760,8 +1760,8 @@ package CYGPKG_IO_USB_SLAVE_SERIAL {
                          as serial devices to the host."
 }
 
-package CYGPKG_IO_USB_SLAVE_WINUSB_SERIAL {
-        alias		{ "USB slave-side winusb drivers" usbs_serial }
+package CYGPKG_IO_USB_SLAVE_WINUSB {
+        alias		{ "USB slave-side winusb drivers" usbs_winusb }
         directory       io/usb/winusb/slave
         script          usbs_winusb.cdl
         description     "Support for USB peripherals that present themselves 
@@ -7073,7 +7073,7 @@ target KM_8 {
             CYGPKG_IO_FILEIO
             CYGPKG_IO_ADC
             CYGPKG_DEVS_ADC_AVR32_ADCIFB
-            CYGPKG_IO_USB_SLAVE_WINUSB_SERIAL
+            CYGPKG_IO_USB_SLAVE_WINUSB
             CYGPKG_IO_USB
             CYGPKG_IO_USB_SLAVE
             CYGPKG_DEVS_USB_UC3C
@@ -8127,7 +8127,6 @@ target satisgeo_km_8_k22f512 {
                    CYGPKG_HAL_FREESCALE_EDMA
                    CYGPKG_IO_SERIAL_FREESCALE_UART_HDR
                    CYGPKG_IO_SERIAL_FREESCALE_UART
-                   #CYGPKG_DEVICES_WALLCLOCK_KINETIS_RTC
                    CYGPKG_DEVICES_WALLCLOCK_NXP_PCF2129A
                    CYGPKG_IO_SPI
                    CYGPKG_DEVS_SPI_FREESCALE_DSPI_GPIO
@@ -8145,7 +8144,7 @@ target satisgeo_km_8_k22f512 {
                    CYGPKG_DEVS_BEEP_KINETIS
                    CYGPKG_DEVS_EHCI_SERIAL_FREESCALE
                    CYGPKG_DEVS_USB_KINETIS
-                   CYGPKG_IO_USB_SLAVE_WINUSB_SERIAL
+                   CYGPKG_IO_USB_SLAVE_WINUSB 
                    CYGPKG_IO_USB
                    CYGPKG_IO_USB_SLAVE
                  }
