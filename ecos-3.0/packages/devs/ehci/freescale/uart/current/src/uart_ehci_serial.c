@@ -508,8 +508,7 @@ freescale_ehci_serial_start_xmit(ehci_serial_channel *chan, const cyg_uint8 *buf
 {
     freescale_ehci_serial_info * const uart_chan = (freescale_ehci_serial_info *)
                                                 chan->dev_priv;
-    cyg_addrword_t uart_base          = uart_chan->uart_base;
-    cyg_uint32                          regval;
+
     cyghwr_hal_freescale_dma_set_t      *dma_set_p;
     cyghwr_hal_freescale_edma_t         *edma_p = NULL;
     cyg_uint32                          dma_chan_tx_i = 0;
@@ -540,8 +539,7 @@ freescale_ehci_serial_start_recive(ehci_serial_channel *chan, const cyg_uint8 *b
 {
     freescale_ehci_serial_info * const uart_chan = (freescale_ehci_serial_info *)
                                                 chan->dev_priv;
-    cyg_addrword_t uart_base            = uart_chan->uart_base;
-    cyg_uint32                            regval;
+   
     cyghwr_hal_freescale_dma_set_t       *dma_set_p;
     cyghwr_hal_freescale_edma_t          *edma_p = NULL;
     cyg_uint32 dma_chan_rx_i            = 0;
@@ -554,7 +552,7 @@ freescale_ehci_serial_start_recive(ehci_serial_channel *chan, const cyg_uint8 *b
 
     // Set up the DMA channels.
     dma_chan_rx_i = dma_set_p->chan_p[EHCI_DMA_CHAN_RX_I].dma_chan_i;
-    edma_p->tcd[dma_chan_rx_i].daddr = buffer;
+    edma_p->tcd[dma_chan_rx_i].daddr = (cyg_uint8*)buffer;
     edma_p->tcd[dma_chan_rx_i].biter.elinkno = len;
     edma_p->tcd[dma_chan_rx_i].citer.elinkno = len;
     edma_p->tcd[dma_chan_rx_i].csr |= FREESCALE_EDMA_CSR_INTMAJOR_M |
@@ -573,8 +571,6 @@ freescale_ehci_serial_DSR(cyg_vector_t vector, cyg_ucount32 count, cyg_addrword_
     ehci_serial_channel *chan = (ehci_serial_channel *)data;
     freescale_ehci_serial_info * const uart_chan = (freescale_ehci_serial_info *)
                                                 chan->dev_priv;
-    cyg_addrword_t uart_base = uart_chan->uart_base;
-    cyg_uint32 regval;
 
     CYG_FAIL("Unexpected serial isr in EHCI driver\n");
     cyg_drv_interrupt_unmask(uart_chan->interrupt_num);
@@ -613,8 +609,6 @@ freescale_ehci_tx_dma_ISR(cyg_vector_t vector, cyg_addrword_t data)
     ehci_serial_channel * const chan = (ehci_serial_channel *) data;
     freescale_ehci_serial_info * const uart_chan = (freescale_ehci_serial_info *)
                                                     chan->dev_priv;
-    cyg_addrword_t uart_base = uart_chan->uart_base;
-    cyg_uint32     regval;
 
     cyghwr_hal_freescale_dma_set_t *dma_set_p;
     cyghwr_hal_freescale_edma_t    *edma_p = NULL;
@@ -655,8 +649,6 @@ freescale_ehci_rx_dma_ISR(cyg_vector_t vector, cyg_addrword_t data)
     ehci_serial_channel * const chan = (ehci_serial_channel *) data;
     freescale_ehci_serial_info * const uart_chan = (freescale_ehci_serial_info *)
                                                     chan->dev_priv;
-    cyg_addrword_t uart_base = uart_chan->uart_base;
-    cyg_uint32     regval;
 
     cyghwr_hal_freescale_dma_set_t *dma_set_p;
     cyghwr_hal_freescale_edma_t    *edma_p = NULL;
