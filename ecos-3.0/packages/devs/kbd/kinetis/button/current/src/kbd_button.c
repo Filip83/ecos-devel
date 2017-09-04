@@ -181,13 +181,13 @@ static cyg_uint16 kbd_scan_code_to_key(cyg_uint32 scan_code)
         return K_ENTER;
         break;
         case 0x00004:
-        return K_SAK;
+        return K_DOWN;
         break;
         case 0x02:
         return K_UP;
         break;
         case 0x008:
-        return K_DOWN;
+        return K_SAK;
         break;
     }
 
