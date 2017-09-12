@@ -52,7 +52,7 @@ cdl_package CYGPKG_IO_USB_SLAVE_WINUSB {
     parent      CYGPKG_IO_USB_SLAVE
     requires    { CYGHWR_IO_USB_SLAVE_OUT_ENDPOINTS >= 1 }
     requires    { CYGHWR_IO_USB_SLAVE_IN_ENDPOINTS >= 1 }
-    compile     usbs_winusb.c
+    compile     usbs_winusb.c usbs_winusb_file_io.c
     implements  CYGINT_IO_USB_SLAVE_CLIENTS
     
     description "
@@ -163,6 +163,12 @@ cdl_package CYGPKG_IO_USB_SLAVE_WINUSB {
             state. For details, see the USB specification.)"
     }
 
+    cdl_option CYGOPT_IO_USB_WINUSB_SLAVE_FILE_IO {
+        display       "Enable winusb file IO"
+        default_value 1
+        flavor        bool
+        description   " "
+    }
     cdl_option  CYGBLD_IO_USB_WINUSB_SLAVE_DEBUG {
         display       "Enable debug output from the driver"
         default_value 0
