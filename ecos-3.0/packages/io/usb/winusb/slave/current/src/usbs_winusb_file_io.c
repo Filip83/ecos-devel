@@ -44,7 +44,7 @@ const char *name);
 DEVIO_TABLE(usbs_io_funs,&cyg_usbs_write,&cyg_usbs_read,&cyg_usbs_select,
 			&cyg_usbs_get_config,&cyg_usbs_set_config);
 			
-DEVTAB_ENTRY(usb_devtab,"/dev/usbs",NULL,&usbs_io_funs,&cyg_usbs_inti,&cyg_usbs_lookup,&usbs_winusb0);
+DEVTAB_ENTRY(usb_devtab,CYGOPT_IO_USB_WINUSB_SLAVE_FILE_IO_NAME,NULL,&usbs_io_funs,&cyg_usbs_inti,&cyg_usbs_lookup,&usbs_winusb0);
 
 static cyg_bool Initialized = false;
 static cyg_bool DriverInitialized = false;
