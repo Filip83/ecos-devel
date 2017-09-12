@@ -169,6 +169,15 @@ cdl_package CYGPKG_IO_USB_SLAVE_WINUSB {
         flavor        bool
         description   " "
     }
+
+    cdl_option CYGOPT_IO_USB_WINUSB_SLAVE_FILE_IO_NAME {
+        display       "Device name for USB file IO driver."
+        flavor        data
+        default_value {"\"/dev/usbs\""}
+        description   "
+            This option specifies the name of the winusb file IO device."
+    }
+
     cdl_option  CYGBLD_IO_USB_WINUSB_SLAVE_DEBUG {
         display       "Enable debug output from the driver"
         default_value 0
