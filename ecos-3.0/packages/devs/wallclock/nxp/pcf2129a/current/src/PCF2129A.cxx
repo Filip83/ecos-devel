@@ -119,6 +119,8 @@ externC cyg_spi_device cyg_spi_wallclock_pcf2129a;
 #define PCF_SECONDS_OSF      	0x80   // Clock Halt
 #define PCF_HOURS_24        	0x04   // 24 hour clock mode
 
+#define PCF_STOP                0x20
+
 #define PCF_I2C_ADDRES		0x51
 
 #define PCF_SPI_WRITE           0x20
@@ -252,6 +254,11 @@ DS_GET(cyg_uint8* regs)
         
         SET_HW_ERRROR(HW_ERROR_RTC_CHECK_TIME);
     }
+    
+    if((regs[PCF_CONTROL1] & PCF_STOP) == PCF_STOP)
+    {
+        SET_HW_ERRROR(HW_ERROR_RTC_CHECK_TIME);
+    }
 }
 
 static void
@@ -279,7 +286,9 @@ init_pcf_hwclock(void)
         (0 != (regs[PCF_SECONDS] & PCF_SECONDS_OSF))) 
     {
         regs[PCF_SECONDS]  &= ~PCF_SECONDS_OSF;
-        regs[PCF_CONTROL1] &= ~PCF_HOURS_24;
+        regs[PCF_CONTROL1]   = 0;
+        regs[PCF_CONTROL2]   = 0;
+        regs[PCF_CONTROL3]   = 0;
         DS_PUT(regs);
     }
 }
@@ -291,6 +300,9 @@ set_pcf_hwclock(cyg_uint32 year, cyg_uint32 month, cyg_uint32 mday,
     cyg_uint8 regs[PCF_REGS_SIZE];
 
     // Set up the registers
+    regs[PCF_CONTROL1]   = 0;
+    regs[PCF_CONTROL2]   = 0;
+    regs[PCF_CONTROL3]   = 0;
     regs[PCF_YEAR]       = TO_BCD((cyg_uint8)(year % 100));
     regs[PCF_MONTH]      = TO_BCD((cyg_uint8)month);
     regs[PCF_DAYS]       = TO_BCD((cyg_uint8)mday);
