@@ -17,7 +17,8 @@
 #include <string.h>
 #include <cyg/io/io.h>
 #include <cyg/io/devtab.h>
-#include <usbio/usbs_winusb_io.h>
+#include <pkgconf/io_usb_slave_winusb.h>
+//#include <usbio/usbs_winusb_io.h>
 
 /**
  * \file usbs_winusb_io.c
@@ -53,7 +54,7 @@ cyg_bool  cyg_usbs_inti(struct cyg_devtab_entry *tab)
 {
     if(!DriverInitialized)
     {
-        usbs_kinetis_init(); 
+        //usbs_kinetis_init(); 
         DriverInitialized = true;
     }
     return true;
@@ -66,7 +67,7 @@ const char *name)
     if(!Initialized)
     {
         Initialized = true;
-        usbs_winusb_start(NULL, NULL, NULL, NULL);
+        //usbs_winusb_start(NULL, NULL, NULL, NULL);
     }
 
     return ENOERR;
