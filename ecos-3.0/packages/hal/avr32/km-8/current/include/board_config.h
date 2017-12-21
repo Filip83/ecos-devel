@@ -56,7 +56,7 @@
 #ifndef BOARD_CONFIG_H_
 #define BOARD_CONFIG_H_
 
-
+#include <cyg/hal/gpio.h>
 /**
 /* cphol and ncpha configuration see documentation page 660
 */
@@ -121,6 +121,13 @@
 #define BT_NSHUTD_PIN                   AVR32_PIN_PB10
 #define DAC_RESET_PIN                   AVR32_PIN_PB24
 
+// LCD Pins
+
+#define CYGNUM_DEVS_FRAMEBUF_ST7565_A0_PIN_HIGH gpio_set_pin_high(LCD_A0_PIN)
+#define CYGNUM_DEVS_FRAMEBUF_ST7565_A0_PIN_LOW  gpio_set_pin_low(LCD_A0_PIN)
+
+#define CYGHWR_IO_SET_PIN_LCD_BL      gpio_set_pin_high(LCD_BACKLIGHT_PIN)
+#define CYGHWR_IO_CLEAR_PIN_LCD_BL    gpio_set_pin_low(LCD_BACKLIGHT_PIN)
 
 /**
 /* Pin access and manipulation macros
