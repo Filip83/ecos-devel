@@ -67,7 +67,7 @@
 #include <cyg/io/framebuf.h>
 #include <cyg/io/framebuf.inl>
 
-#include <cyg/io/spi_freescale_dspi.h>
+//#include <cyg/io/spi_freescale_dspi.h>
 
 
 externC cyg_spi_device lcd_spi_device;
