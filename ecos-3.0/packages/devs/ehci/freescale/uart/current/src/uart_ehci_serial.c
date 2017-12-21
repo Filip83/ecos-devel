@@ -390,9 +390,11 @@ freescale_ehci_serial_config_port(ehci_serial_channel *chan,
     if(new_config != &chan->config)
             chan->config = *new_config;
 
+    hal_freescale_edma_irq_clear(edma_p,dma_set_p->chan_p[EHCI_DMA_CHAN_TX_I].dma_chan_i);
     cyg_drv_interrupt_acknowledge(dma_set_p->chan_p[EHCI_DMA_CHAN_TX_I].isr_num);
     cyg_drv_interrupt_unmask(dma_set_p->chan_p[EHCI_DMA_CHAN_TX_I].isr_num);
 
+    hal_freescale_edma_irq_clear(edma_p,dma_set_p->chan_p[EHCI_DMA_CHAN_RX_I].dma_chan_i);
     cyg_drv_interrupt_acknowledge(dma_set_p->chan_p[EHCI_DMA_CHAN_RX_I].isr_num);
     cyg_drv_interrupt_unmask(dma_set_p->chan_p[EHCI_DMA_CHAN_RX_I].isr_num);
     return true;
@@ -453,12 +455,17 @@ freescale_ehci_serial_lookup(struct cyg_devtab_entry **tab,
 {
     ehci_serial_channel * const chan = (ehci_serial_channel *) (*tab)->priv;
 
+    //CYGHWR_IO_SET_PIN_NSHUTD;
     if(!chan->init)
     {
         freescale_ehci_serial_init(*tab);
         chan->init = true;
     }
-    CYGHWR_IO_SET_PIN_NSHUTD;
+   /* else
+    {
+        freescale_ehci_serial_config_port(chan, &chan->config, true);
+    }*/
+    
     return ENOERR;
 }
 
@@ -468,14 +475,42 @@ freescale_ehci_serial_close(ehci_serial_channel *chan)
     cyg_uint32 regval;
     freescale_ehci_serial_info * uart_chan = (freescale_ehci_serial_info *)(chan->dev_priv);
     cyg_addrword_t uart_base = uart_chan->uart_base;
-
+    
     // Disable ehci uart
     regval = 0;
     HAL_WRITE_UINT8(uart_base + CYGHWR_DEV_FREESCALE_UART_C2, regval);
-    // Shut down module
-    CYGHWR_IO_CLEAR_PIN_NSHUTD;
+    
+    // Disable DMA
+    cyghwr_hal_freescale_dma_set_t *dma_set_p;
+    cyghwr_hal_freescale_edma_t    *edma_p = NULL;
+    cyg_uint32 dma_chan_tx_i               = 0;
+    cyg_uint32 dma_chan_rx_i               = 0;
 
-    chan->init = 0;
+    dma_set_p     = uart_chan->dma_set_p;
+    edma_p        = dma_set_p->edma_p;
+    dma_chan_tx_i = dma_set_p->chan_p[EHCI_DMA_CHAN_TX_I].dma_chan_i;
+    dma_chan_rx_i = dma_set_p->chan_p[EHCI_DMA_CHAN_RX_I].dma_chan_i;
+
+    // Clear edma done requsts are automatically disable
+    // on the completition of major loop
+   /* hal_freescale_edma_transfer_clear(edma_p,dma_chan_tx_i);
+    hal_freescale_edma_cleardone(edma_p,dma_chan_tx_i);*/
+    hal_freescale_edma_erq_disable(edma_p,dma_chan_tx_i);
+    hal_freescale_edma_irq_clear(edma_p,dma_chan_tx_i);
+
+    cyg_drv_interrupt_mask(dma_set_p->chan_p[EHCI_DMA_CHAN_TX_I].isr_num);
+    
+   /* hal_freescale_edma_transfer_clear(edma_p,dma_chan_rx_i);
+    hal_freescale_edma_cleardone(edma_p,dma_chan_rx_i);*/
+    hal_freescale_edma_erq_disable(edma_p,dma_chan_rx_i);
+    hal_freescale_edma_irq_clear(edma_p,dma_chan_rx_i);
+
+    cyg_drv_interrupt_mask(dma_set_p->chan_p[EHCI_DMA_CHAN_RX_I].isr_num);
+
+    // Shut down module
+    //CYGHWR_IO_CLEAR_PIN_NSHUTD;
+
+    //chan->init = 0;
 }
 
 // Set up the device characteristics; baud rate, etc.
