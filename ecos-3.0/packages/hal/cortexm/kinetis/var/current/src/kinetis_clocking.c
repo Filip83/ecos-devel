@@ -339,7 +339,7 @@ hal_start_main_clock2(void)
     cyghwr_hal_kinetis_sim_t *sim_p = CYGHWR_HAL_KINETIS_SIM_P;
     volatile cyg_uint8 *osc_cr_p = CYGHWR_HAL_KINETIS_OSC_CR_P;
 
-    sim_p->clk_div1 = 0x01230000U;
+    sim_p->clk_div1 = 0x55550000U;
     
 
     //CLOCK_InitOsc0
@@ -382,12 +382,13 @@ hal_start_main_clock2(void)
     
 
     //CLOCK_SetSimConfig
-    sim_p->clk_div1 = 0x200000U;
-    sim_p->clk_div2 = 0;
+   /* sim_p->clk_div1 = 0x200000U;
+    sim_p->clk_div2 = 0;*/
     sim_p->sopt2 =  (2 << CYGHWR_HAL_KINETIS_SIM_SOPT2_PLLFLLSEL_S) |
                     CYGHWR_HAL_KINETIS_SIM_SOPT2_USBSRC_M           |
                     (3 << 16) | (7 << 5);
     //sim_p->sopt1 =  (2 << CYGHWR_HAL_KINETIS_SIM_SOPT2_PLLFLLSEL_S);
+    hal_set_clock_dividers();
 #endif
 
 }
@@ -518,17 +519,17 @@ hal_freescale_uart_setbaud(cyg_uint32 uart_p, cyg_uint32 baud)
 
 void hal_update_clock_var(void)
 {
-#if 1
+#if 0
     hal_kinetis_sysclk=hal_get_cpu_clock();
     /*hal_kinetis_busclk=hal_kinetis_sysclk /
           CYGHWR_HAL_CORTEXM_KINETIS_CLKDIV_PER_BUS;*/
     hal_kinetis_busclk = hal_kinetis_sysclk;
     hal_cortexm_systick_clock=hal_kinetis_sysclk;
 #else
-    hal_kinetis_sysclk=hal_get_cpu_clock();
-    hal_kinetis_busclk=hal_kinetis_sysclk /
+    hal_cortexm_systick_clock=hal_get_cpu_clock();
+    hal_kinetis_sysclk=hal_cortexm_systick_clock;
+    hal_kinetis_busclk=hal_cortexm_systick_clock /
           CYGHWR_HAL_CORTEXM_KINETIS_CLKDIV_PER_BUS;
-    hal_cortexm_systick_clock=hal_kinetis_sysclk;
 #endif
 }
 
