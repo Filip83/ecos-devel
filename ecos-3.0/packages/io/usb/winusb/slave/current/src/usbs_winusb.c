@@ -624,8 +624,8 @@ void usbs_winusb_start(app_state_change_fn state_change_fn,
   
   usbs_winusb_ep0->state_change_fn = usbs_winusb_state_change_handler;
   
-  if (!usbs_winusb_ep0->class_control_fn)
-    usbs_winusb_ep0->class_control_fn = usbs_winusb_ms_vendor_handler;
+  if (!usbs_winusb_ep0->vendor_control_fn)
+    usbs_winusb_ep0->vendor_control_fn = usbs_winusb_ms_vendor_handler;
   
   usbs_winusb0.app_state_change_callback = state_change_fn;
   
