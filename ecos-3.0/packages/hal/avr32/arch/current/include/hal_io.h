@@ -62,6 +62,8 @@
 
 #include <cyg/infra/cyg_type.h>
 
+#include <cyg/hal/board_config.h>
+
 
 //-----------------------------------------------------------------------------
 // IO Register address.
