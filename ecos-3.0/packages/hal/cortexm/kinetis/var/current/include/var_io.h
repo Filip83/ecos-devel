@@ -1203,6 +1203,10 @@ typedef volatile struct cyghwr_hal_kinetis_mpu_s {
 // I2S
 #include <cyg/hal/var_io_i2s.h>
 
+//---------------------------------------------------------------------------
+// SMC
+#include <cyg/hal/var_io_smc.h>
+
 //=============================================================================
 // DEVS:
 // Following macros may also be, and usually are borrwed by some device drivers.
