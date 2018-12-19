@@ -91,10 +91,10 @@ bool ecAboutDialog::AddControls(wxWindow* parent)
             wxFile file;
             file.Open(htmlFile, wxFile::read);
             long len = file.Length();
-            char* buf = htmlText.GetWriteBuf(len + 1);
-            file.Read(buf, len);
-            buf[len] = 0;
-            htmlText.UngetWriteBuf();
+            //char* buf = (char)htmlText.GetChar(len + 1);
+            //file.Read(buf, len);
+            //buf[len] = 0;
+            //htmlText.UngetWriteBuf();
         }
     }
 
