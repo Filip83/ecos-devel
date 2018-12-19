@@ -37,7 +37,7 @@
 #include "wx/scrolwin.h"
 #endif
 
-WXDLLEXPORT_DATA(extern const wxChar*) wxPanelNameStr;
+//WXDLLEXPORT_DATA(extern const wxChar*) wxPanelNameStr;
 
 // default scrolled window style
 #ifndef wxScrolledWindowStyle

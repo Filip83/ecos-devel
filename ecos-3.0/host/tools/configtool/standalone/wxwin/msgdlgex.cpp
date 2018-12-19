@@ -73,8 +73,8 @@ wxMessageDialogEx::wxMessageDialogEx( wxWindow *parent, const wxString& message,
     // 1) icon
     if (style & wxICON_MASK)
     {
-         wxStaticBitmap *icon = new wxStaticBitmap(
-            this, -1, wxTheApp->GetStdIcon((int)(style & wxICON_MASK)));
+         wxStaticBitmap *icon = new wxStaticBitmap();/*(
+            this, -1, wxTheApp->GetStdIcon((int)(style & wxICON_MASK)));*/
          icon_text->Add( icon, 0, wxCENTER );
     }
 

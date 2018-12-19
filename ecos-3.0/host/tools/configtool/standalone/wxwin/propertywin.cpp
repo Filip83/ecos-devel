@@ -248,7 +248,8 @@ void ecPropertyListCtrl::Fill(ecConfigItem *pti)
         }
 
         // List all the properties applicable to me
-        const std::string name = ecUtils::UnicodeToStdStr (m_pti->GetMacro ());
+        //const std::string name = ecUtils::UnicodeToStdStr (m_pti->GetMacro ());
+        const std::string name = m_pti->GetMacro ().ToStdString();
         if (name.size () > 0)
         {
             const CdlConfiguration config = wxGetApp().GetConfigToolDoc ()->GetCdlConfig ();

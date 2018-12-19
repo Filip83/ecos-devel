@@ -69,6 +69,7 @@
 #include "wx/file.h"
 #include "wx/filefn.h"
 #include "wx/progdlg.h"
+#include "wx/treebase.h"
 
 #include "configtool.h"
 #include "admindlg.h"
@@ -213,7 +214,7 @@ void ecAdminDialog::OnAdd(wxCommandEvent& event)
     wxString defaultDir; // TODO
     wxString defaultFile;
     wxString wildcard = wxT("eCos Package Files (*.epk)|*.epk");
-    wxFileDialog dlg(this, _("Open eCos Package Files"), defaultDir, defaultFile, wildcard, wxOPEN|wxMULTIPLE);
+    wxFileDialog dlg(this, _("Open eCos Package Files"), defaultDir, defaultFile, wildcard, wxFD_OPEN|wxFD_MULTIPLE);
 
     if (wxID_OK == dlg.ShowModal ())
     {

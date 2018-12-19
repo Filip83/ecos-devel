@@ -255,11 +255,12 @@ ecMainFrame::ecMainFrame(wxDocManager *manager, const wxString& title, const wxP
     
     CreateWindows();
 
-    wxIcon mainIcon(wxICON(configtool));
-    wxGetApp().SetMainIcon(mainIcon);
+    //const wxIcon mainIcon(wxICON(configtool));
+    
+    wxGetApp().SetMainIcon(wxICON(configtool));
     
     // set the frame icon
-    SetIcon(mainIcon);
+    SetIcon(wxICON(configtool));
     
     // create a menu bar
 
@@ -650,7 +651,7 @@ void ecMainFrame::RecreateToolbar()
     toolBarBitmaps[8] = wxBITMAP(buildlibrary);
     toolBarBitmaps[9] = wxBITMAP(help);
     toolBarBitmaps[10] = wxBITMAP(newregion);
-    toolBarBitmaps[11] = wxBITMAP(newsection);
+    toolBarBitmaps[11] = wxBITMAP(newregion);//wxBITMAP(newsection);
     toolBarBitmaps[12] = wxBITMAP(delete);
     toolBarBitmaps[13] = wxBITMAP(properties);
     toolBarBitmaps[14] = wxBITMAP(cshelp);
@@ -796,9 +797,9 @@ void ecMainFrame::OnToggleToolbar(wxCommandEvent& event)
     
     wxSizeEvent sizeEvent(GetSize(), GetId());
     GetEventHandler()->ProcessEvent(sizeEvent);
-#ifdef __WXGTK__
+/*#ifdef __WXGTK__
     GtkOnSize();
-#endif
+#endif*/
 }
 
 void ecMainFrame::OnUpdateToggleToolbar(wxUpdateUIEvent& event)

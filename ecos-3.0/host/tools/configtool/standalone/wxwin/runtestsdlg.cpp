@@ -332,7 +332,7 @@ void ecRunTestsDialog::OnRun(wxCommandEvent& event)
                 if (wxGetApp().GetSettings().GetRunTestsSettings().m_bSerial)
                     strPort = wxGetApp().GetSettings().GetRunTestsSettings().m_strPort;
                 else
-                    strPort = (const wxChar*) CeCosSocket::HostPort(wxGetApp().GetSettings().GetRunTestsSettings().m_strLocalTCPIPHost,wxGetApp().GetSettings().GetRunTestsSettings().m_nLocalTCPIPPort);
+                    strPort = wxString::FromAscii(CeCosSocket::HostPort(wxGetApp().GetSettings().GetRunTestsSettings().m_strLocalTCPIPHost,wxGetApp().GetSettings().GetRunTestsSettings().m_nLocalTCPIPPort));
                 if(0==strPort.Length()){
                     m_pResource=new CTestResource(_T(""),m_ep.PlatformName());
                 } else
@@ -764,7 +764,7 @@ void ecRunTestsExecutablesDialog::OnAdd(wxCommandEvent& event)
 //#endif
 
     wxFileDialog dialog(this, _("Choose one or more executables to add"), wxGetCwd(), wxEmptyString,
-        wildcard, wxMULTIPLE|wxOPEN);
+        wildcard, wxFD_MULTIPLE|wxFD_OPEN);
 
     if (dialog.ShowModal() == wxID_OK)
     {

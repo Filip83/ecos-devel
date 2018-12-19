@@ -374,7 +374,7 @@ void ecTemplatesDialog::OnSelHardwareTemplates(wxCommandEvent& event)
     std::string* template_i =  (std::string*) cdlHardwareCtrl->GetClientData (nIndex);
 	m_hardware = template_i->c_str();
 
-	m_strCdlHardwareDescription = doc->GetCdlPkgData ()->get_target_description ((const wxChar*) m_hardware).c_str ();
+	m_strCdlHardwareDescription = doc->GetCdlPkgData ()->get_target_description (m_hardware.ToStdString());
 	m_strCdlHardwareDescription = ecUtils::StripExtraWhitespace (m_strCdlHardwareDescription);
 
     UpdateDetails (); // display new hardware packages in details box
@@ -407,7 +407,7 @@ void ecTemplatesDialog::OnSelPackageVersion(wxCommandEvent& event)
 
 	//TRACE (_T("Version '%s' selected\n"), strVersion);
 	m_template_version = ecUtils::UnicodeToStdStr (strVersion).c_str();
-	m_strCdlTemplateDescription = doc->GetCdlPkgData ()->get_template_description (m_template.c_str(), m_template_version.c_str()).c_str ();
+	m_strCdlTemplateDescription = doc->GetCdlPkgData ()->get_template_description (m_template.ToStdString(), m_template_version.ToStdString());
 	m_strCdlTemplateDescription = ecUtils::StripExtraWhitespace (m_strCdlTemplateDescription);
 	
 	UpdateDetails (); // display new template packages in details box
@@ -426,7 +426,7 @@ void ecTemplatesDialog::UpdateVersionList(const wxString& defaultVersion)
 	cdlVersionCtrl->Clear ();
 	
 	// get the template version information
-	const std::vector<std::string>& versions = doc->GetCdlPkgData ()->get_template_versions (m_template.c_str());
+	const std::vector<std::string>& versions = doc->GetCdlPkgData ()->get_template_versions (m_template.ToStdString());
 	wxASSERT (versions.size () > 0);
 	
 	// add the template versions to the version combo box
@@ -454,8 +454,8 @@ void ecTemplatesDialog::UpdateDetails()
     ecConfigToolDoc* doc = wxGetApp().GetConfigToolDoc();
 
 	// retrieve the template and target package names
-	const std::vector<std::string> & template_packages = doc->GetCdlPkgData ()->get_template_packages (m_template.c_str(), m_template_version.c_str());
-	std::vector<std::string> packages = doc->GetCdlPkgData ()->get_target_packages (m_hardware.c_str());
+	const std::vector<std::string> & template_packages = doc->GetCdlPkgData ()->get_template_packages (m_template.ToStdString(), m_template_version.ToStdString());
+	std::vector<std::string> packages = doc->GetCdlPkgData ()->get_target_packages (m_hardware.ToStdString());
 	packages.insert (packages.end (), template_packages.begin (), template_packages.end ());
 	
 	// retrieve the zeroth (verbose) package alias for each package
