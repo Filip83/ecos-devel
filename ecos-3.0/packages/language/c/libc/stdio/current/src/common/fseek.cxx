@@ -57,6 +57,7 @@
 #include <cyg/infra/cyg_type.h>     // Common project-wide type definitions
 #include <cyg/infra/cyg_ass.h>      // Assertion support
 #include <cyg/infra/cyg_trac.h>     // Tracing support
+#include <sys/types.h>
 #include <stddef.h>                 // NULL and size_t from compiler
 #include <errno.h>                  // Error codes
 #include <stdio.h>                  // header for fseek() etc.
