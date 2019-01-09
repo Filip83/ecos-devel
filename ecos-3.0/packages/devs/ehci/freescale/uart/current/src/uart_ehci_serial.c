@@ -66,7 +66,7 @@
 #include <cyg/infra/cyg_ass.h>
 #include <cyg/infra/diag.h>
 
-#include <cyg/io/ehci_serial.h>
+#include <cyg/io/ehci.h>
 #include <cyg/io/devtab.h>
 #include <cyg/hal/freescale_edma.h>
 #include <cyg/io/ser_freescale_uart.h>

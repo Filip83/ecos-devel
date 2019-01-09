@@ -51,7 +51,9 @@
 cdl_package CYGPKG_DEVS_EHCI_SERIAL_FREESCALE {
     display       "Freescale uart ehci serial device drivers"
 
+    implements    CYGINT_DEVS_EHCI_KINETIS
     implements    CYGINT_HAL_DMA
+    parent		  CYGPKG_IO_EHCI
 
     requires      CYGPKG_IO_SERIAL_FREESCALE_UART_HDR
     requires      CYGPKG_ERROR
