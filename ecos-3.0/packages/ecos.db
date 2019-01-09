@@ -2894,6 +2894,15 @@ package CYGPKG_IO_DAC {
            dac devices."
 }
 
+package CYGPKG_IO_EHCI {
+	alias 		{ "Generic EHCI support" ehci io_ehci }
+	directory	io/ehci
+	script		io_ehci.cdl
+        description "
+           This package contains drivers for basic I/O services on
+           ehci devices."
+}
+
 package CYGPKG_DEVS_AVR32_SPECTROMETER_FPGA {
     alias           { "Spectrometer FPGA driver for AVR32UC3C" }
     hardware
@@ -3227,6 +3236,13 @@ package CYGPKG_HAL_SH_SH7750_DREAMCAST {
         description "
            This SH HAL package provides the support needed to run
            eCos on SEGA Dreamcast."
+}
+
+package CYGPKG_BLUETOOTH_LIB {
+	alias 		{ "Bluetooth" bt }
+	directory	services/bluetooth
+	script		bluetooth.cdl
+    description     "Bluetooth stack and deamon."
 }
 
 # --------------------------------------------------------------------------
@@ -8042,6 +8058,16 @@ package CYGPKG_HAL_CORTEXM_KINETIS_KM_8_K22F512 {
         eCos on the SatisGeo KM-8 board."
 }
 
+package CYGPKG_HAL_CORTEXM_KINETIS_FRDM_K64F1024 {
+	alias		{ "NXP FRDM K64 HAL" hal_cortexm_k64f1M0 }
+	directory	hal/cortexm/kinetis/frdm_k64f1024
+	script		hal_cortexm_kinetis_frdm_k64f1024.cdl
+	hardware
+        description "
+        The FRDM K64 HAL package provides the support needed to run
+        eCos on the NXP development system."
+}
+
 target freescale_twr_k60n512 {
         alias { "Freescale Kinetis TWR-K60N512" twr_k60n512 }
         packages { CYGPKG_HAL_CORTEXM
@@ -8142,6 +8168,44 @@ target satisgeo_km_8_k22f512 {
                    CYGPKG_IO_KBD
                    CYGPKG_DEVS_KBD_BUTTON_KINETIS
                    CYGPKG_DEVS_BEEP_KINETIS
+                   CYGPKG_IO_EHCI
+                   CYGPKG_DEVS_EHCI_SERIAL_FREESCALE
+                   CYGPKG_BLUETOOTH_LIB
+                   CYGPKG_DEVS_USB_KINETIS
+                   CYGPKG_IO_USB_SLAVE_WINUSB 
+                   CYGPKG_IO_USB
+                   CYGPKG_IO_USB_SLAVE
+                 }
+
+        description "
+            The satisgeo_km_8_k22f512 target provides the packages needed
+            to run eCos on the Satisgeo KM-8 board."
+}
+
+target satisgeo_km_8_k22f512 {
+        alias { "Satisgeo km-8" km_8 }
+        packages { 
+                   CYGPKG_HAL_CORTEXM
+                   CYGPKG_HAL_CORTEXM_KINETIS
+                   CYGPKG_HAL_CORTEXM_KINETIS_KM_8_K22F512
+                   CYGPKG_HAL_FREESCALE_EDMA
+                   CYGPKG_IO_SERIAL_FREESCALE_UART_HDR
+                   CYGPKG_IO_SERIAL_FREESCALE_UART
+                   CYGPKG_DEVICES_WALLCLOCK_NXP_PCF2129A
+                   CYGPKG_IO_SPI
+                   CYGPKG_DEVS_SPI_FREESCALE_DSPI_GPIO
+                   CYGPKG_DEVS_FLASH_KINETIS
+                   CYGPKG_CRC
+                   CYGPKG_IO_FLASH
+                   CYGPKG_DEVS_FLASH_SPI_FM25VXX
+                   CYGPKG_IO_FILEIO
+                   CYGPKG_IO_FRAMEBUF
+                   CYGPKG_DEVS_FRAMEBUF_ST7565
+                   CYGPKG_IO_ADC
+                   CYGPKG_DEVS_ADC_KINETIS_ADC
+                   CYGPKG_IO_KBD
+                   CYGPKG_DEVS_KBD_BUTTON_KINETIS
+                   CYGPKG_DEVS_BEEP_KINETIS
                    CYGPKG_DEVS_EHCI_SERIAL_FREESCALE
                    CYGPKG_DEVS_USB_KINETIS
                    CYGPKG_IO_USB_SLAVE_WINUSB 
@@ -8154,39 +8218,25 @@ target satisgeo_km_8_k22f512 {
             to run eCos on the Satisgeo KM-8 board."
 }
 
-target freescale_twr_k70f120m {
-        alias { "Freescale Kinetis TWR-K70F120M" twr_k70f120m }
+target nxp_frdm_k64f1m0 {
+        alias { "nxp Kinetis FRDM-K64F Platform" frdm_k64f1m0 }
         packages { CYGPKG_HAL_CORTEXM
                    CYGPKG_HAL_CORTEXM_KINETIS
-                   CYGPKG_HAL_CORTEXM_KINETIS_TWR_K70F120M
+                   CYGPKG_HAL_CORTEXM_KINETIS_FRDM_K64F1024
                    CYGPKG_HAL_FREESCALE_EDMA
                    CYGPKG_IO_SERIAL_FREESCALE_UART_HDR
                    CYGPKG_IO_SERIAL_FREESCALE_UART
                    CYGPKG_DEVICES_WALLCLOCK_KINETIS_RTC
-                   CYGPKG_DEVS_ETH_PHY
-                   CYGPKG_DEVS_ETH_FREESCALE_ENET
                    CYGPKG_IO_SPI
                    CYGPKG_DEVS_SPI_FREESCALE_DSPI
                    CYGPKG_IO_I2C
                    CYGPKG_DEVS_I2C_FREESCALE_I2C
-                   CYGPKG_DEVS_DISK_MMC
-                   CYGPKG_DEVS_DISK_MMC_FREESCALE_DSPI
-                   CYGPKG_DEVS_FLASH_KINETIS
-                   CYGPKG_DEVS_FLASH_SPI_SST25XX
-                   CYGPKG_DEVS_FLASH_SST25XX_FREESCALE_DSPI
-                   CYGPKG_DEVS_FLASH_SPI_FM25VXX
-                   CYGPKG_DEVS_FLASH_FM25VXX_FREESCALE_DSPI
-                   CYGPKG_DEVS_ADC_SPI_LTC1859
-                   CYGPKG_DEVS_ADC_LTC1859_FREESCALE_DSPI
-                   CYGPKG_DEVS_ADC_SPI_LTC2498
-                   CYGPKG_DEVS_ADC_LTC2498_FREESCALE_DSPI
-                   CYGPKG_DEVS_DAC_SPI_LTC2600
-                   CYGPKG_DEVS_DAC_LTC2600_FREESCALE_DSPI
-                   CYGPKG_DEVS_DAC_SPI_LTC2704
-                   CYGPKG_DEVS_DAC_LTC2704_FREESCALE_DSPI
+                   CYGPKG_IO_EHCI
+                   CYGPKG_DEVS_EHCI_SERIAL_FREESCALE
+                   CYGPKG_BLUETOOTH_LIB
                  }
-        description "The freescale_twr_k70f120m target provides the packages needed
-        to run eCos on the Freescale TWR-k70f120m development system."
+        description "The nxp_frdm_k64f1m0 target provides the packages needed
+        to run eCos on the Freescale FRDM K64 development system."
 }
 
 target freescale_twr_k60f120m {
@@ -8198,15 +8248,12 @@ target freescale_twr_k60f120m {
                    CYGPKG_IO_SERIAL_FREESCALE_UART_HDR
                    CYGPKG_IO_SERIAL_FREESCALE_UART
                    CYGPKG_DEVICES_WALLCLOCK_KINETIS_RTC
-                   CYGPKG_DEVS_ETH_PHY
-                   CYGPKG_DEVS_ETH_FREESCALE_ENET
                    CYGPKG_IO_SPI
                    CYGPKG_DEVS_SPI_FREESCALE_DSPI
                    CYGPKG_IO_I2C
                    CYGPKG_DEVS_I2C_FREESCALE_I2C
-                   CYGPKG_DEVS_DISK_MMC
-                   CYGPKG_DEVS_DISK_MMC_FREESCALE_DSPI
                    CYGPKG_DEVS_FLASH_KINETIS
+                   CYGPKG_IO_FILEIO
                  }
         description "The freescale_twr_k60f120m target provides the packages needed
         to run eCos on the Freescale TWR-k60f120m development system."
