@@ -74,6 +74,15 @@ cyg_uint32 hal_cortexm_systick_clock;
 cyg_uint32 hal_kinetis_sysclk;
 cyg_uint32 hal_kinetis_busclk;
 
+typedef enum 
+{
+    mcg_fei, mcg_fee, mcg_fbe, mcg_fbi, 
+    mcg_blpi, mcg_blpe, mcg_pbe, mcg_pee
+} t_hall_kinetis_mcg_mode;
+
+t_hall_kinetis_mcg_mode hal_kinetis_mcg_current_mode;
+t_hall_kinetis_mcg_mode hal_kinetis_mcg_new_mode;
+
 cyg_uint32 hal_get_cpu_clock(void);
 
 void hal_start_main_clock(void);
@@ -102,9 +111,9 @@ hal_start_clocks( void )
     // Real Time Clock
     hal_start_rtc_clock();
 # endif
-    //hal_set_clock_dividers();
+    hal_set_clock_dividers();
     // Main clock - MCG
-    hal_start_main_clock2();
+    hal_start_main_clock();
 #endif
     // Trace clock
 #ifdef CYGHWR_HAL_CORTEXM_KINETIS_TRACECLK_CORE
@@ -116,7 +125,6 @@ hal_start_clocks( void )
     port_p->pcr[6] = CYGHWR_HAL_KINETIS_PORT_PCR_MUX(0x7);
 #endif
 }
-
 
 #define MCG_WAIT_WHILE(_condition_) do{}while(_condition_)
 
@@ -173,7 +181,6 @@ hal_start_pll1(cyghwr_hal_kinetis_mcg_t *mcg_p)
 }
 #endif // CYGOPT_HAL_CORTEXM_KINETIS_MCGOUT_PLL1
 
-#ifdef CYGOPT_HAL_CORTEXM_KINETIS_MCG_REF_EXT
 
 // There are 1 or 2 external oscillators
 void CYGOPT_HAL_KINETIS_MISC_FLASH_SECTION_ATTR
@@ -181,21 +188,21 @@ hal_start_ext_ref(void)
 {
     volatile cyg_uint8 *osc_cr_p = CYGHWR_HAL_KINETIS_OSC_CR_P;
 
-# if defined CYGHWR_HAL_CORTEXM_KINETIS_PLLREFSEL_0 || \
-     defined CYGHWR_HAL_CORTEXM_KINETIS_PLL1REFSEL_0
-#  ifdef CYGOPT_HAL_CORTEXM_KINETIS_MCG_REF_EXT_IS_XTAL
+# if CYGOPT_HAL_CORTEXM_KINETIS_MCG_OSC0 == 1
+#  ifdef CYGOPT_HAL_CORTEXM_KINETIS_MCG_OSC0_IS_XTAL
     // Set the oscillator 0
     *osc_cr_p = CYGHWR_HAL_CORTEXM_KINETIS_OSC_CAP / 2;
 #  elif defined CYGOPT_HAL_CORTEXM_KINETIS_MCG_REF_EXT_IS_OSC
     // Select external oscillator
+    // In this mode OSCERCLK is enabled and is astive in 
+    // Stop mode. Can be used as error clock source
     *osc_cr_p = CYGHWR_HAL_KINETIS_OSC_CR_ERCLKEN_M |
           CYGHWR_HAL_KINETIS_OSC_CR_EREFSTEN_M;
-#  endif // CYGOPT_HAL_CORTEXM_KINETIS_MCG_REF_EXT_IS_XTAL
-# endif // CYGHWR_HAL_CORTEXM_KINETIS_PLLREFSEL_0 || ...
+#  endif // CYGOPT_HAL_CORTEXM_KINETIS_MCG_OSC0_IS_XTAL
+# endif // CYGOPT_HAL_CORTEXM_KINETIS_MCG_OSC0 
 
-# if defined CYGHWR_HAL_CORTEXM_KINETIS_PLLREFSEL_1 || \
-     defined CYGHWR_HAL_CORTEXM_KINETIS_PLL1REFSEL_1
-#  ifdef CYGOPT_HAL_CORTEXM_KINETIS_MCG_REF_EXT1_IS_XTAL
+# if CYGOPT_HAL_CORTEXM_KINETIS_MCG_OSC1 == 1
+#  ifdef CYGOPT_HAL_CORTEXM_KINETIS_MCG_OSC1_IS_XTAL
     // Set the oscillator 1
     osc_cr_p = CYGHWR_HAL_KINETIS_OSC1_CR_P;
     *osc_cr_p = CYGHWR_HAL_CORTEXM_KINETIS_OSC1_CAP / 2;
@@ -203,47 +210,71 @@ hal_start_ext_ref(void)
     // Select external oscillator
     *osc_cr_p = CYGHWR_HAL_KINETIS_OSC1_CR_ERCLKEN_M |
           CYGHWR_HAL_KINETIS_OSC1_CR_EREFSTEN_M;
-#  endif // CYGOPT_HAL_CORTEXM_KINETIS_MCG_REF_EXT1_IS_XTAL
-# endif // CYGHWR_HAL_CORTEXM_KINETIS_PLLREFSEL_1 || ...
+#  endif // CYGOPT_HAL_CORTEXM_KINETIS_MCG_OSC1_IS_XTAL
+# endif // CYGOPT_HAL_CORTEXM_KINETIS_MCG_OSC1 
 }
-#endif // CYGOPT_HAL_CORTEXM_KINETIS_MCG_REF_EXT
+
 
 void CYGOPT_HAL_KINETIS_MISC_FLASH_SECTION_ATTR
 hal_start_main_clock(void)
 {
+    cyg_uint32 i;
     cyghwr_hal_kinetis_mcg_t *mcg_p = CYGHWR_HAL_KINETIS_MCG_P;
-/*#if defined CYGOPT_HAL_CORTEXM_KINETIS_MCG_MCGOUTCLK_PLL ||\
-    defined CYGOPT_HAL_CORTEXM_KINETIS_MCG_MCGOUTCLK_PLL1 ||\
-    (defined CYGOPT_HAL_CORTEXM_KINETIS_MCG_REF_EXT_IS_RTC &&\
-    CYGHWR_HAL_CORTEXM_KINETIS_REV == 1)*/
     cyghwr_hal_kinetis_sim_t *sim_p = CYGHWR_HAL_KINETIS_SIM_P;
-//#endif
-
-#ifdef CYGOPT_HAL_CORTEXM_KINETIS_MCG_REF_EXT_IS_RTC
+    
+#if CYGOPT_HAL_CORTEXM_KINETIS_MCG_OSC0 == 1
+    hal_start_ext_ref();
+# endif
+    
+#if defined(CYGOPT_HAL_CORTEXM_KINETIS_MCG_MCGOUTCLK_FLL) && \
+    defined(CYGNUM_HAL_CORTEXM_KINETIS_MCG_REF_FREQ_SOURCE_EXT_32K_RTC)
     // Select RTC clock source for MCG reference
 # if CYGHWR_HAL_CORTEXM_KINETIS_REV == 1
     sim_p->sopt2 |= CYGHWR_HAL_KINETIS_SIM_SOPT2_MCGCLKSEL_M;
 # elif CYGHWR_HAL_CORTEXM_KINETIS_REV == 2
     mcg_p->c7 |= CYGHWR_HAL_KINETIS_MCG_C7_OSCSEL_M;
 # endif // CYGHWR_HAL_CORTEXM_KINETIS_REV == 2
-#endif // CYGOPT_HAL_CORTEXM_KINETIS_MCG_REF_EXT_IS_RTC
+#endif // CYGNUM_HAL_CORTEXM_KINETIS_MCG_REF_FREQ_SOURCE_EXT_32_RTC
 
-#ifdef CYGOPT_HAL_CORTEXM_KINETIS_MCG_REF_EXT
-    hal_start_ext_ref();
+#  ifdef CYGOPT_HAL_CORTEXM_KINETIS_MCG_OSC0_IS_EXTAL
+          mcg_p->c2 |= CYGHWR_HAL_KINETIS_MCG_C2_EREFS_M | CYGHWR_HAL_KINETIS_MCG_C2_HGO_M
+#  endif // CYGOPT_HAL_CORTEXM_KINETIS_MCG_REF_EXT_IS_XTAL
+          ;
+        
+#ifdef CYGOPT_HAL_CORTEXM_KINETIS_MCG_MCGOUTCLK_PLL   
+    // Wait for oscillator start up
+    MCG_WAIT_WHILE(!(mcg_p->status & CYGHWR_HAL_KINETIS_MCG_S_OSCINIT_M));
+    // Wait for reference clock to switch to external reference
+    MCG_WAIT_WHILE(mcg_p->status & CYGHWR_HAL_KINETIS_MCG_S_IREFST_M);
+    // Wait for status flags update
+    MCG_WAIT_WHILE((mcg_p->status & CYGHWR_HAL_KINETIS_MCG_S_CLKST_M) !=
+            CYGHWR_HAL_KINETIS_MCG_S_CLKST_EXT;
+    
+    hal_start_pll0(mcg_p);
+    
+    // Switch to PBE mode
+    mcg_p->c6 |=  CYGHWR_HAL_KINETIS_MCG_C6_PLLS_M;
+
+    MCG_WAIT_WHILE((mcg_p->status & CYGHWR_HAL_KINETIS_MCG_S_CLKST_M) !=
+                   CYGHWR_HAL_KINETIS_MCG_S_CLKST_EXT);
+    MCG_WAIT_WHILE(!(mcg_p->status & CYGHWR_HAL_KINETIS_MCG_S_PLLST_M));
+    MCG_WAIT_WHILE(!(mcg_p->status & CYGHWR_HAL_KINETIS_MCG_S_LOCK_M));
+
+    // Enter PEE mode
+    mcg_p->c1 &= ~CYGHWR_HAL_KINETIS_MCG_C1_CLKS_M;
+    MCG_WAIT_WHILE((mcg_p->status & CYGHWR_HAL_KINETIS_MCG_S_CLKST_M) !=
+                   CYGHWR_HAL_KINETIS_MCG_S_CLKST_PLL);
+
+    sim_p->sopt2 |= CYGHWR_HAL_KINETIS_SIM_SOPT2_PLLFLLSEL_M;
 # endif
-
-#if defined(CYGOPT_HAL_CORTEXM_KINETIS_MCG_MCGOUTCLK_PLL) || \
-    defined(CYGOPT_HAL_CORTEXM_KINETIS_MCG_MCGOUTCLK_PLL1) || \
-    defined(CYGOPT_HAL_CORTEXM_KINETIS_MCG_MCGOUTCLK_FLL) || \
-    defined(CYGOPT_HAL_CORTEXM_KINETIS_MCG_MCGOUTCLK_EXT_REFCLK)
-
-    mcg_p->c2 = CYGHWR_HAL_KINETIS_MCG_C2_RANGE(
+    
+#ifdef CYGOPT_HAL_CORTEXM_KINETIS_MCG_MCGOUTCLK_FLL 
+        mcg_p->c2 = CYGHWR_HAL_KINETIS_MCG_C2_RANGE(
                     CYGNUM_HAL_CORTEXM_KINETIS_MCG_REF_FREQ_RANGE)
-#  ifdef CYGOPT_HAL_CORTEXM_KINETIS_MCG_REF_EXT_IS_XTAL
+#  ifdef CYGOPT_HAL_CORTEXM_KINETIS_MCG_OSC0_IS_EXTAL
           | CYGHWR_HAL_KINETIS_MCG_C2_EREFS_M | CYGHWR_HAL_KINETIS_MCG_C2_HGO_M
 #  endif // CYGOPT_HAL_CORTEXM_KINETIS_MCG_REF_EXT_IS_XTAL
           ;
-
     mcg_p->c1 = CYGHWR_HAL_KINETIS_MCG_C1_FRDIV(
         CYGNUM_HAL_CORTEXM_KINETIS_MCG_REF_FRDIV_REG)
 # if defined(CYGOPT_HAL_CORTEXM_KINETIS_MCG_MCGOUTCLK_PLL) || \
@@ -252,81 +283,57 @@ hal_start_main_clock(void)
         |CYGHWR_HAL_KINETIS_MCG_C1_CLKS(CYGHWR_HAL_KINETIS_MCG_C1_CLKS_EXT_REF)
 # endif // CYGOPT_HAL_CORTEXM_KINETIS_MCG_MCGOUTCLK_PLL*
         ;
-
-# ifdef CYGOPT_HAL_CORTEXM_KINETIS_MCG_REF_EXT_IS_XTAL
-    // Wait for oscillator start up
-    MCG_WAIT_WHILE(!(mcg_p->status & CYGHWR_HAL_KINETIS_MCG_S_OSCINIT_M));
-# endif
-# ifdef CYGOPT_HAL_CORTEXM_KINETIS_MCG_REF_EXT1_IS_XTAL
-    // Wait for oscillator 1 start up
-    MCG_WAIT_WHILE(!(mcg_p->s2 & CYGHWR_HAL_KINETIS_MCG_S2_OSCINIT1_M));
-# endif
-# ifdef CYGOPT_HAL_CORTEXM_KINETIS_MCG_REF_EXT
-    // Wait for reference clock to switch to external reference
-    MCG_WAIT_WHILE(mcg_p->status & CYGHWR_HAL_KINETIS_MCG_S_IREFST_M);
-    // Wait for status flags update
-    MCG_WAIT_WHILE((mcg_p->status & CYGHWR_HAL_KINETIS_MCG_S_CLKST_M) !=
-#  if defined(CYGOPT_HAL_CORTEXM_KINETIS_MCG_MCGOUTCLK_PLL) || \
-      defined(CYGOPT_HAL_CORTEXM_KINETIS_MCG_MCGOUTCLK_PLL1) || \
-      defined(CYGOPT_HAL_CORTEXM_KINETIS_MCG_MCGOUTCLK_EXT_REFCLK)
-            CYGHWR_HAL_KINETIS_MCG_S_CLKST_EXT
-#  else
-            CYGHWR_HAL_KINETIS_MCG_S_CLKST_FLL
-#  endif
-            );
-# endif //  CYGOPT_HAL_CORTEXM_KINETIS_MCG_REF_EXT
-
-# ifdef CYGOPT_HAL_CORTEXM_KINETIS_MCG_MCGOUTCLK_FLL
-    // Configure FLL
+        
+        // Configure FLL
     mcg_p->c4 = (mcg_p->c4 & 0x1f) |
           (CYGNUM_HAL_CORTEXM_MCG_DCO_DMX32 |
            CYGHWR_HAL_KINETIS_MCG_C4_DRST_DRS(
                CYGNUM_HAL_CORTEXM_MCG_DCO_DRST_DRS));
-
-# endif // CYGOPT_HAL_CORTEXM_KINETIS_MCG_MCGOUTCLK_FLL
-
-# ifdef CYGOPT_HAL_CORTEXM_KINETIS_MCGOUT_PLL
-    hal_start_pll0(mcg_p);
-# endif
-# ifdef CYGOPT_HAL_CORTEXM_KINETIS_MCGOUT_PLL1
-    hal_start_pll1(mcg_p);
-# endif
-# if defined(CYGOPT_HAL_CORTEXM_KINETIS_MCGOUT_PLL) || \
-     defined(CYGOPT_HAL_CORTEXM_KINETIS_MCGOUT_PLL1)
-    // Switch to PBE mode
-    mcg_p->c6 |=  CYGHWR_HAL_KINETIS_MCG_C6_PLLS_M;
-
+#endif
+    
+#ifdef CYGOPT_HAL_CORTEXM_KINETIS_MCG_MCGOUTCLK_EXT_REF_CLK
+    mcg_p->c7 |= CYGHWR_HAL_KINETIS_MCG_C7_OSCSEL_M;
+    
+    mcg_p->c1 = CYGHWR_HAL_KINETIS_MCG_C1_CLKS(2);
+     
+    i = 1500U;
+    while (i--)
+    {
+        asm ("nop");
+    }
+    
+    // Wait for oscillator start up
+    MCG_WAIT_WHILE(!(mcg_p->status & CYGHWR_HAL_KINETIS_MCG_S_OSCINIT_M));
+    // Wait for reference clock to switch to external reference
+    MCG_WAIT_WHILE(mcg_p->status & CYGHWR_HAL_KINETIS_MCG_S_IREFST_M);
+    // Wait for status flags update
     MCG_WAIT_WHILE((mcg_p->status & CYGHWR_HAL_KINETIS_MCG_S_CLKST_M) !=
-                   CYGHWR_HAL_KINETIS_MCG_S_CLKST_EXT);
-    MCG_WAIT_WHILE(!(mcg_p->status & CYGHWR_HAL_KINETIS_MCG_S_PLLST_M));
-#  ifdef CYGOPT_HAL_CORTEXM_KINETIS_MCGOUT_PLL
-    MCG_WAIT_WHILE(!(mcg_p->status & CYGHWR_HAL_KINETIS_MCG_S_LOCK_M));
-#  endif
-#  if defined CYGOPT_HAL_CORTEXM_KINETIS_MCGOUT_PLL1
-    MCG_WAIT_WHILE(!(mcg_p->s2 & CYGHWR_HAL_KINETIS_MCG_S2_LOCK1_M));
-#  endif // CYGOPT_HAL_CORTEXM_KINETIS_MCGOUT_PLL1
+            CYGHWR_HAL_KINETIS_MCG_S_CLKST_EXT);
+#endif
+    
+#ifdef CYGOPT_HAL_CORTEXM_KINETIS_MCG_MCGOUTCLK_INT_RC
+    // Select internal reference
+    mcg_p->c1 = CYGHWR_HAL_KINETIS_MCG_C1_CLKS(1) |
+                CYGHWR_HAL_KINETIS_MCG_C1_IREFS_M;
+    
+    mcg_p->c2 = CYGHWR_HAL_KINETIS_MCG_C2_LP_M
+#if CYGOPT_HAL_CORTEXM_KINETIS_MCGOUT_INT_RC_HI == 1
+            | CYGHWR_HAL_KINETIS_MCG_C1_IREFSTEN_M
+#endif
+            ;
 
-    // Enter PEE mode
-    mcg_p->c1 &= ~CYGHWR_HAL_KINETIS_MCG_C1_CLKS_M;
+    // Wait for reference clock to switch to internal reference
+    MCG_WAIT_WHILE(!(mcg_p->status & CYGHWR_HAL_KINETIS_MCG_S_IREFST_M));
+    // Wait for status flags update
     MCG_WAIT_WHILE((mcg_p->status & CYGHWR_HAL_KINETIS_MCG_S_CLKST_M) !=
-                   CYGHWR_HAL_KINETIS_MCG_S_CLKST_PLL);
-# endif // defined CYGOPT_HAL_CORTEXM_KINETIS_MCGOUT_PLL*
-
-# if defined(CYGOPT_HAL_CORTEXM_KINETIS_MCG_MCGOUTCLK_PLL) || \
-     defined(CYGOPT_HAL_CORTEXM_KINETIS_MCG_MCGOUTCLK_PLL1) || \
-     defined(CYGOPT_HAL_CORTEXM_KINETIS_MCG_MCGOUTCLK_EXT_REFCLK)
-    sim_p->sopt2 |= CYGHWR_HAL_KINETIS_SIM_SOPT2_PLLFLLSEL_M;
-# endif
-
-#endif // defined(CYGOPT_HAL_CORTEXM_KINETIS_MCG_MCGOUTCLK_PLL) ||
-       // defined(CYGOPT_HAL_CORTEXM_KINETIS_MCG_MCGOUTCLK_PLL1) ||
-       // defined(CYGOPT_HAL_CORTEXM_KINETIS_MCG_MCGOUTCLK_FLL) ||
-       // defined(CYGOPT_HAL_CORTEXM_KINETIS_MCG_MCGOUTCLK_EXT_REFCLK)
+            CYGHWR_HAL_KINETIS_MCG_S_CLKST_INT);
+#endif
+#if 0
     
     sim_p->clk_div2 = 0;
     sim_p->sopt2 |=  
                     CYGHWR_HAL_KINETIS_SIM_SOPT2_USBSRC_M  | (7 << 5);         
-                    
+#endif   
 }
 
 void CYGOPT_HAL_KINETIS_MISC_FLASH_SECTION_ATTR
@@ -376,6 +383,7 @@ hal_start_main_clock2(void)
     {
     }
 
+
     /* In FBE now, start to enter BLPE. */
     mcg_p->c2 |= CYGHWR_HAL_KINETIS_MCG_C2_LP_M;
     
@@ -396,9 +404,7 @@ hal_start_main_clock2(void)
 cyg_uint32 CYGOPT_HAL_KINETIS_MISC_FLASH_SECTION_ATTR
 hal_get_cpu_clock(void)
 {
-#if 1
-    cyg_uint32 freq = 24576000;
-#else
+
     cyg_uint32 freq;
 #ifdef CYGOPT_HAL_CORTEXM_KINETIS_MCG_MCGOUTCLK_PLL
     cyghwr_hal_kinetis_mcg_t *mcg_p = CYGHWR_HAL_KINETIS_MCG_P;
@@ -418,13 +424,10 @@ hal_get_cpu_clock(void)
     freq = CYGNUM_HAL_CORTEXM_KINETIS_MCG_FLL_PLL_REF_FREQ /
           ((mcg_p->c11 & CYGHWR_HAL_KINETIS_MCG_C11_PRDIV1_M)+1) *
           ((mcg_p->c12 & CYGHWR_HAL_KINETIS_MCG_C12_VDIV1_M)+16) / 2;
-#elif defined(CYGOPT_HAL_CORTEXM_KINETIS_MCG_MCGOUTCLK_FLL)
-    freq = CYGNUM_HAL_CORTEXM_KINETIS_MCG_FLL_FREQ_AV;
-#elif defined(CYGOPT_HAL_CORTEXM_KINETIS_MCG_MCGOUTCLK_EXT_REFCLK)
-    freq = CYGOPT_HAL_CORTEXM_KINETIS_MCGOUT_EXT_RC;
-#else // ifdef CYGOPT_HAL_CORTEXM_KINETIS_MCG_MCGOUTCLK_none
+#else 
+    freq = CYGNUM_HAL_CORTEXM_KINETIS_MCG_MCGOUT_FREQ_SP;
 #endif // CYGOPT_HAL_CORTEXM_KINETIS_MCG_MCGOUTCLK_end
-#endif
+
     return freq;
 }
 
