@@ -46,7 +46,6 @@ typedef struct lfs_data_s
 {
 	lfs_t _lfs; // _the actual filesystem
 	struct lfs_config _config;
-	//mbed::BlockDevice *_bd; // the block device
 
 	// default parameters
 	lfs_size_t _read_size;
@@ -54,10 +53,13 @@ typedef struct lfs_data_s
 	lfs_size_t _block_size;
 	lfs_size_t _lookahead;
 
-	cyg_mutex _mutex;
+	cyg_flashaddr_t  _lfs_flash_base;
 }lfs_data_t;
 
-lfs_data_t lfs_data;
+lfs_data_t lfs_data =
+{
+	._lfs_flash_base = 0xc0000000
+};
 
 //==========================================================================
 // Tracing support defines 
@@ -268,35 +270,37 @@ static int lfs_totype(int type)
 static int lfs_bd_read(const struct lfs_config *c, lfs_block_t block,
 	lfs_off_t off, void *buffer, lfs_size_t size)
 {
-	BlockDevice *bd = (BlockDevice *)c->context;
-	return bd->read(buffer, (bd_addr_t)block * c->block_size + off, size);
+	cyg_flashaddr_t err_address;
+	cyg_flashaddr_t base_addr = *((cyg_flashaddr_t *)c->context);
+	return -cyg_flash_read((cyg_flashaddr_t)base_addr + block * c->block_size + off, buffer, size, &err_address);
 }
 
 static int lfs_bd_prog(const struct lfs_config *c, lfs_block_t block,
 	lfs_off_t off, const void *buffer, lfs_size_t size)
 {
-	BlockDevice *bd = (BlockDevice *)c->context;
-	return bd->program(buffer, (bd_addr_t)block * c->block_size + off, size);
+	cyg_flashaddr_t err_address;
+	cyg_flashaddr_t base_addr = *((cyg_flashaddr_t *)c->context);
+	return -cyg_flash_program((cyg_flashaddr_t)base_addr + block * c->block_size + off, buffer, size, &err_address);
 }
 
 static int lfs_bd_erase(const struct lfs_config *c, lfs_block_t block)
 {
-	BlockDevice *bd = (BlockDevice *)c->context;
-	return bd->erase((bd_addr_t)block * c->block_size, c->block_size);
+	cyg_flashaddr_t err_address;
+	cyg_flashaddr_t base_addr = *((cyg_flashaddr_t *)c->context);
+	return -cyg_flash_erase((cyg_flashaddr_t)base_addr + block * c->block_size, , &err_address);
 }
 
 static int lfs_bd_sync(const struct lfs_config *c)
 {
-	BlockDevice *bd = (BlockDevice *)c->context;
-	return bd->sync();
+	return 0
 }
 
 // -------------------------------------------------------------------------
-// fatfs_getinfo()
+// lfs_getinfo()
 // Getinfo. Support for attrib
 
 static int
-fatfs_getinfo(cyg_mtab_entry *mte,
+lfs_getinfo(cyg_mtab_entry *mte,
 	cyg_dir         dir,
 	const char     *name,
 	int             key,
@@ -311,7 +315,7 @@ fatfs_getinfo(cyg_mtab_entry *mte,
 	{
 #ifdef CYGCFG_FS_FAT_USE_ATTRIBUTES
 	case FS_INFO_ATTRIB:
-		err = fatfs_get_attrib(mte, dir, name, (cyg_fs_attrib_t*)buf);
+		err = lfs_get_attrib(mte, dir, name, (cyg_fs_attrib_t*)buf);
 		break;
 #endif // CYGCFG_FS_FAT_USE_ATTRIBUTES
 #if defined(CYGSEM_FILEIO_BLOCK_USAGE)
@@ -319,9 +323,9 @@ fatfs_getinfo(cyg_mtab_entry *mte,
 		cyg_uint32 total_clusters;
 		cyg_uint32 free_clusters;
 		struct cyg_fs_block_usage *usage = (struct cyg_fs_block_usage *) buf;
-		fatfs_disk_t  *disk = (fatfs_disk_t *)mte->data;
+		lfs_disk_t  *disk = (lfs_disk_t *)mte->data;
 
-		err = fatfs_get_disk_usage(disk, &total_clusters, &free_clusters);
+		err = lfs_get_disk_usage(disk, &total_clusters, &free_clusters);
 		if (err)
 			return err;
 		usage->total_blocks = total_clusters;
@@ -338,17 +342,19 @@ fatfs_getinfo(cyg_mtab_entry *mte,
 }
 
 // -------------------------------------------------------------------------
-// fatfs_setinfo()
+// lfs_setinfo()
 // Setinfo. Support for fssync and attrib
 
 static int
-fatfs_setinfo(cyg_mtab_entry *mte,
+lfs_setinfo(cyg_mtab_entry *mte,
 	cyg_dir         dir,
 	const char     *name,
 	int             key,
 	void           *buf,
 	int             len)
 {
+	lfs_data_t  *_lfs_data = (lfs_data_t *)mte->data;
+	lfs_file_t *f = (lfs_file_t *)buf; // TODO: nevim jestli spravne
 	int err = EINVAL;
 
 	CYG_TRACE6(TFS, "setinfo mte=%p dir=%p name='%s' key=%d buf=%p len=%d",
@@ -357,13 +363,17 @@ fatfs_setinfo(cyg_mtab_entry *mte,
 	switch (key)
 	{
 	case FS_INFO_SYNC:
-		err = cyg_blib_sync(&(((fatfs_disk_t *)mte->data)->blib));
+		LFS_INFO("file_sync(%p)", file);
+		err = lfs_file_sync(_lfs_data->_lfs, f);
+		LFS_INFO("file_sync -> %d", lfs_toerror(err));
 		break;
 #ifdef CYGCFG_FS_FAT_USE_ATTRIBUTES
 	case FS_INFO_ATTRIB:
-		err = fatfs_set_attrib(mte, dir, name, *(cyg_fs_attrib_t *)buf);
+		err = lfs_set_attrib(mte, dir, name, *(cyg_fs_attrib_t *)buf);
 		break;
 #endif // CYGCFG_FS_FAT_USE_ATTRIBUTES
+	case 120:
+		break;
 	default:
 		err = EINVAL;
 		break;
@@ -371,34 +381,33 @@ fatfs_setinfo(cyg_mtab_entry *mte,
 	return err;
 }
 
+// -------------------------------------------------------------------------
+// fatfs_rmdir()
+// Remove a directory.
+
+static int
+lfs_rmdir(cyg_mtab_entry *mte, cyg_dir dir, const char *name)
+{
+	return lfs_unlink(mte, dir, name);
+}
+
 //==========================================================================
 // Filesystem operations
 
 // -------------------------------------------------------------------------
-// fatfs_mount()
+// lfs_mount()
 // Process a mount request. This mainly creates a root for the
 // filesystem.
 
 static int
-fatfs_mount(cyg_fstab_entry *fste, cyg_mtab_entry *mte)
+lfs_mount(cyg_fstab_entry *fste, cyg_mtab_entry *mte)
 {
-	//_mutex.lock();
-	/*LFS_INFO("mount(%p)", bd);
-	_bd = bd;
-	int err = lfs_data._bd->init();
-	if (err) {
-		lfs_data._bd = NULL;
-		LFS_INFO("mount -> %d", err);
-		//_mutex.unlock();
-		return err;
-	}*/
-
 	cyg_flash_info_t info;
-	cyg_flashaddr_t lfs_flash_base;
-	cyg_flash_get_info_addr(lfs_flash_base, &info)
+	
+	cyg_flash_get_info_addr(lfs_data._lfs_flash_base, &info)
 
 	memset(&lfs_data._config, 0, sizeof(lfs_data._config));
-	lfs_data._config.context = NULL;
+	lfs_data._config.context = &lfs_data._lfs_flash_base;
 	lfs_data._config.read = lfs_bd_read;
 	lfs_data._config.prog = lfs_bd_prog;
 	lfs_data._config.erase = lfs_bd_erase;
@@ -424,83 +433,75 @@ fatfs_mount(cyg_fstab_entry *fste, cyg_mtab_entry *mte)
 	err = lfs_mount(&lfs_data._lfs, &lfs_data._config);
 	mte->data = (CYG_ADDRWORD)lfs_data;
 	if (err) {
-		//lfs_data._bd = NULL;
 		LFS_INFO("mount -> %d", lfs_toerror(err));
-		//_mutex.unlock();
 		return lfs_toerror(err);
 	}
-
-	//_mutex.unlock();
 	LFS_INFO("mount -> %d", 0);
 	return 0;
 }
 
 // -------------------------------------------------------------------------
-// fatfs_umount()
+// lfs_umount()
 // Unmount the filesystem. This will currently only succeed if the
 // filesystem is empty.
 
 static int
-fatfs_umount(cyg_mtab_entry *mte)
+lfs_umount(cyg_mtab_entry *mte)
 {
-	//_mutex.lock();
 	lfs_data_t  *_lfs_data = (lfs_data_t *)mte->data;
 	LFS_INFO("unmount(%s)", "");
 	int res = 0;
-	//if (_bd) {
-		int err = lfs_unmount(lfs_data->_lfs);
+	if (_lfs_data) {
+		int err = lfs_unmount(_lfs_data->_lfs);
 		if (err && !res) {
 			res = lfs_toerror(err);
 		}
-
-		/*err = lfs_data._bd->deinit();
-		if (err && !res) {
-			res = err;
-		}
-		
-		lfs_data._bd = NULL;*/
 	}
 
 	LFS_INFO("unmount -> %d", res);
-	//_mutex.unlock();
+
+	mte->root = CYG_DIR_NULL;
+	mte->data = (CYG_ADDRWORD)NULL;
+
+	CYG_TRACE0(TFS, "disk umounted");
+
 	return res;
 }
 
 static int 
-format(BlockDevice *bd,
+format(
 	lfs_size_t read_size, lfs_size_t prog_size,
 	lfs_size_t block_size, lfs_size_t lookahead)
 {
-	LFS_INFO("format(%p, %ld, %ld, %ld, %ld)",
-		bd, read_size, prog_size, block_size, lookahead);
-	int err = lfs_data.bd->init();
-	if (err) {
-		LFS_INFO("format -> %d", err);
-		return err;
-	}
-
 	lfs_t _lfs;
 	struct lfs_config _config;
+	cyg_flash_info_t info;
+
+	cyg_flash_get_info_addr(lfs_data._lfs_flash_base, &info)
+
+	LFS_INFO("format(%ld, %ld, %ld, %ld)",
+		read_size, prog_size, block_size, lookahead);
+
 
 	memset(&lfs_data._config, 0, sizeof(lfs_data._config));
-	lfs_data._config.context = bd;
+	lfs_data._config.context = &lfs_data._lfs_flash_base;
 	lfs_data._config.read = lfs_bd_read;
 	lfs_data._config.prog = lfs_bd_prog;
 	lfs_data._config.erase = lfs_bd_erase;
 	lfs_data._config.sync = lfs_bd_sync;
-	lfs_data._config.read_size = lfs_data.bd->get_read_size();
+	lfs_data._config.read_size = sizeof(char); //TODO: Neco lepsiho mozna
 	if (lfs_data._config.read_size < read_size) {
 		lfs_data._config.read_size = read_size;
 	}
-	lfs_data._config.prog_size = bd->get_program_size();
+	lfs_data._config.prog_size = sizeof(char); //TODO: Neco lepsiho mozna
 	if (lfs_data._config.prog_size < prog_size) {
 		lfs_data._config.prog_size = prog_size;
 	}
-	lfs_data._config.block_size = lfs_data.bd->get_erase_size();
+	lfs_data._config.block_size = info.block_info[0].block_size;
 	if (lfs_data._config.block_size < block_size) {
 		lfs_data._config.block_size = block_size;
 	}
-	lfs_data._config.block_count = bd->size() / lfs_data._config.block_size;
+	lfs_data._config.block_count = info.block_info[0].blocks;
 	lfs_data._config.lookahead = 32 * ((lfs_data._config.block_count + 31) / 32);
 	if (lfs_data._config.lookahead > lookahead) {
 		lfs_data._config.lookahead = lookahead;
@@ -512,130 +513,75 @@ format(BlockDevice *bd,
 		return lfs_toerror(err);
 	}
 
-	err = lfs_data.bd->deinit();
-	if (err) {
-		LFS_INFO("format -> %d", err);
-		return err;
-	}
-
 	LFS_INFO("format -> %d", 0);
 	return 0;
 }
 
-static int
-reformat(BlockDevice *bd)
-{
-	//_mutex.lock();
-	///LFS_INFO("reformat(%p)", bd);
-	//if (_bd) {
-		/*if (!bd) {
-			bd = lfs_data._bd;
-		}
-		*/
-		int err = unmount();
-		if (err) {
-			LFS_INFO("reformat -> %d", err);
-			//_mutex.unlock();
-			return err;
-		}
-	}
-
-	/*if (!bd) {
-		LFS_INFO("reformat -> %d", -ENODEV);
-		//_mutex.unlock();
-		return -ENODEV;
-	}*/
-
-	int err = format(bd,
-		lfs_data._read_size, lfs_data._prog_size, lfs_data._block_size, lfs_data._lookahead);
-	if (err) {
-		LFS_INFO("reformat -> %d", err);
-		//_mutex.unlock();
-		return err;
-	}
-
-	err = mount(bd);
-	if (err) {
-		LFS_INFO("reformat -> %d", err);
-		//_mutex.unlock();
-		return err;
-	}
-
-	LFS_INFO("reformat -> %d", 0);
-	//_mutex.unlock();
-	return 0;
-}
-
 // -------------------------------------------------------------------------
-// fatfs_unlink()
+// lfs_unlink()
 // Remove a file link from its directory.
 
 static int
-fatfs_unlink(cyg_mtab_entry *mte,
+lfs_unlink(cyg_mtab_entry *mte,
 	cyg_dir         dir,
 	const char     *name)
 {
-	//_mutex.lock();
+	lfs_data_t  *_lfs_data = (lfs_data_t *)mte->data;
 	LFS_INFO("remove(\"%s\")", name);
-	int err = lfs_remove(&lfs_data._lfs, name);
+	int err = lfs_remove(_lfs_data->_lfs, name);
 	LFS_INFO("remove -> %d", lfs_toerror(err));
-	//_mutex.unlock();
 	return lfs_toerror(err);
 }
 
 // -------------------------------------------------------------------------
-// fatfs_rename()
+// lfs_rename()
 // Rename a file/dir.
 
 static int
-fatfs_rename(cyg_mtab_entry *mte,
+lfs_rename(cyg_mtab_entry *mte,
 	cyg_dir         dir1,
 	const char     *name1,
 	cyg_dir         dir2,
 	const char     *name2)
 {
-	//_mutex.lock();
+	lfs_data_t  *_lfs_data = (lfs_data_t *)mte->data;
 	LFS_INFO("rename(\"%s\", \"%s\")", name1, name2);
-	int err = lfs_rename(&lfs_data._lfs, name1, name2);
+	int err = lfs_rename(_lfs_data->_lfs, name1, name2);
 	LFS_INFO("rename -> %d", lfs_toerror(err));
-	//_mutex.unlock();
 	return lfs_toerror(err);
 }
 
 // -------------------------------------------------------------------------
-// fatfs_mkdir()
+// lfs_mkdir()
 // Create a new directory.
 
 static int
-fatfs_mkdir(cyg_mtab_entry *mte, cyg_dir dir, const char *name)
+lfs_mkdir(cyg_mtab_entry *mte, cyg_dir dir, const char *name)
 {
-	//_mutex.lock();
+	lfs_data_t  *_lfs_data = (lfs_data_t *)mte->data;
 	LFS_INFO("mkdir(\"%s\", 0x%lx)", name, mode);
-	int err = lfs_mkdir(&lfs_data._lfs, name);
+	int err = lfs_mkdir(_lfs_data->_lfs, name);
 	LFS_INFO("mkdir -> %d", lfs_toerror(err));
-	//_mutex.unlock();
 	return lfs_toerror(err);
 }
 
 // -------------------------------------------------------------------------
-// fatfs_stat()
+// lfs_stat()
 // Get struct stat info for named object.
 
 static int
-fatfs_stat(cyg_mtab_entry *mte,
+lfs_stat(cyg_mtab_entry *mte,
 	cyg_dir         dir,
 	const char     *name,
 	struct stat    *buf)
 {
+	lfs_data_t  *_lfs_data = (lfs_data_t *)mte->data;
 	struct lfs_info info;
-	//_mutex.lock();
 	LFS_INFO("stat(\"%s\", %p)", name, st);
-	int err = lfs_stat(&lfs_data.__lfs, name, &info);
+	int err = lfs_stat(_lfs_data->_lfs, name, &info);
 	LFS_INFO("stat -> %d", lfs_toerror(err));
-	//_mutex.unlock();
 
 	buf->st_mode = lfs_tomode(info.type);
-	//buf->st_ino = (ino_t)ds.node->dentry.cluster;
 	buf->st_dev = 0;
 	buf->st_nlink = 1;
 	buf->st_uid = 0;
@@ -649,27 +595,44 @@ fatfs_stat(cyg_mtab_entry *mte,
 }
 
 // -------------------------------------------------------------------------
-// fatfs_open()
+// lfs_chdir()
+// Change directory support.
+
+static int
+lfs_chdir(cyg_mtab_entry *mte,
+	cyg_dir         dir,
+	const char     *name,
+	cyg_dir        *dir_out)
+{
+	lfs_data_t  *_lfs_data = (lfs_data_t *)mte->data;
+
+	CYG_TRACE4(TFS, "chdir mte=%p dir=%p dir_out=%p name=%d",
+		mte, dir, dir_out, name);
+
+	return ENOERR;
+}
+
+// -------------------------------------------------------------------------
+// lfs_open()
 // Open a file for reading or writing.
 
 static int
-fatfs_open(cyg_mtab_entry *mte,
+lfs_open(cyg_mtab_entry *mte,
 	cyg_dir         dir,
 	const char     *name,
 	int             mode,
 	cyg_file       *file)
 {
+	lfs_data_t  *_lfs_data = (lfs_data_t *)mte->data;
+
 	lfs_file_t *f = new lfs_file_t;
-	//_mutex.lock();
 	LFS_INFO("file_open(%p, \"%s\", 0x%x)", *file, name, mode);
-	int err = lfs_file_open(&lfs_data._lfs, f, name, lfs_fromflags(mode));
+	int err = lfs_file_open(_lfs_data->_lfs, f, name, lfs_fromflags(mode));
 	LFS_INFO("file_open -> %d", lfs_toerror(err));
-	//_mutex.unlock();
 	if (!err) {
-		//*file = f;
 		file->f_flag |= mode & CYG_FILE_MODE_MASK;
 		file->f_type = CYG_FILE_TYPE_FILE;
-		file->f_ops = &fatfs_fileops;
+		file->f_ops = &lfs_fileops;
 		file->f_offset = (mode & O_APPEND) ? f->pos : 0;
 		file->f_data = (CYG_ADDRWORD)f;
 		file->f_xops = 0;
@@ -681,37 +644,34 @@ fatfs_open(cyg_mtab_entry *mte,
 }
 
 // -------------------------------------------------------------------------
-// fatfs_fo_close()
+// lfs_fo_close()
 // Close a file.
 
 static int
-fatfs_fo_close(struct CYG_FILE_TAG *fp)
+lfs_fo_close(struct CYG_FILE_TAG *fp)
 {
-	fatfs_disk_t  *disk = (fatfs_disk_t *)fp->f_mte->data;
+	lfs_data_t  *_lfs_data = (lfs_data_t *)mte->data;
 	lfs_file_t *f = (lfs_file_t *)fp->f_data;;
-	//_mutex.lock();
 	LFS_INFO("file_close(%p)", f);
-	int err = lfs_file_close(&lfs_data._lfs, f);
+	int err = lfs_file_close(_lfs_data->_lfs, f);
 	LFS_INFO("file_close -> %d", lfs_toerror(err));
-	//_mutex.unlock();
 	delete f;
 	return lfs_toerror(err);
 }
 
 // -------------------------------------------------------------------------
-// fatfs_fo_read()
+// lfs_fo_read()
 // Read data from the file.
 
 static int
-fatfs_fo_read(struct CYG_FILE_TAG *fp, struct CYG_UIO_TAG *uio)
+lfs_fo_read(struct CYG_FILE_TAG *fp, struct CYG_UIO_TAG *uio)
 {
-	fatfs_disk_t  *disk = (fatfs_disk_t *)fp->f_mte->data;
+	lfs_data_t  *_lfs_data = (lfs_data_t *)mte->data;
 	lfs_file_t *f = (lfs_file_t *)fp->f_data;
 	cyg_uint32     pos = fp->f_offset;
 	ssize_t        resid = uio->uio_resid;
 	int            i;
 
-	//_mutex.lock();
 	CYG_TRACE3(TFO, "read fp=%p uio=%p pos=%d", fp, uio, pos);
 
 	for (i = 0; i < uio->uio_iovcnt; i++)
@@ -720,31 +680,30 @@ fatfs_fo_read(struct CYG_FILE_TAG *fp, struct CYG_UIO_TAG *uio)
 		char       *buf = (char *)iov->iov_base;
 		off_t       len = iov->iov_len;
 
-		lfs_ssize_t res = lfs_file_read(&lfs_data._lfs, f, buf, len);
+		lfs_ssize_t res = lfs_file_read(_lfs_data->_lfs, f, buf, len);
+		LFS_INFO("file_read -> %d", lfs_toerror(res));
+		if (res < 0)
+		{
+			return lfs_toerror(res);
+		}
 
-		// Update working vars
-
-		len -= l;
-		buf += l;
-		pos += l;
-		resid -= l;
+		resid -= res;
 	}
 
 	LFS_INFO("file_read -> %d", lfs_toerror(res));
 	uio->uio_resid = resid;
-	fp->f_offset = (off_t)pos;
-	//_mutex.unlock();
+	fp->f_offset = (off_t)f->pos;
 	return lfs_toerror(res);
 }
 
 // -------------------------------------------------------------------------
-// fatfs_fo_write()
+// lfs_fo_write()
 // Write data to file.
 
 static int
-fatfs_fo_write(struct CYG_FILE_TAG *fp, struct CYG_UIO_TAG *uio)
+lfs_fo_write(struct CYG_FILE_TAG *fp, struct CYG_UIO_TAG *uio)
 {
-	fatfs_disk_t  *disk = (fatfs_disk_t *)fp->f_mte->data;
+	lfs_data_t  *_lfs_data = (lfs_data_t *)mte->data;
 	lfs_file_t *f = (lfs_file_t *)fp->f_data;
 	cyg_uint32     pos = fp->f_offset;
 	ssize_t        resid = uio->uio_resid;
@@ -759,86 +718,201 @@ fatfs_fo_write(struct CYG_FILE_TAG *fp, struct CYG_UIO_TAG *uio)
 		char       *buf = (char *)iov->iov_base;
 		off_t       len = iov->iov_len;
 
-		// Loop over the vector writing it to the file 
-		// until it has all been done
-
-		lfs_ssize_t res = lfs_file_write(&lfs_data._lfs, f, buf, len);
+		lfs_ssize_t res = lfs_file_write(_lfs_data->_lfs, f, buf, len);
 		LFS_INFO("file_write -> %d", lfs_toerror(res));
+		if (res == LFS_ERR_NOSPC)
+			break;
 
+		if (res < 0)
+		{
+			return lfs_toerror(res);
+		}
+
+		resid -= res;
 	}
 
-	// We wrote some data successfully, update the modified and access
-	// times of the node, increase its size appropriately, and update
-	// the file offset and transfer residue.
-
-
-
-	if (pos > node->dentry.size)
-		node->dentry.size = pos;
-
 	uio->uio_resid = resid;
-	fp->f_offset = (off_t)pos;
+	fp->f_offset = (off_t)f->pos;
 
 	return lfs_toerror(res);
 }
 
 // -------------------------------------------------------------------------
-// fatfs_fo_fsync().
+// lfs_fo_fsync().
 // Force the file out to data storage.
 
 static int
-fatfs_fo_fsync(struct CYG_FILE_TAG *fp, int mode)
+lfs_fo_fsync(struct CYG_FILE_TAG *fp, int mode)
 {
-	fatfs_disk_t  *disk = (fatfs_disk_t *)fp->f_mte->data;
+	lfs_data_t  *_lfs_data = (lfs_data_t *)mte->data;
 	lfs_file_t *f = (lfs_file_t *)fp->f_data;
 	int            err;
 
 	CYG_TRACE2(TFO, "fsync fp=%p mode=%d", fp, mode);
 
-	int err = lfs_file_sync(&lfs_data._lfs, f);
+	int err = lfs_file_sync(_lfs_data->_lfs, f);
 	LFS_INFO("file_sync -> %d", lfs_toerror(err));
 
 	return lfs_toerror(err);
 }
 
 // -------------------------------------------------------------------------
-// fatfs_fo_lseek()
+// lfs_fo_lseek()
 // Seek to a new file position.
 
 static int
-fatfs_fo_lseek(struct CYG_FILE_TAG *fp, off_t *apos, int whence)
+lfs_fo_lseek(struct CYG_FILE_TAG *fp, off_t *apos, int whence)
 {
-	fatfs_disk_t  *disk = (fatfs_disk_t *)fp->f_mte->data;
+	lfs_data_t  *_lfs_data = (lfs_data_t *)mte->data;
 	lfs_file_t *f = (lfs_file_t *)fp->f_data;
-	int            err;
+	off_t          pos = *apos;
+	off_t          res;
 
 	CYG_TRACE3(TFO, "lseek fp=%p pos=%d whence=%d", fp, fp->f_offset, whence);
 
-	off_t res = lfs_file_seek(&lfs_data._lfs, f, *apos, lfs_fromwhence(whence));
+	off_t res = lfs_file_seek(_lfs_data->_lfs, f, pos, lfs_fromwhence(whence));
 	LFS_INFO("file_seek -> %d", lfs_toerror(res));
+	if(res > 0)
+		return lfs_toerror(res);
 
-	return lfs_toerror(res);
+	*apos = fp->f_offset = f->pos; // new position
+	return ENOERR
+}
+
+// -------------------------------------------------------------------------
+// lfs_fo_fstat()
+// Get file status.
+
+static int
+lfs_fo_fstat(struct CYG_FILE_TAG *fp, struct stat *buf)
+{
+	lfs_data_t  *_lfs_data = (lfs_data_t *)mte->data;
+	lfs_file_t *f = (lfs_file_t *)fp->f_data;
+
+	CYG_TRACE2(TFO, "fstat fp=%p buf=%p", fp, buf);
+
+	// Fill in the status
+
+	buf->st_mode = f->flags;
+	buf->st_ino = (ino_t)0;
+	buf->st_dev = 0;
+	buf->st_nlink = 1;
+	buf->st_uid = 0;
+	buf->st_gid = 0;
+	buf->st_size = f->size;
+	buf->st_atime = 0;
+	buf->st_mtime = 0;
+	buf->st_ctime = 0;
+
+	return ENOERR;
+}
+
+
+// -------------------------------------------------------------------------
+// lfs_fo_ioctl()
+// Handle ioctls. Currently none are defined.
+
+static int
+lfs_fo_ioctl(struct CYG_FILE_TAG *fp, CYG_ADDRWORD com, CYG_ADDRWORD data)
+{
+	CYG_TRACE3(TFO, "ioctl fp=%p com=%x data=%x", fp, com, data);
+	return EINVAL;
+}
+
+// -------------------------------------------------------------------------
+// lfs_fo_getinfo()
+// Get info.
+
+static int
+lfs_fo_getinfo(struct CYG_FILE_TAG *fp, int key, void *buf, int len)
+{
+	CYG_TRACE4(TFO, "getinfo fp=%p key=%d buf=%p len=%d", fp, key, buf, len);
+	return EINVAL;
+}
+
+// -------------------------------------------------------------------------
+// lfs_fo_setinfo()
+// Set info.
+
+static int
+lfs_fo_setinfo(struct CYG_FILE_TAG *fp, int key, void *buf, int len)
+{
+	CYG_TRACE4(TFO, "setinfo fp=%p key=%d buf=%p len=%d", fp, key, buf, len);
+	return EINVAL;
 }
 
 //==========================================================================
 // Directory operations
 
+// -------------------------------------------------------------------------
+// lfs_link()
+// Make a new directory entry for a file.
+
+static int
+lfs_link(cyg_mtab_entry *mte,
+	cyg_dir         dir1,
+	const char     *name1,
+	cyg_dir         dir2,
+	const char     *name2,
+	int             type)
+{
+	CYG_TRACE6(TFS, "link mte=%p dir1=%p name1='%s' dir2=%p name2='%s' type=%d",
+		mte, dir1, name1, dir2, name2, type);
+
+	// Linking not supported
+	return EINVAL;
+}
 
 // -------------------------------------------------------------------------
-// fatfs_dir_close()
+// lfs_opendir()
+// Open a directory for reading.
+
+static int
+lfs_opendir(cyg_mtab_entry *mte,
+	cyg_dir         dir,
+	const char     *name,
+	cyg_file       *file)
+{
+	lfs_data_t  *_lfs_data = (lfs_data_t *)mte->data;
+	lfs_fd_t         *fd;
+	lfs_dirsearch_t   ds;
+	int                 err;
+
+	CYG_TRACE4(TFS, "opendir mte=%p dir=%p name='%s' file=%p",
+		mte, dir, name, file);
+
+	lfs_dir_t *d = new lfs_dir_t;
+	LFS_INFO("dir_open(%p, \"%s\")", &dir, name);
+	int err = lfs_dir_open(_lfs_data->_lfs, d, name);
+	LFS_INFO("dir_open -> %d", lfs_toerror(err));
+	if (!err) {
+		file->f_type = CYG_FILE_TYPE_FILE;
+		file->f_ops = &lfs_dirops;
+		file->f_data = (CYG_ADDRWORD)d;
+		file->f_xops = 0;
+		file->f_offset = 0;
+	}
+	else {
+		delete d;
+	}
+	return lfs_toerror(err);
+
+}
+// -------------------------------------------------------------------------
+// lfs_dir_close()
 // Close a directorz.
 
 static int
-fatfs_dir_close(struct CYG_FILE_TAG *fp)
+lfs_dir_close(struct CYG_FILE_TAG *fp)
 {
-	fatfs_disk_t  *disk = (fatfs_disk_t *)fp->f_mte->data;
-	fs_dir_t *d = (fs_dir_t *)fp->f_data;
+	lfs_data_t  *_lfs_data = (lfs_data_t *)mte->data;
+	lfs_dir_t *d = (lfs_dir_t *)fp->f_data;
 
 	int            err = ENOERR;
 
 	CYG_TRACE1(TFO, "close fp=%p", fp);
 
-	err = lfs_dir_close(&lfs_data._lfs, d);
+	err = lfs_dir_close(_lfs_data->_lfs, d);
 	LFS_INFO("dir_close -> %d", lfs_toerror(err));
 
 	delete d;
@@ -847,14 +921,14 @@ fatfs_dir_close(struct CYG_FILE_TAG *fp)
 }
 
 // -------------------------------------------------------------------------
-// fatfs_fo_dirread()
+// lfs_fo_dirread()
 // Read a single directory entry from a file.
 
 static int
-fatfs_fo_dirread(struct CYG_FILE_TAG *fp, struct CYG_UIO_TAG *uio)
+lfs_fo_dirread(struct CYG_FILE_TAG *fp, struct CYG_UIO_TAG *uio)
 {
-	fatfs_disk_t      *disk = (fatfs_disk_t *)fp->f_mte->data;
-	fs_dir_t *d = (fs_dir_t *)fp->f_data;
+	lfs_data_t  *_lfs_data = (lfs_data_t *)mte->data;
+	lfs_dir_t *d = (lfs_dir_t *)fp->f_data;
 	struct dirent     *ent = (struct dirent *) uio->uio_iov[0].iov_base;
 	char              *nbuf = ent->d_name;
 	off_t              len = uio->uio_iov[0].iov_len;
@@ -866,25 +940,26 @@ fatfs_fo_dirread(struct CYG_FILE_TAG *fp, struct CYG_UIO_TAG *uio)
 	if (len < sizeof(struct dirent))
 		return EINVAL;
 
-	int res = lfs_dir_read(&lfs_data._lfs, d, &info);
+	int res = lfs_dir_read(_lfs_data->_lfs, d, &info);
 	LFS_INFO("dir_read -> %d", lfs_toerror(res));
 	
 	if (res == 1) {
 		ent->d_type = lfs_totype(info.type);
 		strcpy(ent->d_name, info.name);
 	}
+	// TODO: mozna bude chtit inkrementovat pozici
 	return lfs_toerror(res);
 }
 
 // -------------------------------------------------------------------------
-// fatfs_fo_dirlseek()
+// lfs_fo_dirlseek()
 // Seek directory to start.
 
 static int
-fatfs_fo_dirlseek(struct CYG_FILE_TAG *fp, off_t *pos, int whence)
+lfs_fo_dirlseek(struct CYG_FILE_TAG *fp, off_t *pos, int whence)
 {
-	fatfs_disk_t  *disk = (fatfs_disk_t *)fp->f_mte->data;
-	fs_dir_t *d = (fs_dir_t *)fp->f_data;
+	lfs_data_t  *_lfs_data = (lfs_data_t *)mte->data;
+	lfs_dir_t *d = (lfs_dir_t *)fp->f_data;
 	int            err;
 
 	CYG_TRACE2(TFO, "dirlseek fp=%p whence=%d", fp, whence);
@@ -894,9 +969,7 @@ fatfs_fo_dirlseek(struct CYG_FILE_TAG *fp, off_t *pos, int whence)
 	if (whence != SEEK_SET || *pos != 0)
 		return EINVAL;
 
-	lfs_dir_seek(&lfs_data._lfs, d, *pos);
+	lfs_dir_seek(_lfs_data->_lfs, d, *pos);
 
-
-
-	return 0;
+	return ENOERR;
 }
