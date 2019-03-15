@@ -62,6 +62,7 @@
 #include <cyg/infra/diag.h>
 
 #include <cyg/io/beep.h>
+#include <cyg/io/beeper.h>
 #include <cyg/hal/hal_endian.h>
 
 #include <cyg/io/devtab.h>
@@ -103,38 +104,6 @@ static cyg_beep_kinetis_t cyg_beep_kinetis =
     .interrupt_prio         = CYGNUM_DEVS_BEEP_KINETIS_ISR_PRI,
 };
 
-// Functions in this module
-
-
-
-static Cyg_ErrNo beep_set_config(cyg_io_handle_t handle,
-                                cyg_uint32 key,
-                                const void *buffer,
-                                cyg_uint32 *len);
-static Cyg_ErrNo beep_get_config(cyg_io_handle_t handle,
-                                cyg_uint32 key,
-                                void *buffer,
-                                cyg_uint32 *len);
-static bool      beep_init(struct cyg_devtab_entry *tab);
-static Cyg_ErrNo beep_lookup(struct cyg_devtab_entry **tab,
-                            struct cyg_devtab_entry *st,
-                            const char *name);
-
-
-DEVIO_TABLE(beep_handlers,
-                 NULL,                            // Unsupported write() function
-                 NULL,
-                 NULL,
-                 beep_get_config,
-                 beep_set_config);
-
-DEVTAB_ENTRY(beep_device,
-            CYGDAT_DEVS_BEEP_NAME,
-            NULL,                           // Base device name
-            &beep_handlers,
-            beep_init,
-            beep_lookup,
-            &cyg_beep_kinetis);                // Private data pointer
 
 
 static cyg_uint32
@@ -143,126 +112,105 @@ kinetis_beep_ISR(cyg_vector_t vector, cyg_addrword_t data);
 static void       
 kinetis_beep_DSR(cyg_vector_t vector, cyg_ucount32 count, cyg_addrword_t data);
 
-static Cyg_ErrNo
-beep_set_config(cyg_io_handle_t handle,
-               cyg_uint32 key,
-               const void *buffer,
-               cyg_uint32 *len)
-{
-    cyg_uint32 regval;
-    cyg_devtab_entry_t *hnd = (cyg_devtab_entry_t*)handle;
-    cyg_beep_kinetis_t * priv = (cyg_beep_kinetis_t*)hnd->priv;
-    cyg_addrword_t base = priv->timer_base;
-    cyg_uint32 ret = ENOERR;
-    
-    switch(key)
-    {
-        case CYG_BEEP_IOCTL_SET_BEEP:
-        {
-            if(*len == -1)
-            {
-                priv->cnt = 0;
-                
-                priv->cnt_beep_count = priv->time_to_cnt*
-                        CYGDAT_DEVS_BEEP_DEFAULT_TIME;
-                
-                // read status register
-                HAL_READ_UINT32(base + CYGHWR_DEV_FREESCALE_FTM_C0SC +
-                        CYGNUM_DEVS_BEEP_CHANNEL, regval); 
-                // Enable channel interrupt
-                regval |= CYGHWR_DEV_FREESCALE_FTM_CNSC_CHIE;
-                // and clear interrupt status flgag
-                regval &= ~CYGHWR_DEV_FREESCALE_FTM_CNSC_CHF;
-                HAL_WRITE_UINT32(base + CYGHWR_DEV_FREESCALE_FTM_C0SC +
-                        CYGNUM_DEVS_BEEP_CHANNEL, regval); 
-                
-                // Reset timer count value
-                regval =  0;
-                HAL_WRITE_UINT32(base + CYGHWR_DEV_FREESCALE_FTM_CNT, regval);
-                // set overflow value
-                regval =  priv->timer_cmp_value;
-                HAL_WRITE_UINT32(base + CYGHWR_DEV_FREESCALE_FTM_MOD, regval);
-                
-                // Clock source system clock divided by 1 slo by i vice
-                regval = (1 << 3) | 0;
-                HAL_WRITE_UINT8(base + CYGHWR_DEV_FREESCALE_FTM_SC, regval);
-                
-                // set beeping state
-                priv->beeping = true;
-                // and unmask interrupt in interrupt conteroller
-                cyg_drv_interrupt_unmask(priv->interrupt_number);
-                cyg_drv_interrupt_acknowledge(priv->interrupt_number);
-                
-            }
-            else if(*len == sizeof(cyg_uint32))
-            {
-                cyg_uint32 *time = (cyg_uint32*)buffer;
-                
-                priv->cnt = 0;
-                
-                priv->cnt_beep_count = priv->time_to_cnt*(*time);
-                
-                // read status register
-                HAL_READ_UINT32(base + CYGHWR_DEV_FREESCALE_FTM_C0SC +
-                        CYGNUM_DEVS_BEEP_CHANNEL, regval); 
-                // Enable channel interrupt
-                regval |= CYGHWR_DEV_FREESCALE_FTM_CNSC_CHIE;
-                // and clear interrupt status flgag
-                regval &= ~CYGHWR_DEV_FREESCALE_FTM_CNSC_CHF;
-                HAL_WRITE_UINT32(base + CYGHWR_DEV_FREESCALE_FTM_C0SC +
-                        CYGNUM_DEVS_BEEP_CHANNEL, regval); 
-                
-                // Reset timer count value
-                regval =  0;
-                HAL_WRITE_UINT32(base + CYGHWR_DEV_FREESCALE_FTM_CNT, regval);
-                // set overflow value
-                regval =  priv->timer_cmp_value;
-                HAL_WRITE_UINT32(base + CYGHWR_DEV_FREESCALE_FTM_MOD, regval);
-                
-                // Clock source system clock divided by 1 slo by i vice
-                regval = (1 << 3) | 0;
-                HAL_WRITE_UINT8(base + CYGHWR_DEV_FREESCALE_FTM_SC, regval);
-                
-                // set beeping state
-                priv->beeping = true;
-                // and unmask interrupt in interrupt conteroller
-                cyg_drv_interrupt_unmask(priv->interrupt_number);
-                cyg_drv_interrupt_acknowledge(priv->interrupt_number);
-            }
-            else
-                ret = EINVAL;
-        }
-        break;
-        default:
-            ret = EINVAL;
-    }
 
-    return ret;
+void cyg_beep_nb(int beep_interval_ms)
+{
+	cyg_beep_kinetis_t * priv = &cyg_beep_kinetis;
+	cyg_addrword_t base = priv->timer_base;
+	cyg_uint32 regval;
+
+	if (beep_interval_ms <= 0)
+	{
+		priv->cnt = 0;
+
+		priv->cnt_beep_count = priv->time_to_cnt*
+			CYGDAT_DEVS_BEEP_DEFAULT_TIME;
+
+		// read status register
+		HAL_READ_UINT32(base + CYGHWR_DEV_FREESCALE_FTM_C0SC +
+			CYGNUM_DEVS_BEEP_CHANNEL, regval);
+		// Enable channel interrupt
+		regval |= CYGHWR_DEV_FREESCALE_FTM_CNSC_CHIE;
+		// and clear interrupt status flgag
+		regval &= ~CYGHWR_DEV_FREESCALE_FTM_CNSC_CHF;
+		HAL_WRITE_UINT32(base + CYGHWR_DEV_FREESCALE_FTM_C0SC +
+			CYGNUM_DEVS_BEEP_CHANNEL, regval);
+
+		// Reset timer count value
+		regval = 0;
+		HAL_WRITE_UINT32(base + CYGHWR_DEV_FREESCALE_FTM_CNT, regval);
+		// set overflow value
+		regval = priv->timer_cmp_value;
+		HAL_WRITE_UINT32(base + CYGHWR_DEV_FREESCALE_FTM_MOD, regval);
+
+		// Clock source system clock divided by 1 slo by i vice
+		regval = (1 << 3) | 0;
+		HAL_WRITE_UINT8(base + CYGHWR_DEV_FREESCALE_FTM_SC, regval);
+
+		// set beeping state
+		priv->beeping = true;
+		// and unmask interrupt in interrupt conteroller
+		cyg_drv_interrupt_unmask(priv->interrupt_number);
+		cyg_drv_interrupt_acknowledge(priv->interrupt_number);
+
+	}
+	else
+	{
+		priv->cnt = 0;
+
+		priv->cnt_beep_count = priv->time_to_cnt*beep_interval_ms;
+
+		// read status register
+		HAL_READ_UINT32(base + CYGHWR_DEV_FREESCALE_FTM_C0SC +
+			CYGNUM_DEVS_BEEP_CHANNEL, regval);
+		// Enable channel interrupt
+		regval |= CYGHWR_DEV_FREESCALE_FTM_CNSC_CHIE;
+		// and clear interrupt status flgag
+		regval &= ~CYGHWR_DEV_FREESCALE_FTM_CNSC_CHF;
+		HAL_WRITE_UINT32(base + CYGHWR_DEV_FREESCALE_FTM_C0SC +
+			CYGNUM_DEVS_BEEP_CHANNEL, regval);
+
+		// Reset timer count value
+		regval = 0;
+		HAL_WRITE_UINT32(base + CYGHWR_DEV_FREESCALE_FTM_CNT, regval);
+		// set overflow value
+		regval = priv->timer_cmp_value;
+		HAL_WRITE_UINT32(base + CYGHWR_DEV_FREESCALE_FTM_MOD, regval);
+
+		// Clock source system clock divided by 1 slo by i vice
+		regval = (1 << 3) | 0;
+		HAL_WRITE_UINT8(base + CYGHWR_DEV_FREESCALE_FTM_SC, regval);
+
+		// set beeping state
+		priv->beeping = true;
+		// and unmask interrupt in interrupt conteroller
+		cyg_drv_interrupt_unmask(priv->interrupt_number);
+		cyg_drv_interrupt_acknowledge(priv->interrupt_number);
+	}
 }
 
-static Cyg_ErrNo
-beep_get_config(cyg_io_handle_t handle,
-               cyg_uint32 key,
-               void *buffer,
-               cyg_uint32 *len)
+void cyg_beep(int beep_interval_ms)
 {
-    cyg_devtab_entry_t *hnd = (cyg_devtab_entry_t*)handle;
-    cyg_beep_kinetis_t * priv = (cyg_beep_kinetis_t*)hnd->priv;
-    switch(key)
-    {
-        case CYG_BEEP_IOCTL_GET_BEEPING:
-            if(*len == sizeof(cyg_uint32))
-            {
-                *((cyg_uint32*)buffer) = (cyg_uint32)priv->beeping;
-                return ENOERR;
-            }
-            break;
-    }
-    return EINVAL;
+	cyg_beep_nb(beep_interval_ms);
+	cyg_beep_wait();
 }
 
-static bool
-beep_init(struct cyg_devtab_entry *tab)
+
+int  cyg_beep_wait()
+{
+	cyg_drv_mutex_lock(&cyg_beep_kinetis.lock);
+	while(cyg_beep_kinetis.beeping)
+		cyg_drv_cond_wait(&cyg_beep_kinetis.wait);
+	cyg_drv_mutex_unlock(&cyg_beep_kinetis.lock);
+	return cyg_beep_kinetis.beeping;
+}
+
+int  cyg_beep_is_beeping()
+{
+	return cyg_beep_kinetis.beeping;
+}
+
+void beeper_init()
 {
     cyg_uint32 regval;
     cyg_beep_kinetis_t *beep_dev = &cyg_beep_kinetis;
@@ -276,6 +224,9 @@ beep_init(struct cyg_devtab_entry *tab)
                              &beep_dev->beep_interrupt_handle,
                              &beep_dev->beep_interrupt);
     cyg_drv_interrupt_attach(beep_dev->beep_interrupt_handle);
+
+	cyg_drv_mutex_init(&beep_dev->lock);
+	cyg_drv_cond_init(&beep_dev->wait, &beep_dev->lock);
 
     // Enable clocks
 #if CYGNUM_DEVS_BEEP_TIMER == 0
@@ -320,22 +271,9 @@ beep_init(struct cyg_devtab_entry *tab)
     return true;
 }
 
-static Cyg_ErrNo
-beep_lookup(struct cyg_devtab_entry **tab,
-           struct cyg_devtab_entry *st,
-           const char *name)
-{
-    cyg_beep_kinetis_t * const priv = (cyg_beep_kinetis_t *) (*tab)->priv;
-    
-    if(!priv->init)
-    {
-        beep_init(*tab);
-    }
-    return ENOERR;
-}
-
 cyg_uint32 kinetis_beep_ISR(cyg_vector_t vector, cyg_addrword_t data)
 {
+	cyg_uint32 ret = CYG_ISR_HANDLED;
     cyg_uint32 regval;
     cyg_beep_kinetis_t * priv = (cyg_beep_kinetis_t*)data;
     cyg_addrword_t base = priv->timer_base;
@@ -359,6 +297,7 @@ cyg_uint32 kinetis_beep_ISR(cyg_vector_t vector, cyg_addrword_t data)
             
             priv->beeping = false;
             cyg_drv_interrupt_mask(priv->interrupt_number);
+			ret |= CYG_ISR_CALL_DSR;
         }
         else
         {
@@ -375,11 +314,15 @@ cyg_uint32 kinetis_beep_ISR(cyg_vector_t vector, cyg_addrword_t data)
     }
 	
     cyg_drv_interrupt_acknowledge(priv->interrupt_number);
-    return CYG_ISR_HANDLED;
+    return ret;
 }
 
 void kinetis_beep_DSR(cyg_vector_t vector, cyg_ucount32 count, cyg_addrword_t data)
 {
-	
+	cyg_beep_kinetis_t * priv = (cyg_beep_kinetis_t*)data;
+	cyg_drv_mutex_lock(&priv->lock);
+	cyg_drv_cond_signal(&priv->wait);
+	cyg_drv_mutex_unlock(&priv->lock);
+
 }
 

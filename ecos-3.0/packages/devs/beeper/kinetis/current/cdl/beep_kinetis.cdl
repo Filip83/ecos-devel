@@ -51,7 +51,8 @@
 
 cdl_package CYGPKG_DEVS_BEEP_KINETIS {
     display     "Beeper driver."
-    requires    CYGPKG_IO
+	parent      CYGPKG_IO_BEEPER
+    requires    CYGPKG_IO_BEEPER
     
     include_dir   cyg/io
 
@@ -61,43 +62,6 @@ cdl_package CYGPKG_DEVS_BEEP_KINETIS {
                  use Kinetis timer to generate beeper frequncy in wave generation
                  mode. The timer is as well used to generate beeper beep interval"
 
-    cdl_component CYGPKG_DEVS_BEEP_OPTIONS {
-        display "options"
-        flavor  none
-        no_define
-
-        cdl_option CYGPKG_DEVS_BEEP_CFLAGS {
-            display       "Additional compiler flags"
-            flavor        data
-            no_define
-            default_value { "" }
-            description "
-               This option modifies the set of compiler flags for
-               building the keypad driver package. These flags
-               are used in addition to the set of global flags."
-        }
-    }
-
-    cdl_option CYGDAT_DEVS_BEEP_NAME {
-        display "Device name for the beeper driver"
-        flavor data
-        default_value {"\"/dev/beep\""}
-        description " This option specifies the name of the beeper device"
-    }
-
-    cdl_option CYGDAT_DEVS_BEEP_DEFAULT_TIME {
-        display "Default beeping timer in ms"
-        flavor data
-        legal_values     100 to 3000
-        default_value { 500 }
-    }
-
-    cdl_option CYGDAT_DEVS_BEEP_DEFAULT_FREQUENCY {
-        display "Beeper frequncy in Hz"
-        flavor data
-        legal_values     500 to 10000
-        default_value { 4000 }
-    }
 
     cdl_option CYGNUM_DEVS_BEEP_TIMER {
         display "Beeper timer to use FTM0 to FTM2"

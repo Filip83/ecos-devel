@@ -1,3 +1,8 @@
+2018-12-19  Filip  <filip.gnu@gmail.com>
+
+	* Modification to work with generic beeper device
+	  which use own api functin and not IO api.
+
 2017-04-04  Filip  <filip.gnu@gmail.com>
 
 	* Beeper driver for Freescale Kinetis.
