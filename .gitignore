@@ -338,3 +338,4 @@ ASALocalRun/
 .localhistory/
 
 .vs
+ecos-3\.0/host/VSProject/
