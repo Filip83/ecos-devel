@@ -234,10 +234,10 @@
 #define PCF2129A_SPI_CLOCK_POL                          0
 #define PCF2129A_SPI_CLOCK_PHASE                        0
 #define CYGHWR_DEVS_RTC_PCF2129A_DEV0_SPEED             1000000l
-#define CYGHWR_DEVS_RTC_PCF2129A_DEV0_CS_DLY            0
-#define CYGHWR_DEVS_RTC_PCF2129A_DEV0_CS_DLY            0
-#define CYGHWR_DEVS_RTC_PCF2129A_DEV0_CS_DLY            0
-#define CYGHWR_DEVS_RTC_PCF2129A_DEV0_CS_DLY_UN         0
+#define CYGHWR_DEVS_RTC_PCF2129A_DEV0_CS_DLY            1
+#define CYGHWR_DEVS_RTC_PCF2129A_DEV0_CS_DLY            1
+#define CYGHWR_DEVS_RTC_PCF2129A_DEV0_CS_DLY            1
+#define CYGHWR_DEVS_RTC_PCF2129A_DEV0_CS_DLY_UN         100
 #define PCF2129A_SPI_DBR_DEV0                           0l
 
 
@@ -248,10 +248,8 @@
 #define LCD_SPI_CLOCK_POL                               0
 #define LCD_SPI_CLOCK_PHASE                             0
 #define CYGHWR_DEVS_LCD_DEV1_SPEED                      16000000l
-#define CYGHWR_DEVS_LCD_DEV1_CS_DLY                     0
-#define CYGHWR_DEVS_LCD_DEV1_CS_DLY                     0
-#define CYGHWR_DEVS_LCD_DEV1_CS_DLY                     0
-#define CYGHWR_DEVS_LCD_DEV1_CS_DLY_UN                  0
+#define CYGHWR_DEVS_LCD_DEV1_CS_DLY                     1
+#define CYGHWR_DEVS_LCD_DEV1_CS_DLY_UN                  100
 #define LCD_SPI_DBR_DEV1                                0l
 
 
@@ -261,10 +259,8 @@
 #define FM25VXX_SPI_CLOCK_POL                           0
 #define FM25VXX_SPI_CLOCK_PHASE                         0
 #define CYGHWR_DEVS_FRAM_FM25VXX_DEV2_SPEED             16000000l
-#define CYGHWR_DEVS_FRAM_FM25VXX_DEV2_CS_DLY            0
-#define CYGHWR_DEVS_FRAM_FM25VXX_DEV2_CS_DLY            0
-#define CYGHWR_DEVS_FRAM_FM25VXX_DEV2_CS_DLY            0
-#define CYGHWR_DEVS_FRAM_FM25VXX_DEV2_CS_DLY_UN         0
+#define CYGHWR_DEVS_FRAM_FM25VXX_DEV2_CS_DLY            1
+#define CYGHWR_DEVS_FRAM_FM25VXX_DEV2_CS_DLY_UN         100
 #define FM25VXX_SPI_DBR_DEV2                            0l
 #define FRAM_FM25WXX_BASE_ADDRESS			0x80000000
 
@@ -274,10 +270,8 @@
 #define AD7124_SPI_CLOCK_POL                            1
 #define AD7124_SPI_CLOCK_PHASE                          1
 #define CYGHWR_DEVS_ADC_AD7124_DEV0_SPEED               2000000l
-#define CYGHWR_DEVS_ADC_AD7124_DEV0_CS_DLY              0
-#define CYGHWR_DEVS_ADC_AD7124_DEV0_CS_DLY              0
-#define CYGHWR_DEVS_ADC_AD7124_DEV0_CS_DLY              0
-#define CYGHWR_DEVS_ADC_AD7124_DEV0_CS_DLY_UN           0
+#define CYGHWR_DEVS_ADC_AD7124_DEV0_CS_DLY              1
+#define CYGHWR_DEVS_ADC_AD7124_DEV0_CS_DLY_UN           100
 #define AD7124_SPI_DBR_DEV0                             0l
   
 // Analog board DAC SPI
@@ -286,10 +280,8 @@
 #define TLV320_SPI_CLOCK_POL                            0
 #define TLV320_SPI_CLOCK_PHASE                          1
 #define CYGHWR_DEVS_DAC_TLV320_DEV1_SPEED               2000000l
-#define CYGHWR_DEVS_DAC_TLV320_DEV1_CS_DLY              0
-#define CYGHWR_DEVS_DAC_TLV320_DEV1_CS_DLY              0
-#define CYGHWR_DEVS_DAC_TLV320_DEV1_CS_DLY              0
-#define CYGHWR_DEVS_DAC_TLV320_DEV1_CS_DLY_UN           0
+#define CYGHWR_DEVS_DAC_TLV320_DEV1_CS_DLY              1
+#define CYGHWR_DEVS_DAC_TLV320_DEV1_CS_DLY_UN           100
 #define TLV320_SPI_DBR_DEV1                             0l
 
 externC cyg_uint64 _hw_error;
