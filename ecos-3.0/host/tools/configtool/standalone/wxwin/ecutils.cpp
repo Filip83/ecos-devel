@@ -202,7 +202,10 @@ bool ecUtils::StrToItemIntegerType(const wxString & str, long &d)
 const wxString ecUtils::IntToStr(long d,bool bHex)
 {
   wxString s;
-  s.Printf(bHex?wxT("0x%08x"):wxT("%d"),d);
+  if(bHex)
+    s.Printf(wxT("0x%08x"),d);
+  else
+    s.Printf(wxT("%ld"),d);
   return s;
 }
 
@@ -436,6 +439,8 @@ bool ecUtils::Launch(const ecFileName &strFileName, const ecFileName &strViewer)
 
 #endif
 
+#undef _UNICODE
+
 void ecUtils::UnicodeToCStr(const wxChar* str,char *&psz)
 {
     int nLength=1 + wxStrlen(str);
@@ -443,18 +448,21 @@ void ecUtils::UnicodeToCStr(const wxChar* str,char *&psz)
 #ifdef _UNICODE
     WideCharToMultiByte(CP_ACP, 0, str, -1, psz, nLength, NULL, NULL);
 #else
-    strcpy(psz,str);
+    //strcpy(psz,str);
 #endif
 }
 
 std::string ecUtils::UnicodeToStdStr(const wxChar* str)
 {
-    std::string stdstr;
+    wxString tmp(str);
+    tmp = tmp.ToUTF8();
+    return tmp.ToStdString();
+    /*std::string stdstr;
     char *psz;
     UnicodeToCStr(str,psz);
     stdstr=std::string(psz);
     delete psz;
-    return stdstr;
+    return stdstr;*/
 }
 
 // ecUtils::StripExtraWhitespace() returns a modified version of
@@ -469,7 +477,9 @@ static bool ecIsSpace(wxChar ch)
 wxString ecUtils::StripExtraWhitespace (const wxString & strInput)
 {
     wxString strOutput;
-    wxChar* o=strOutput.GetWriteBuf(1+strInput.Len());
+    //wxChar* o=strOutput.GetWriteBuf(1+strInput.Len());
+    wxStringBuffer oo(strOutput,1+strInput.Len());
+    wxChar * o = &oo[0];
     for(const wxChar* c=strInput.GetData();*c;c++){
         if(ecIsSpace(*c)){
             *o++=wxT(' ');
@@ -482,7 +492,7 @@ wxString ecUtils::StripExtraWhitespace (const wxString & strInput)
         }
     }
     *o=0;
-    strOutput.UngetWriteBuf();
+    //strOutput.UngetWriteBuf();
     strOutput.Trim(TRUE);
     strOutput.Trim(FALSE);
     return strOutput;

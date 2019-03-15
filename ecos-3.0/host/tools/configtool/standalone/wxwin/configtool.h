@@ -52,7 +52,7 @@
 #include "wx/docview.h"
 #include "wx/process.h"
 #include "wx/timer.h"
-#include "wx/gizmos/splittree.h"
+//#include "wx/gizmos/splittree.h"
 
 #include "appsettings.h"
 

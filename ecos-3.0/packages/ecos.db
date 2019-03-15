@@ -2912,6 +2912,15 @@ package CYGPKG_DEVS_AVR32_SPECTROMETER_FPGA {
             This packages provides an spectromter FPGA driver."
 }
 
+package CYGPKG_IO_BEEPER {
+	alias 		{ "Generic beeper support" beeper io_beeper }
+	directory	io/beeper
+	script		io_beeper.cdl
+        description "
+           This package contains api to control
+           beeper devices."
+}
+
 package CYGPKG_KERNEL {
 	alias		{ "eCos kernel" kernel }
 	directory	kernel
@@ -7594,6 +7603,14 @@ package CYGPKG_FS_FAT {
         This package contains a FAT filesystem implementation."
 }
 
+package CYGPKG_FS_LITTE {
+    alias       { "LITTE Filesystem" lfs litte_fs }
+    directory   fs/littlefs
+    script      littlefs.cdl
+    description "
+        This package contains a LITE filesystem implementation."
+}
+
 package CYGPKG_FS_FFFS {
     alias       { "FFFS Filesystem" fffs ff_fs fs_ff }
     directory   fs/fffs
@@ -8161,12 +8178,14 @@ target satisgeo_km_8_k22f512 {
                    CYGPKG_IO_FLASH
                    CYGPKG_DEVS_FLASH_SPI_FM25VXX
                    CYGPKG_IO_FILEIO
+				   CYGPKG_FS_LITTE
                    CYGPKG_IO_FRAMEBUF
                    CYGPKG_DEVS_FRAMEBUF_ST7565
                    CYGPKG_IO_ADC
                    CYGPKG_DEVS_ADC_KINETIS_ADC
                    CYGPKG_IO_KBD
                    CYGPKG_DEVS_KBD_BUTTON_KINETIS
+				   CYGPKG_IO_BEEPER
                    CYGPKG_DEVS_BEEP_KINETIS
                    CYGPKG_IO_EHCI
                    CYGPKG_DEVS_EHCI_SERIAL_FREESCALE

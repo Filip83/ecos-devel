@@ -72,6 +72,8 @@ typedef struct cyg_beep_kinetis_s
     cyg_handle_t      beep_interrupt_handle; /**< Beeper interrupt handle. */
     cyg_vector_t      interrupt_number;     /**< Beeper interrupt number. */
     cyg_uint32        interrupt_prio;	    /**< Beeper interrupts priority. */
+	cyg_drv_cond_t    wait;					/**< Wait for beeping done. */
+	cyg_drv_mutex_t   lock;                // Device lock
 }cyg_beep_kinetis_t;
 
 

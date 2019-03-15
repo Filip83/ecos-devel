@@ -277,7 +277,7 @@ bool ecSettings::LoadConfig()
     m_eUseCustomBrowser = (ecBrowserType) tmp;
     
     config.Read(_("/Options/Browser"), & m_strBrowser);
-    config.Read(_("/Options/Viewer"), & m_strViewer);
+    config.Read(_("/Options/Viewer"), & (wxString)m_strViewer);
     config.Read(_("/Options/HexDisplay"), (bool*) & m_bHex);
     config.Read(_("/Options/UseDefaultFonts"), (bool*) & m_windowSettings.m_useDefaults);
     config.Read(_("/Rule/Checking"), & m_nRuleChecking);
@@ -301,15 +301,15 @@ bool ecSettings::LoadConfig()
     // Fonts
     m_windowSettings.LoadConfig(config);   
     
-    if (!config.Read(_("/Paths/UserToolsDir"), & m_userToolsDir))
+    if (!config.Read(_("/Paths/UserToolsDir"), & (wxString)m_userToolsDir))
     {
         // Use the default provided by the installer
-        config.Read(_("Default User Tools Path"), & m_userToolsDir);
+        config.Read(_("Default User Tools Path"), & (wxString)m_userToolsDir);
     }
 
     // Only to be used if we fail to find the information installed
     // with the Configuration Tool.
-    config.Read(_("/Paths/BuildToolsDir"), & m_buildToolsDir);
+    config.Read(_("/Paths/BuildToolsDir"), & (wxString)m_buildToolsDir);
     if (m_buildToolsDir.IsEmpty()) // first invocation by this user
     {
         // we have no clues as to the location of the build tools so
@@ -586,7 +586,7 @@ bool ecSettings::LoadConfig()
         wxConfigPathChanger path(& config, wxT("/Repository/"));
 
         //if (!eCosConfig.Read(wxT("Folder"), & m_strRepository))
-        if (!eCosConfig.Read(wxT("/Paths/RepositoryDir"), & m_strRepository))
+        if (!eCosConfig.Read(wxT("/Paths/RepositoryDir"), & (wxString)m_strRepository))
         {
 #ifdef __WXMSW__
             // If we can't find the current folder, look for clues in the registry.
@@ -708,14 +708,14 @@ bool ecSettings::SaveConfig()
     config.Write(_("/Options/UseExternalBrowser"), m_bUseExternalBrowser);
     config.Write(_("/Options/UseCustomBrowser"), (long) m_eUseCustomBrowser);
     config.Write(_("/Options/Browser"), m_strBrowser);
-    config.Write(_("/Options/Viewer"), m_strViewer);
+    config.Write(_("/Options/Viewer"), (wxString)m_strViewer);
     config.Write(_("/Options/HexDisplay"), m_bHex);
     config.Write(_("/Options/UseDefaultFonts"), m_windowSettings.m_useDefaults);
 
     config.Write(_("/Rule/Checking"), (long) m_nRuleChecking);
     
-    config.Write(_("/Paths/UserToolsDir"), m_userToolsDir);
-    config.Write(_("/Paths/BuildToolsDir"), m_buildToolsDir);
+    config.Write(_("/Paths/UserToolsDir"), (wxString)m_userToolsDir);
+    config.Write(_("/Paths/BuildToolsDir"), (wxString)m_buildToolsDir);
     
     config.Write(_("/Build/Make Options"), m_strMakeOptions);
 
@@ -741,7 +741,7 @@ bool ecSettings::SaveConfig()
             // Don't override the value in the local settings
         }
         else
-            config.Write(wxT("/Paths/RepositoryDir"), m_strRepository);
+            config.Write(wxT("/Paths/RepositoryDir"), (wxString)m_strRepository);
     }
     
     // Run tests settings

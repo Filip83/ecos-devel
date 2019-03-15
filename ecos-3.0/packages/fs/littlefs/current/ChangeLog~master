@@ -1,17 +1,18 @@
-2018-12-19  Filip  <filip.gnu@gmail.com>
+2019-03-11 Filip <filip.gnu@gmail.com> 
 
-	* Modification to work with generic beeper device
-	  which use own api functin and not IO api.
+        * cdl/littlefs.cdl:
+        * src/lfs.c:
+        * src/lfs_fileops.c:
+        * src/lfs_uitl.c:
+        A Litte filesystem implementation
 
-2017-04-04  Filip  <filip.gnu@gmail.com>
 
-	* Beeper driver for Freescale Kinetis.
 
 //===========================================================================
 // ####GPLCOPYRIGHTBEGIN####                                                
 // -------------------------------------------                              
 // This file is part of eCos, the Embedded Configurable Operating System.   
-// Copyright (C) 1998, 1999, 2000, 2001, 2002 Free Software Foundation, Inc.
+// Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2009 Free Software Foundation, Inc.
 //
 // This program is free software; you can redistribute it and/or modify     
 // it under the terms of the GNU General Public License as published by     

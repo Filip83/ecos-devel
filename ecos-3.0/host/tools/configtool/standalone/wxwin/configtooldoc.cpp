@@ -262,7 +262,7 @@ bool ecConfigToolDoc::OnSaveDocument(const wxString& filename)
 
         try
         {
-            m_CdlConfig->save ((const wxChar*) filename);
+            m_CdlConfig->save (filename.ToStdString());
             rc=TRUE;
         }
 
@@ -413,7 +413,7 @@ bool ecConfigToolDoc::OnOpenDocument(const wxString& filename)
     try
     {
         NewCdlInterp = CdlInterpreterBody::make ();
-        NewCdlConfig = CdlConfigurationBody::load ((const wxChar*) filename, m_CdlPkgData, NewCdlInterp, &CdlLoadErrorHandler, &CdlLoadWarningHandler);
+        NewCdlConfig = CdlConfigurationBody::load (filename.ToStdString(), m_CdlPkgData, NewCdlInterp, &CdlLoadErrorHandler, &CdlLoadWarningHandler);
         rc = TRUE;
     }
     catch (CdlStringException exception)
@@ -919,7 +919,7 @@ bool ecConfigToolDoc::OpenRepository (ecFileName& strNewRepository, CdlPackagesD
 
                     // create a CDL repository, interpreter and configuration
                     try {// create a new package database, interpreter and configuration
-                        NewCdlPkgData = CdlPackagesDatabaseBody::make ((const wxChar*) ecUtils::NativeToPosixPath(strNewPackagesDir), &CdlParseErrorHandler, &CdlParseWarningHandler);
+                        NewCdlPkgData = CdlPackagesDatabaseBody::make (ecUtils::NativeToPosixPath(strNewPackagesDir).ToStdString(), &CdlParseErrorHandler, &CdlParseWarningHandler);
                         NewCdlInterp = CdlInterpreterBody::make ();
                         NewCdlConfig = CdlConfigurationBody::make ("eCos", NewCdlPkgData, NewCdlInterp);
                     }
@@ -942,7 +942,7 @@ bool ecConfigToolDoc::OpenRepository (ecFileName& strNewRepository, CdlPackagesD
                     // otherwise select the first available target
                     wxString default_hardware = GetDefaultHardware ();
 
-                    if (! NewCdlPkgData->is_known_target ((const wxChar*) default_hardware)) {
+                    if (! NewCdlPkgData->is_known_target (default_hardware.ToStdString())) {
                         const std::vector<std::string>& targets = NewCdlPkgData->get_targets ();
                         if (targets.size () == 0)
                         {
@@ -957,7 +957,7 @@ bool ecConfigToolDoc::OpenRepository (ecFileName& strNewRepository, CdlPackagesD
 
                     try {
                         m_strCdlErrorMessage = wxT("");
-                        NewCdlConfig->set_hardware ((const wxChar*) default_hardware, &CdlParseErrorHandler, &CdlParseWarningHandler);
+                        NewCdlConfig->set_hardware (default_hardware.ToStdString(), &CdlParseErrorHandler, &CdlParseWarningHandler);
                     }
                     catch (CdlStringException exception) {
                         if (m_strCdlErrorMessage.IsEmpty ())
@@ -997,7 +997,7 @@ void ecConfigToolDoc::SelectTemplate (const wxString& newTemplate, const wxStrin
         m_templateVersion = wxT("");
         try
         {
-            m_CdlConfig->set_template (newTemplate.c_str(), newTemplateVersion.c_str(), CdlParseErrorHandler, CdlParseWarningHandler);
+            m_CdlConfig->set_template (newTemplate.ToStdString(), newTemplateVersion.ToStdString(), CdlParseErrorHandler, CdlParseWarningHandler);
             m_templateVersion = newTemplateVersion;
         }
         catch (CdlStringException exception)
@@ -1057,7 +1057,7 @@ void ecConfigToolDoc::SelectHardware (const wxString& newTemplate)
 
         try
         {
-            m_CdlConfig->set_hardware (newTemplate.c_str(), CdlParseErrorHandler, CdlParseWarningHandler);
+            m_CdlConfig->set_hardware (newTemplate.ToStdString(), CdlParseErrorHandler, CdlParseWarningHandler);
         }
         catch (CdlStringException exception)
         {
@@ -2152,7 +2152,7 @@ bool ecConfigToolDoc::ExportFile()
 	wxT("eCos Minimal Configuration Files (*.ecm)|*.ecm|All Files (*)|*"),
 #endif
 #if wxCHECK_VERSION(2, 6, 0)
-	wxSAVE|wxOVERWRITE_PROMPT);
+	wxFD_SAVE|wxFD_OVERWRITE_PROMPT);
 #else
 	wxSAVE|wxOVERWRITE_PROMPT|wxHIDE_READONLY);
 #endif
@@ -2191,7 +2191,7 @@ bool ecConfigToolDoc::ImportFile()
 	wxT("eCos Minimal Configuration Files (*.ecm)|*.ecm|All Files (*)|*"),
 #endif
 #if wxCHECK_VERSION(2, 6, 0)
-	wxOPEN|wxFILE_MUST_EXIST);
+	wxFD_OPEN|wxFD_FILE_MUST_EXIST);
 #else
 	wxOPEN|wxFILE_MUST_EXIST|wxHIDE_READONLY);
 #endif

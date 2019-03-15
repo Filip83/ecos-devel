@@ -97,7 +97,7 @@ m_timer(this)
     m_keywords = wxEmptyString;
     m_updateLists = FALSE;
     m_updateInterval = 600; // Milliseconds
-    wxStartTimer();
+    // wxStartTimer(); deprecated
     
     SetExtraStyle(wxDIALOG_EX_CONTEXTHELP);
     
@@ -362,10 +362,10 @@ void ecPackagesDialog::Fill()
     // wxGTK doesn't deselect items properly when clearing, I think
     int i;
     for (i = 0; i < availableList->GetCount(); i++)
-        if (availableList->Selected(i))
+        if (availableList->IsSelected(i))
             availableList->Deselect(i);
     for (i = 0; i < useList->GetCount(); i++)
-        if (useList->Selected(i))
+        if (useList->IsSelected(i))
             useList->Deselect(i);
     
     availableList->Clear();
@@ -698,7 +698,7 @@ void ecPackagesDialog::OnClearKeywords(wxCommandEvent& event)
     TransferDataFromWindow();
     Fill();
     m_updateLists = FALSE;
-    wxStartTimer();
+    //wxStartTimer();
     FindWindow( ecID_PACKAGES_DIALOG_KEYWORDS )->SetFocus();
 }
 
@@ -713,7 +713,7 @@ void ecPackagesDialog::OnUpdateKeywordText(wxCommandEvent& event)
     
     TransferDataFromWindow();
     m_updateLists = TRUE;
-    wxStartTimer();
+    //wxStartTimer();
 }
 
 void ecPackagesDialog::OnClickOmitHardwarePackages(wxCommandEvent& event)
@@ -730,12 +730,12 @@ void ecPackagesDialog::OnClickExactMatch(wxCommandEvent& event)
 
 void ecPackagesDialog::OnIdle(wxIdleEvent& event)
 {
-    long elapsed = wxGetElapsedTime(FALSE);
+    long elapsed = 0;//wxGetElapsedTime(FALSE);
     if (m_updateLists && (elapsed > m_updateInterval))
     {
         m_updateLists = FALSE;
         Fill();
-        wxStartTimer();
+        //wxStartTimer();
     }
 }
 

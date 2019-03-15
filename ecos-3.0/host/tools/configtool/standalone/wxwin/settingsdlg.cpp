@@ -443,7 +443,7 @@ void ecDisplayOptionsDialog::OnChangeFont(wxCommandEvent& event)
         wxFontData data;
         data.SetInitialFont(wxGetApp().GetSettings().GetWindowSettings().GetFont(str));
 
-        wxFontDialog dlg(this, & data);
+        wxFontDialog dlg((wxWindow*)this, data);
         if (dlg.ShowModal() == wxID_OK)
         {
             wxGetApp().GetSettings().GetWindowSettings().SetFont(str, dlg.GetFontData().GetChosenFont()) ;

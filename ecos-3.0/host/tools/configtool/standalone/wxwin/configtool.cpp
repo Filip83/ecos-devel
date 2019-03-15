@@ -159,7 +159,7 @@ bool ecApp::OnInit()
     // Mandatory initialisation for Tcl 8.4
     Tcl_FindExecutable(argv[0]);
 
-    wxLog::SetTimestamp(NULL);
+    wxLog::SetTimestamp("");
 
     m_whatsThisMenu = new wxMenu;
     m_whatsThisMenu->Append(ecID_WHATS_THIS, _("&What's This?"));
@@ -637,10 +637,10 @@ bool ecApp::LoadTextResource(wxString& text, const wxString& filename, bool addT
     {
         wxInputStream* stream = file->GetStream();
 
-        char* buf = text.GetWriteBuf(stream->GetSize() + 1);
-        stream->Read((void*) buf, stream->GetSize());
+        wxStringBuffer buf(text,stream->GetSize() + 1);
+        stream->Read(buf, stream->GetSize());
         buf[stream->GetSize()] = 0;
-        text.UngetWriteBuf();
+        //text.UngetWriteBuf();
 
         success = TRUE;
         
@@ -652,10 +652,11 @@ bool ecApp::LoadTextResource(wxString& text, const wxString& filename, bool addT
     {
         wxFileInputStream str(GetFullAppPath(filename));
 
-        char* buf = text.GetWriteBuf(str.GetSize() + 1);
-        str.Read((void*) buf, str.GetSize());
+        //char* buf = text.GetWriteBuf(str.GetSize() + 1);
+        wxStringBuffer buf(text,str.GetSize() + 1);
+        str.Read(buf, str.GetSize());
         buf[str.GetSize()] = 0;
-        text.UngetWriteBuf();
+        //text.UngetWriteBuf();
 
         success = TRUE;
     }
@@ -675,10 +676,11 @@ bool ecApp::GetMemoryTextResource(const wxString& filename, wxString& text)
     {
         wxInputStream* stream = file->GetStream();
 
-        char* buf = text.GetWriteBuf(stream->GetSize() + 1);
-        stream->Read((void*) buf, stream->GetSize());
+        //char* buf = text.GetWriteBuf(stream->GetSize() + 1);
+        wxStringBuffer buf(text,stream->GetSize() + 1);
+        stream->Read(buf, stream->GetSize());
         buf[stream->GetSize()] = 0;
-        text.UngetWriteBuf();
+        //text.UngetWriteBuf();
 
         delete file;
         return TRUE;

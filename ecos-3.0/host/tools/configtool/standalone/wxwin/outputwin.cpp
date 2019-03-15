@@ -128,7 +128,7 @@ void ecOutputWindow::OnSelectAll(wxCommandEvent& event)
 void ecOutputWindow::OnSave(wxCommandEvent& event)
 {
     wxFileDialog dialog(this, _("Save output as"),
-        wxT(""), wxT("output.txt"), wxT("*.txt"), wxSAVE|wxOVERWRITE_PROMPT);
+        wxT(""), wxT("output.txt"), wxT("*.txt"), wxFD_SAVE|wxFD_OVERWRITE_PROMPT);
     if (dialog.ShowModal() == wxID_OK)
     {
         if (!SaveFile(dialog.GetPath()))

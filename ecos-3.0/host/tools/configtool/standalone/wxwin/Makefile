@@ -146,9 +146,10 @@ EXTRACPPFLAGS=\
   -I$(ECOSDIR)/host/tools/ecostest/common\
   -I$(ECOSBUILDDIR)/libcdl\
   -I$(ECOSBUILDDIR)/infra\
-  -DecUSE_EXPERIMENTAL_CODE=$(USEEXPERIMENTALCODE)
+  -DecUSE_EXPERIMENTAL_CODE=$(USEEXPERIMENTALCODE)\
+  -I/usr/include/tcl8.6 -std=gnu++98 -fpermissive
 
-EXTRALDFLAGS=-L$(ECOSBUILDDIR)/infra -L$(ECOSBUILDDIR)/libcdl -lcdl -lcyginfra -ltcl
+EXTRALDFLAGS=-L/usr/lib/x86_64-linux-gnu -lX11 -L$(ECOSBUILDDIR)/infra -L$(ECOSBUILDDIR)/libcdl -lcdl -lcyginfra -ltcl -lX11
 
 .SUFFIXES:	.o .cpp .cxx
 

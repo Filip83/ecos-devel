@@ -237,7 +237,7 @@ void ecFindDialog::OnFindNext(wxCommandEvent& event)
 
             rect2 = GetRect(); // screen coords
 
-            if (rect2.Inside(topLeft) || rect2.Inside(bottomRight))
+            if (rect2.Contains(topLeft) || rect2.Contains(bottomRight))
             {
                 Move(wxPoint(topLeft.x + rect1.width, rect2.y));
             }

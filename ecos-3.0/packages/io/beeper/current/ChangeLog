@@ -1,17 +1,15 @@
-2018-12-19  Filip  <filip.gnu@gmail.com>
+2018-12-13  Filip  <filip.gnu@gmail.com>
 
-	* Modification to work with generic beeper device
-	  which use own api functin and not IO api.
+	* cdl/io_beeper.cdl:
+	* include/beeper.h: 
+	* src/dac.c:
+	New package -- DAC generic driver support.
 
-2017-04-04  Filip  <filip.gnu@gmail.com>
-
-	* Beeper driver for Freescale Kinetis.
-
-//===========================================================================
+##==========================================================================
 // ####GPLCOPYRIGHTBEGIN####                                                
 // -------------------------------------------                              
 // This file is part of eCos, the Embedded Configurable Operating System.   
-// Copyright (C) 1998, 1999, 2000, 2001, 2002 Free Software Foundation, Inc.
+// Copyright (C) 2008 Free Software Foundation, Inc.                        
 //
 // This program is free software; you can redistribute it and/or modify     
 // it under the terms of the GNU General Public License as published by     
@@ -29,4 +27,4 @@
 // Fifth Floor, Boston, MA  02110-1301, USA.                                
 // -------------------------------------------                              
 // ####GPLCOPYRIGHTEND####                                                  
-//===========================================================================
+##==========================================================================

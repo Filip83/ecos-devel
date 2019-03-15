@@ -6,33 +6,15 @@
 // Author:      Julian Smart
 // Modified by:
 // Created:     8/7/2000
-// RCS-ID:      $Id: splittree.h,v 1.3 2001/06/11 14:22:31 julians Exp $
+// RCS-ID:      $Id$
 // Copyright:   (c) Julian Smart
-//
-// This program is part of the eCos host tools.
-//
-// This program is free software; you can redistribute it and/or modify it
-// under the terms of the GNU General Public License as published by the Free
-// Software Foundation; either version 2 of the License, or (at your option)
-// any later version.
-//
-// This program is distributed in the hope that it will be useful, but WITHOUT
-// ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-// FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
-// more details.
-//
-// You should have received a copy of the GNU General Public License along with
-// this program; if not, write to the Free Software Foundation, Inc.,
-// 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-//
+// Licence:     wxWindows licence
 /////////////////////////////////////////////////////////////////////////////
 
 #ifndef _WX_SPLITTREE_H_
 #define _WX_SPLITTREE_H_
 
-#ifdef __GNUG__
-	#pragma interface "splittree.cpp"
-#endif
+#include "wx/gizmos/gizmos.h"
 
 // Set this to 1 to use generic tree control (doesn't yet work properly)
 #define USE_GENERIC_TREECTRL 0
@@ -40,7 +22,7 @@
 #include "wx/wx.h"
 #include "wx/treectrl.h"
 #include "wx/splitter.h"
-#include "ecscrolwin.h"
+#include "wx/scrolwin.h"
 
 #if USE_GENERIC_TREECTRL
 #include "wx/generic/treectlg.h"
@@ -62,18 +44,19 @@ class wxSplitterScrolledWindow;
  * It also updates the scrolled window vertical scrollbar as appropriate.
  */
 
-class wxRemotelyScrolledTreeCtrl: public wxTreeCtrl
+class WXDLLIMPEXP_GIZMOS wxRemotelyScrolledTreeCtrl: public wxTreeCtrl
 {
-	DECLARE_CLASS(wxRemotelyScrolledTreeCtrl)
+    DECLARE_CLASS(wxRemotelyScrolledTreeCtrl)
 public:
     wxRemotelyScrolledTreeCtrl(wxWindow* parent, wxWindowID id, const wxPoint& pt = wxDefaultPosition,
         const wxSize& sz = wxDefaultSize, long style = wxTR_HAS_BUTTONS);
-	~wxRemotelyScrolledTreeCtrl();
+    ~wxRemotelyScrolledTreeCtrl();
 
 //// Events
-	void OnSize(wxSizeEvent& event);
-	void OnExpand(wxTreeEvent& event);
+    void OnSize(wxSizeEvent& event);
+    void OnExpand(wxTreeEvent& event);
     void OnScroll(wxScrollWinEvent& event);
+    void OnPaint(wxPaintEvent& event);
 
 //// Overrides
     // Override this in case we're using the generic tree control.
@@ -85,7 +68,7 @@ public:
     virtual void SetScrollbars(int pixelsPerUnitX, int pixelsPerUnitY,
                              int noUnitsX, int noUnitsY,
                              int xPos = 0, int yPos = 0,
-                             bool noRefresh = FALSE );
+                             bool noRefresh = false );
 
     // In case we're using the generic tree control.
     // Get the view start
@@ -97,19 +80,31 @@ public:
     // In case we're using the generic tree control.
     virtual int GetScrollPos(int orient) const;
 
+#if wxABI_VERSION >= 20808
+    // Override to suppress vertical scrollbar
+    virtual void SetScrollbar(int orient,
+                               int pos,
+                               int thumbVisible,
+                               int range,
+                               bool update);
+
+    // Override to get scroll values from companion window
+    virtual void DoCalcScrolledPosition(int x, int y, int *xx, int *yy) const;
+#endif
+
 //// Helpers
-	void HideVScrollbar();
+    void HideVScrollbar();
 
-	// Calculate the tree overall size so we can set the scrollbar
-	// correctly
-	void CalcTreeSize(wxRect& rect);
-	void CalcTreeSize(const wxTreeItemId& id, wxRect& rect);
+    // Calculate the tree overall size so we can set the scrollbar
+    // correctly
+    void CalcTreeSize(wxRect& rect);
+    void CalcTreeSize(const wxTreeItemId& id, wxRect& rect);
 
-	// Adjust the containing wxScrolledWindow's scrollbars appropriately
-	void AdjustRemoteScrollbars();
+    // Adjust the containing wxScrolledWindow's scrollbars appropriately
+    void AdjustRemoteScrollbars();
 
-	// Find the scrolled window that contains this control
-	ecScrolledWindow* GetScrolledWindow() const;
+    // Find the scrolled window that contains this control
+    wxScrolledWindow* GetScrolledWindow() const;
 
     // Scroll to the given line (in scroll units where each unit is
     // the height of an item)
@@ -117,15 +112,16 @@ public:
 
 //// Accessors
 
-	// The companion window is one which will get notified when certain
-	// events happen such as node expansion
-	void SetCompanionWindow(wxWindow* companion) { m_companionWindow = companion; }
-	wxWindow* GetCompanionWindow() const { return m_companionWindow; }
+    // The companion window is one which will get notified when certain
+    // events happen such as node expansion
+    void SetCompanionWindow(wxWindow* companion) { m_companionWindow = companion; }
+    wxWindow* GetCompanionWindow() const { return m_companionWindow; }
 
 
     DECLARE_EVENT_TABLE()
 protected:
-	wxWindow*	m_companionWindow;
+    wxWindow*   m_companionWindow;
+    bool        m_drawRowLines;
 };
 
 /*
@@ -134,33 +130,33 @@ protected:
  * A window displaying values associated with tree control items.
  */
 
-class wxTreeCompanionWindow: public wxWindow
+class WXDLLIMPEXP_GIZMOS wxTreeCompanionWindow: public wxWindow
 {
 public:
     DECLARE_CLASS(wxTreeCompanionWindow)
 
-    wxTreeCompanionWindow(wxWindow* parent, wxWindowID id = -1,
+    wxTreeCompanionWindow(wxWindow* parent, wxWindowID id = wxID_ANY,
       const wxPoint& pos = wxDefaultPosition,
       const wxSize& sz = wxDefaultSize,
       long style = 0);
 
 //// Overrides
-	virtual void DrawItem(wxDC& dc, wxTreeItemId id, const wxRect& rect);
+    virtual void DrawItem(wxDC& dc, wxTreeItemId id, const wxRect& rect);
 
 //// Events
-	void OnPaint(wxPaintEvent& event);    
+    void OnPaint(wxPaintEvent& event);
     void OnScroll(wxScrollWinEvent& event);
-	void OnExpand(wxTreeEvent& event);
+    void OnExpand(wxTreeEvent& event);
 
 //// Operations
 
 //// Accessors
-	wxRemotelyScrolledTreeCtrl* GetTreeCtrl() const { return m_treeCtrl; };
-	void SetTreeCtrl(wxRemotelyScrolledTreeCtrl* treeCtrl) { m_treeCtrl = treeCtrl; }
+    wxRemotelyScrolledTreeCtrl* GetTreeCtrl() const { return m_treeCtrl; };
+    void SetTreeCtrl(wxRemotelyScrolledTreeCtrl* treeCtrl) { m_treeCtrl = treeCtrl; }
 
 //// Data members
 protected:
-	wxRemotelyScrolledTreeCtrl*	m_treeCtrl;
+    wxRemotelyScrolledTreeCtrl* m_treeCtrl;
 
     DECLARE_EVENT_TABLE()
 };
@@ -173,15 +169,16 @@ protected:
  * than the usual one.
  */
 
-class wxThinSplitterWindow: public wxSplitterWindow
+class WXDLLIMPEXP_GIZMOS wxThinSplitterWindow: public wxSplitterWindow
 {
 public:
     DECLARE_DYNAMIC_CLASS(wxThinSplitterWindow)
 
-    wxThinSplitterWindow(wxWindow* parent, wxWindowID id = -1,
+    wxThinSplitterWindow(wxWindow* parent, wxWindowID id = wxID_ANY,
       const wxPoint& pos = wxDefaultPosition,
       const wxSize& sz = wxDefaultSize,
       long style = wxSP_3D | wxCLIP_CHILDREN);
+    ~wxThinSplitterWindow();
 
 //// Overrides
 
@@ -189,10 +186,10 @@ public:
     // Tests for x, y over sash. Overriding this allows us to increase
     // the tolerance.
     bool SashHitTest(int x, int y, int tolerance = 2);
-	void DrawSash(wxDC& dc);
+    void DrawSash(wxDC& dc);
 
 //// Events
-    
+
     void OnSize(wxSizeEvent& event);
 
 //// Operations
@@ -201,6 +198,9 @@ public:
 
 //// Data members
 protected:
+    wxPen*      m_facePen;
+    wxBrush*    m_faceBrush;
+
     DECLARE_EVENT_TABLE()
 };
 
@@ -213,12 +213,12 @@ protected:
  * scroll appropriately.
  */
 
-class wxSplitterScrolledWindow: public ecScrolledWindow
+class WXDLLIMPEXP_GIZMOS wxSplitterScrolledWindow: public wxScrolledWindow
 {
 public:
     DECLARE_DYNAMIC_CLASS(wxSplitterScrolledWindow)
 
-    wxSplitterScrolledWindow(wxWindow* parent, wxWindowID id = -1,
+    wxSplitterScrolledWindow(wxWindow* parent, wxWindowID id = wxID_ANY,
       const wxPoint& pos = wxDefaultPosition,
       const wxSize& sz = wxDefaultSize,
       long style = 0);
@@ -226,7 +226,7 @@ public:
 //// Overrides
 
 //// Events
-    
+
     void OnScroll(wxScrollWinEvent& event);
     void OnSize(wxSizeEvent& event);
 

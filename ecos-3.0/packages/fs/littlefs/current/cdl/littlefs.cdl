@@ -1,8 +1,14 @@
 # ====================================================================
 #
+<<<<<<< HEAD
 #      fatfs.cdl
 #
 #      FAT Filesystem configuration data
+=======
+#      littefs.cdl
+#
+#      LitteFS Filesystem configuration data
+>>>>>>> master
 #
 # ====================================================================
 ## ####ECOSGPLCOPYRIGHTBEGIN####                                            
@@ -39,16 +45,27 @@
 # ====================================================================
 ######DESCRIPTIONBEGIN####
 #
+<<<<<<< HEAD
 # Author(s):      Savin Zlobec <savin@elatec.si> 
 # Contributors:   
 # Date:           2003-06-25
+=======
+# Author(s):      Filip <filip.gnu@gmail.com> 
+# Contributors:   
+# Date:           2019-03-11
+>>>>>>> master
 #
 #####DESCRIPTIONEND####
 #
 # ====================================================================
 
+<<<<<<< HEAD
 cdl_package CYGPKG_FS_FAT {
     display         "FAT filesystem"
+=======
+cdl_package CYGPKG_FS_LITTE {
+    display         "LITTE filesystem"
+>>>>>>> master
     include_dir     cyg/fs
 
     parent          CYGPKG_IO_FILEIO
@@ -58,6 +75,7 @@ cdl_package CYGPKG_FS_FAT {
     requires        CYGINT_ISO_ERRNO
     requires        CYGINT_ISO_ERRNO_CODES
     requires        CYGPKG_MEMALLOC
+<<<<<<< HEAD
     requires        CYGPKG_BLOCK_LIB
 
     implements      CYGINT_IO_FILEIO_FS
@@ -157,3 +175,77 @@ cdl_package CYGPKG_FS_FAT {
 
 # ====================================================================
 # End of fatfs.cdl
+=======
+#   requires        CYGPKG_BLOCK_LIB
+
+    implements      CYGINT_IO_FILEIO_FS
+    
+    compile         -library=libextras.a lfs_fileops.c   \
+                                         lfs.c           \
+                                         lfs_util.c 
+
+    cdl_option      CYGNUM_FS_LITTE_FLASH_BASE_ADDRESS {
+        display         "File system flash base address"
+        flavor          data
+        default_value   0xd0000000
+        description     "This value must be base FLASH 
+		address in which lfs filesystem will be used."
+    }
+
+	cdl_option      CYGNUM_FS_LITTE_READ_SIZE {
+        display         "File system read size"
+        flavor          data
+        default_value   512
+        description     "This option controls the minimum
+		read size from storage media in bytes."
+    }
+
+	cdl_option      CYGNUM_FS_LITTE_PROG_SIZE {
+        display         "File system prog size"
+        flavor          data
+        default_value   512
+        description     "This option controls the minimum
+		programmable chunk in bytes."
+    }
+
+	cdl_option      CYGNUM_FS_LITTE_BLOCK_SIZE {
+        display         "File system block size"
+        flavor          data
+        default_value   1024
+        description     "This option sets the block size.
+		This value must be the same as storage media block
+		size. If this option is zero the value from FLASH
+		driver is used."
+    }
+
+	cdl_option      CYGNUM_FS_LITTE_LOOKAHEAD {
+        display         "File system lookahead"
+        flavor          data
+        default_value   0
+        description     "This option controls?"
+    }
+
+	cdl_option      CYGNUM_FS_LITTE_BLOCK_COUNT {
+        display         "File system block count"
+        flavor          data
+        default_value   64
+        description     "This option sets the block count of the used media.
+		If CYGNUM_FS_LITTE_BLOCK_SIZE option is zero the value from FLASH
+		driver is used."
+    }
+    
+    # --------------------------------------------------------------------
+   
+#    cdl_option      CYGPKG_FS_LITTE_TESTS {
+#        display         "LITTE FS tests"
+#        flavor          data
+#        no_define
+#        calculated      { "tests/fatfs1" }
+#        description     "This option specifies the set of tests for the 
+#                         FAT FS package."
+#    }
+}
+
+# ====================================================================
+# End of littlefs.cdl
+>>>>>>> master

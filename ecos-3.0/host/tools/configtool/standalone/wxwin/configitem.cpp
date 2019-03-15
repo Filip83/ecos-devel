@@ -790,7 +790,7 @@ bool ecConfigItem::SetValue(const wxString& value, CdlTransaction transaction/*=
     wxASSERT ((m_optionType == ecString) || (m_optionType == ecEnumerated));
     const CdlValuable valuable = GetCdlValuable();
     wxASSERT (valuable);
-    const std::string str = value.c_str();
+    const std::string str = value.ToStdString();
     if(transaction){
         if (CdlValueFlavor_BoolData == valuable->get_flavor ()){
             // set the user bool to the current bool when changing a booldata
