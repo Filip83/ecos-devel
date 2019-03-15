@@ -1,0 +1,132 @@
+# ====================================================================
+#
+#      littefs.cdl
+#
+#      LitteFS Filesystem configuration data
+#
+# ====================================================================
+## ####ECOSGPLCOPYRIGHTBEGIN####                                            
+## -------------------------------------------                              
+## This file is part of eCos, the Embedded Configurable Operating System.   
+## Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2009 Free Software Foundation, Inc.
+##
+## eCos is free software; you can redistribute it and/or modify it under    
+## the terms of the GNU General Public License as published by the Free     
+## Software Foundation; either version 2 or (at your option) any later      
+## version.                                                                 
+##
+## eCos is distributed in the hope that it will be useful, but WITHOUT      
+## ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or    
+## FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License    
+## for more details.                                                        
+##
+## You should have received a copy of the GNU General Public License        
+## along with eCos; if not, write to the Free Software Foundation, Inc.,    
+## 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.            
+##
+## As a special exception, if other files instantiate templates or use      
+## macros or inline functions from this file, or you compile this file      
+## and link it with other works to produce a work based on this file,       
+## this file does not by itself cause the resulting work to be covered by   
+## the GNU General Public License. However the source code for this file    
+## must still be made available in accordance with section (3) of the GNU   
+## General Public License v2.                                               
+##
+## This exception does not invalidate any other reasons why a work based    
+## on this file might be covered by the GNU General Public License.         
+## -------------------------------------------                              
+## ####ECOSGPLCOPYRIGHTEND####                                              
+# ====================================================================
+######DESCRIPTIONBEGIN####
+#
+# Author(s):      Filip <filip.gnu@gmail.com> 
+# Contributors:   
+# Date:           2019-03-11
+#
+#####DESCRIPTIONEND####
+#
+# ====================================================================
+
+cdl_package CYGPKG_FS_LITTE {
+    display         "LITTE filesystem"
+    include_dir     cyg/fs
+
+    parent          CYGPKG_IO_FILEIO
+    requires        CYGPKG_IO_FILEIO
+
+    requires        CYGPKG_ISOINFRA
+    requires        CYGINT_ISO_ERRNO
+    requires        CYGINT_ISO_ERRNO_CODES
+    requires        CYGPKG_MEMALLOC
+#   requires        CYGPKG_BLOCK_LIB
+
+    implements      CYGINT_IO_FILEIO_FS
+    
+    compile         -library=libextras.a lfs_fileops.c   \
+                                         lfs.c           \
+                                         lfs_util.c 
+
+    cdl_option      CYGNUM_FS_LITTE_FLASH_BASE_ADDRESS {
+        display         "File system flash base address"
+        flavor          data
+        default_value   0xd0000000
+        description     "This value must be base FLASH 
+		address in which lfs filesystem will be used."
+    }
+
+	cdl_option      CYGNUM_FS_LITTE_READ_SIZE {
+        display         "File system read size"
+        flavor          data
+        default_value   512
+        description     "This option controls the minimum
+		read size from storage media in bytes."
+    }
+
+	cdl_option      CYGNUM_FS_LITTE_PROG_SIZE {
+        display         "File system prog size"
+        flavor          data
+        default_value   512
+        description     "This option controls the minimum
+		programmable chunk in bytes."
+    }
+
+	cdl_option      CYGNUM_FS_LITTE_BLOCK_SIZE {
+        display         "File system block size"
+        flavor          data
+        default_value   1024
+        description     "This option sets the block size.
+		This value must be the same as storage media block
+		size. If this option is zero the value from FLASH
+		driver is used."
+    }
+
+	cdl_option      CYGNUM_FS_LITTE_LOOKAHEAD {
+        display         "File system lookahead"
+        flavor          data
+        default_value   0
+        description     "This option controls?"
+    }
+
+	cdl_option      CYGNUM_FS_LITTE_BLOCK_COUNT {
+        display         "File system block count"
+        flavor          data
+        default_value   64
+        description     "This option sets the block count of the used media.
+		If CYGNUM_FS_LITTE_BLOCK_SIZE option is zero the value from FLASH
+		driver is used."
+    }
+    
+    # --------------------------------------------------------------------
+   
+#    cdl_option      CYGPKG_FS_LITTE_TESTS {
+#        display         "LITTE FS tests"
+#        flavor          data
+#        no_define
+#        calculated      { "tests/fatfs1" }
+#        description     "This option specifies the set of tests for the 
+#                         FAT FS package."
+#    }
+}
+
+# ====================================================================
+# End of littlefs.cdl
