@@ -4,13 +4,8 @@
  * Copyright (c) 2017, Arm Limited. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause
  */
-<<<<<<< HEAD
-#include "lfs.h"
-#include "lfs_util.h"
-=======
 #include <cyg/fs/lfs.h>
 #include <cyg/fs/lfs_util.h>
->>>>>>> master
 
 #include <cyg/infra/cyg_type.h>   
 #include <cyg/infra/cyg_trac.h>        // tracing macros

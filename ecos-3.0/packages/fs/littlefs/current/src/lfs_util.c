@@ -4,11 +4,7 @@
  * Copyright (c) 2017, Arm Limited. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause
  */
-<<<<<<< HEAD
-#include "lfs_util.h"
-=======
 #include <cyg/fs/lfs_util.h>
->>>>>>> master
 
 
 // Only compile if user does not provide custom config

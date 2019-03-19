@@ -56,11 +56,8 @@ extern "C"
 #define MBED_LFS_INTRINSICS    true
 #endif
 
-<<<<<<< HEAD
-=======
 #define PRIu32 "u"
 
->>>>>>> master
 // Logging functions
 #if !defined(LFS_NO_INFO) && MBED_LFS_ENABLE_INFO
 #define LFS_INFO(fmt, ...)  printf("lfs info:%d: " fmt "\n", __LINE__, __VA_ARGS__)
@@ -96,15 +93,9 @@ extern "C"
 
 // Runtime assertions
 #if !defined(LFS_NO_ASSERT) && MBED_LFS_ENABLE_ASSERT
-<<<<<<< HEAD
-#define LFS_ASSERT(test) CYG_ASSERT(test)
-#elif !defined(LFS_NO_ASSERT) && !defined(MBED_LFS_ENABLE_ASSERT)
-#define LFS_ASSERT(test) CYG_ASSERT(test)
-=======
 #define LFS_ASSERT(test) CYG_ASSERTC(test)
 #elif !defined(LFS_NO_ASSERT) && !defined(MBED_LFS_ENABLE_ASSERT)
 #define LFS_ASSERT(test) CYG_ASSERTC(test)
->>>>>>> master
 #else
 #define LFS_ASSERT(test)
 #endif
