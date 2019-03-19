@@ -1207,6 +1207,14 @@ typedef volatile struct cyghwr_hal_kinetis_mpu_s {
 // SMC
 #include <cyg/hal/var_io_smc.h>
 
+//---------------------------------------------------------------------------
+// ADC
+#include <cyg/hal/var_io_adc.h>
+
+//---------------------------------------------------------------------------
+// DAC
+#include <cyg/hal/var_io_dac.h>
+
 //=============================================================================
 // DEVS:
 // Following macros may also be, and usually are borrwed by some device drivers.
