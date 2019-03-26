@@ -39,7 +39,7 @@
 ##==========================================================================
 #######DESCRIPTIONBEGIN####
 ##
-## Author(s):    Filp
+## Author(s):    Filip
 ## Date:         2019-03-26
 ## Description:  Implements generic layer of GPIO drivers.
 ##
