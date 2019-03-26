@@ -575,4 +575,8 @@
         }
     }
 
+	cdl_interface CYGINT_HAL_CORTEXM_KINETIS_HAS_OSC1 {
+        display "MCG Has OSC1"
+    }
+
     # EOF kinetis_clocking.cdl
