@@ -23,7 +23,7 @@
 
 #include <cyg/io/ser_freescale_uart.h>
 
-int SMC_SetPowerModeWait()
+int SMC_SetPowerModeWait(void)
 {
     cyg_uint32 *SCB_SCR = (cyg_uint32*)SCB_SCR_BASE;
     /* configure Normal Wait mode */

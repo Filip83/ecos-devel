@@ -93,7 +93,7 @@ typedef struct {
 #define SCB_SCR_BASE    (0xE000E000UL + 0x0D00UL + 0x10UL)    
 
 
-int SMC_SetPowerModeWait();
+int SMC_SetPowerModeWait(void);
 
 
 int SMC_SetPowerModeStop(int option);
