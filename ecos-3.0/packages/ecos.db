@@ -105,6 +105,14 @@ package CYGPKG_IO_CAN {
            CAN devices."
 }
 
+package CYGPKG_IO_GPIO {
+	alias 		{ "GPIO device drivers" gpio }
+	directory	io/gpio
+	script		io_gpio.cdl
+        description "
+           This package contains drivers for basic GPIO operations."
+}
+
 package CYGPKG_DEVS_CAN_MCF52xx_FLEXCAN {
     alias             { "MCF52xx FlexCAN device drivers"
                         devs_can_mcf52xx_flexcan mcf52xx_flexcan_serial_driver }
@@ -990,6 +998,16 @@ package CYGPKG_DEVS_FLASH_KINETIS {
     hardware
     description "
     This package contains hardware support for the internal FLASH memory
+    on kinetis devices."
+}
+
+package CYGPKG_DEVS_GPIO_KINETIS {
+	alias           { "Simple GPIO support for freescale kinetis" }
+    directory       devs/gpio/freescale/kinetis
+    script          kinetis_gpio.cdl
+    hardware
+    description "
+    This package contains hardware support for the simple GPIO
     on kinetis devices."
 }
 
@@ -8250,9 +8268,8 @@ target nxp_frdm_k64f1m0 {
                    CYGPKG_DEVS_SPI_FREESCALE_DSPI
                    CYGPKG_IO_I2C
                    CYGPKG_DEVS_I2C_FREESCALE_I2C
-                   CYGPKG_IO_EHCI
-                   CYGPKG_DEVS_EHCI_SERIAL_FREESCALE
-                   CYGPKG_BLUETOOTH_LIB
+				   CYGPKG_DEVS_GPIO_KINETIS
+				   CYGPKG_IO_GPIO
                  }
         description "The nxp_frdm_k64f1m0 target provides the packages needed
         to run eCos on the Freescale FRDM K64 development system."
