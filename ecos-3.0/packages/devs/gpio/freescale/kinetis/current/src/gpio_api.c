@@ -30,7 +30,7 @@ void pin_function(PinName pin, int function) {
 
     cyghwr_hal_kinetis_sim_t *SIM = CYGHWR_HAL_KINETIS_SIM_P;
     SIM->scgc5 |= 1 << (CYGHWR_HAL_KINETIS_SIM_SCGC5_PORTA_M + port_n);
-    volatile uint32_t* pin_pcr = &(((cyghwr_hal_kinetis_port_t *)
+    volatile cyg_uint32* pin_pcr = &(((cyghwr_hal_kinetis_port_t *)
     		(((char*)CYGHWR_HAL_KINETIS_PORTA_P) + 0x1000 * port_n)))->pcr[pin_n];
 
     // pin mux bits: [10:8] -> 11100000000 = (0x700)
@@ -39,7 +39,7 @@ void pin_function(PinName pin, int function) {
 
 void pin_mode(PinName pin, PinMode mode) {
 	CYG_ASSERTC(pin != (PinName)NC);
-    volatile uint32_t* pin_pcr = (volatile uint32_t*)(((char*)CYGHWR_HAL_KINETIS_PORTA_P) + pin);
+    volatile cyg_uint32* pin_pcr = (volatile uint32_t*)(((char*)CYGHWR_HAL_KINETIS_PORTA_P) + pin);
 
     // pin pullup bits: [1:0] -> 11 = (0x3)
     *pin_pcr = (*pin_pcr & ~0x3) | mode;
@@ -62,10 +62,10 @@ void gpio_init(gpio_t *obj, PinName pin) {
     unsigned int port = (unsigned int)pin >> PORT_SHIFT;
 
     cyghwr_hal_kinetis_gpio_t *reg = (cyghwr_hal_kinetis_gpio_t *)(((char*)CYGHWR_HAL_KINETIS_GPIO_PORTA_P) + port * 0x40);
-    obj->reg_set = &reg->psor;
-    obj->reg_clr = &reg->pcor;
-    obj->reg_in  = &reg->pdir;
-    obj->reg_dir = &reg->pddr;
+    obj->reg_set = (uint32_t*)&reg->psor;
+    obj->reg_clr = (uint32_t*)&reg->pcor;
+    obj->reg_in  = (uint32_t*)&reg->pdir;
+    obj->reg_dir = (uint32_t*)&reg->pddr;
 }
 
 void gpio_mode(gpio_t *obj, PinMode mode) {

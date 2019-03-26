@@ -62,9 +62,9 @@ void pwmout_init(pwmout_t* obj, PinName pin) {
     //Without SYNCEN set CnV does not seem to update
     ftm->COMBINE = FTM_COMBINE_SYNCEN0_MASK | FTM_COMBINE_SYNCEN1_MASK | FTM_COMBINE_SYNCEN2_MASK | FTM_COMBINE_SYNCEN3_MASK;
 
-    obj->CnV = &ftm->CONTROLS[ch_n].CnV;
-    obj->MOD = &ftm->MOD;
-    obj->SYNC = &ftm->SYNC;
+    obj->CnV = (uint32_t*)&ftm->CONTROLS[ch_n].CnV;
+    obj->MOD = (uint32_t*)&ftm->MOD;
+    obj->SYNC = (uint32_t*)&ftm->SYNC;
 
     // default to 20ms: standard for servos, and fine for e.g. brightness control
     pwmout_period_ms(obj, 20);
@@ -123,7 +123,7 @@ void pwmout_pulsewidth_us(pwmout_t* obj, int us) {
     *obj->SYNC |= FTM_SYNC_SWSYNC_MASK;
 }
 
-const PinMap *pwmout_pinmap()
+const PinMap *pwmout_pinmap(void)
 {
     return PinMap_PWM;
 }

@@ -30,9 +30,9 @@ void port_init(port_t *obj, PortName port, int mask, PinDirection dir) {
 
     cyghwr_hal_kinetis_gpio_t *reg = (cyghwr_hal_kinetis_gpio_t *)(((char*)CYGHWR_HAL_KINETIS_GPIO_PORTA_P) + port * 0x40);
 
-    obj->reg_out = &reg->pdor;
-    obj->reg_in  = &reg->pdir;
-    obj->reg_dir = &reg->pddr;
+    obj->reg_out = (uint32_t*)&reg->pdor;
+    obj->reg_in  = (uint32_t*)&reg->pdir;
+    obj->reg_dir = (uint32_t*)&reg->pddr;
 
     uint32_t i;
     // The function is set per pin: reuse gpio logic

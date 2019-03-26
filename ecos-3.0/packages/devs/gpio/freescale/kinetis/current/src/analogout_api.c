@@ -60,8 +60,8 @@ void analogout_init(dac_t *obj, PinName pin) {
 void analogout_free(dac_t *obj) {}
 
 static inline void dac_write(dac_t *obj, int value) {
-	obj->DATL = (uint8_t)( value       & 0xFF);
-    obj->DATH = (uint8_t)((value >> 8) & 0xFF);
+	*obj->DATL = (uint8_t)( value       & 0xFF);
+    *obj->DATH = (uint8_t)((value >> 8) & 0xFF);
 }
 
 static inline int dac_read(dac_t *obj) {
