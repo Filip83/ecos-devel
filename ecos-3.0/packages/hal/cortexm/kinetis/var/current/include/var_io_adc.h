@@ -57,7 +57,7 @@
 /** Peripheral ADC0 base pointer */
 #define ADC0                                     ((cyghwr_hal_kinteis_adc_t *)ADC0_BASE)
 /** Peripheral ADC1 base address */
-#define ADC1_BASE                                (0x40027000u)
+#define ADC1_BASE                                (0x400BB000u)
 /** Peripheral ADC1 base pointer */
 #define ADC1                                     ((cyghwr_hal_kinteis_adc_t *)ADC1_BASE)
 /** Array initializer of ADC peripheral base addresses */
