@@ -144,7 +144,7 @@
             cdl_option CYGHWR_HAL_CORTEXM_KINETIS_OSC_CAP {
                 display "XTAL parallel C \[pF\]"
                 flavor data
-                active_if { CYGOPT_HAL_CORTEXM_KINETIS_MCG_REF_EXT_IS == "XTAL" }
+                active_if { CYGOPT_HAL_CORTEXM_KINETIS_MCG_OSC0_IS == "XTAL" }
                 legal_values { 0 2 4 6 8 10 12 14 16 18 20 22 24 26 28 30 32 }
                 default_value { 0 }
                 description "
