@@ -8,7 +8,8 @@
 #define LFS_H
 
 #include <stdint.h>
-#include <stdbool.h>
+//#include <stdbool.h>
+#include <cyg/infra/cyg_type.h>  
 
 #ifdef __cplusplus
 extern "C"

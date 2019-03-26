@@ -21,7 +21,7 @@
 
 // System includes
 #include <stdint.h>
-#include <stdbool.h>
+//#include <stdbool.h>
 #include <string.h>
 
 #ifndef LFS_NO_MALLOC
