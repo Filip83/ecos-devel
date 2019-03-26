@@ -68,8 +68,6 @@ cdl_package CYGPKG_HAL_CORTEXM_KINETIS_KM_8_K22F512 {
     requires      { CYGHWR_HAL_CORTEXM_KINETIS_SUBFAM == 22 }
     requires      { CYGHWR_HAL_CORTEXM_KINETIS_FPU_DEFAULT == "F" }
     requires      { CYGHWR_HAL_CORTEXM_SYSTICK_CLK_SOURCE == "INTERNAL" }
-    requires      { CYGOPT_HAL_CORTEXM_KINETIS_MCG_REF_EXT_IS == "XTAL" ||
-                    CYGOPT_HAL_CORTEXM_KINETIS_MCG_REF_EXT_IS == "RTC" }
     requires      { CYGHWR_HAL_CORTEXM_KINETIS_FLEXNVM_DEFAULT == "X" }
     requires      { CYGHWR_HAL_CORTEXM_KINETIS_FLASH_NAME_DEFAULT == 512 }
     requires      { CYGHWR_HAL_CORTEXM_KINETIS_FLEXNVM == "X"
@@ -144,51 +142,7 @@ cdl_package CYGPKG_HAL_CORTEXM_KINETIS_KM_8_K22F512 {
         default_value 120000000
     }
 
-    cdl_option CYGHWR_HAL_CORTEXM_KINETIS_PLF_XTAL_OR_OSC_FREQ {
-        display "Platgorm XTAL/OSC Frequency"
-        flavor data
-        parent CYGOPT_HAL_CORTEXM_KINETIS_MCG_REF_EXT
-        active_if { CYGOPT_HAL_CORTEXM_KINETIS_MCG_REF_EXT_IS == "OSC" ||
-                   CYGOPT_HAL_CORTEXM_KINETIS_MCG_REF_EXT_IS == "XTAL" }
-        default_value 50000000
-        legal_values { 12000000 50000000 }
-    }
-
-    cdl_option CYGHWR_HAL_CORTEXM_KINETIS_PLF_XTAL_OR_OSC1_FREQ {
-        display "Platform XTAL1/OSC1 Frequency"
-        flavor data
-        parent CYGOPT_HAL_CORTEXM_KINETIS_MCG_REF_EXT
-        active_if { CYGOPT_HAL_CORTEXM_KINETIS_MCG_REF_EXT1_IS == "OSC" ||
-                   CYGOPT_HAL_CORTEXM_KINETIS_MCG_REF_EXT1_IS == "XTAL" }
-        default_value 50000000
-        legal_values { 12000000 50000000 }
-    }
-
-    cdl_option CYGHWR_HAL_CORTEXM_KINETIS_PLF_OSC_CAP {
-        display "Platform requred XTAL || C \[pF\]"
-        flavor bool
-        default_value { CYGOPT_HAL_CORTEXM_KINETIS_MCG_REF_EXT_IS == "XTAL" }
-        parent CYGOPT_HAL_CORTEXM_KINETIS_MCG_REF_EXT
-        active_if { CYGOPT_HAL_CORTEXM_KINETIS_MCG_REF_EXT_IS == "XTAL" }
-        requires { CYGHWR_HAL_CORTEXM_KINETIS_OSC_CAP == 20 }
-    }
-
-    cdl_option CYGHWR_HAL_CORTEXM_KINETIS_PLF_OSC1_CAP {
-        display "Platform requred XTAL1 || C \[pF\]"
-        flavor bool
-        default_value { CYGOPT_HAL_CORTEXM_KINETIS_MCG_REF_EXT1_IS == "XTAL" }
-        parent CYGOPT_HAL_CORTEXM_KINETIS_MCG_REF_EXT
-        active_if { CYGOPT_HAL_CORTEXM_KINETIS_MCG_REF_EXT1_IS == "XTAL" }
-        requires { CYGHWR_HAL_CORTEXM_KINETIS_OSC1_CAP == 20 }
-    }
-
-    cdl_option CYGHWR_HAL_CORTEXM_KINETIS_PLF_RTC {
-        display "Platform requred RTC XTAL || C \[pF\]"
-        flavor bool
-        default_value 0
-        parent CYGHWR_HAL_CORTEXM_KINETIS_RTC
-        requires { CYGHWR_HAL_CORTEXM_KINETIS_RTC_OSC_CAP == 20 }
-    }
+    
 
     cdl_option CYGNUM_HAL_VIRTUAL_VECTOR_COMM_CHANNELS {
         display      "Number of communication channels on the board"
