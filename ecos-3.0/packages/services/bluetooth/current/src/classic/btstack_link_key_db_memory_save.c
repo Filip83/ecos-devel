@@ -40,6 +40,9 @@
 #include <stdio.h>
 #include <unistd.h>
 
+#include <cyg/infra/cyg_ass.h>
+#include <cyg/infra/diag.h>
+
 #include "btlib/classic/btstack_link_key_db_memory_save.h"
 
 #include "btlib/btstack_debug.h"

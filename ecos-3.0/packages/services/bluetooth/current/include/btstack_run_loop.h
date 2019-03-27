@@ -44,9 +44,9 @@
 #ifndef __btstack_run_loop_H
 #define __btstack_run_loop_H
 
-#include "btlib/btstack_config.h"
+#include "btstack_config.h"
 
-#include "btlib/btstack_linked_list.h"
+#include "btstack_linked_list.h"
 
 #include <stdint.h>
 
@@ -76,6 +76,11 @@ typedef struct btstack_data_source {
     	void * handle;	
     };
 
+    void            *channel;
+    uint32_t         key;
+    uint8_t          *packet;
+    uint16_t         size;
+    int              ret;
     // callback to call for enabled callback types
     void  (*process)(struct btstack_data_source *ds, btstack_data_source_callback_type_t callback_type);
 

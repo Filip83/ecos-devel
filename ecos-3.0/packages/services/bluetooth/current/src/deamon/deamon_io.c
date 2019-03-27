@@ -14,22 +14,14 @@
 #include <cyg/infra/cyg_ass.h>
 #include <cyg/infra/diag.h>
 
-#include "btlib/hci.h"
 #include "btlib/btstack_debug.h"
-
 #include "btlib/btstack_config.h"
-
 #include "btlib/btstack.h"
 
 #include <errno.h>
-#include <fcntl.h>
-#include <signal.h>
-#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
-#include <unistd.h>
 
-#include <sys/stat.h>
 
 #define MAX_PENDING_CONNECTIONS 10
 
@@ -134,7 +126,7 @@ bool  cyg_bt_inti(struct cyg_devtab_entry *tab)
 Cyg_ErrNo cyg_bt_lookup(struct cyg_devtab_entry **tab, struct cyg_devtab_entry *sub_tab,
 												const char *name)
 {
-	channel_state_t * channel = (channel_state_t*)(*tab)->priv;
+	//channel_state_t * channel = (channel_state_t*)(*tab)->priv;
 	if(!client_state.initialised)
 	{
 		CYGHWR_IO_CLEAR_PIN_NSHUTD;
@@ -150,7 +142,7 @@ Cyg_ErrNo cyg_bt_write(cyg_io_handle_t handle, const void *buf, cyg_uint32 *len)
 	cyg_uint32 ret = ENOERR;
 	cyg_devtab_entry_t *dev_tab = (cyg_devtab_entry_t*)handle;
 	channel_state_t   *channel = (channel_state_t*)dev_tab->priv;
-	client_state_t     *client = (client_state_t*)channel->client;
+	//client_state_t     *client = (client_state_t*)channel->client;
 
 	cyg_uint32 length    = *len;
 	cyg_uint8 *buf_start = (cyg_uint8*)buf;
@@ -227,7 +219,7 @@ Cyg_ErrNo cyg_bt_write(cyg_io_handle_t handle, const void *buf, cyg_uint32 *len)
 		}
 	}
 
-	return ret;
+	return -ret;
 }
 
 Cyg_ErrNo cyg_bt_read(cyg_io_handle_t handle, void *buf, cyg_uint32 *len)
@@ -235,7 +227,7 @@ Cyg_ErrNo cyg_bt_read(cyg_io_handle_t handle, void *buf, cyg_uint32 *len)
 	cyg_uint32 ret = ENOERR;
 	cyg_devtab_entry_t *dev_tab = (cyg_devtab_entry_t*)handle;
 	channel_state_t   *channel = (channel_state_t*)dev_tab->priv;
-	client_state_t     *client = (client_state_t*)channel->client;
+	//client_state_t     *client = (client_state_t*)channel->client;
 
 	int length = *len;
 	int completed_length = 0;
@@ -246,11 +238,13 @@ Cyg_ErrNo cyg_bt_read(cyg_io_handle_t handle, void *buf, cyg_uint32 *len)
 		if(channel->connection_status == Connected)
 		{
 			//cyg_mutex_lock(&channel->ch_mutex);
+			cyg_mutex_lock(&channel->read_queue.mutex);
 			do
 			{
-				cyg_mutex_lock(&channel->read_queue.mutex);
+
 				while((completed_length = queue_read(&channel->read_queue,dest, length)) == 0)
 				{
+					//diag_printf("Wait\n");
 					cyg_cond_wait(&channel->read_queue.cond);
 					if(channel->connection_status != Connected)
 						break;
@@ -258,7 +252,7 @@ Cyg_ErrNo cyg_bt_read(cyg_io_handle_t handle, void *buf, cyg_uint32 *len)
 
 				length -= completed_length;
 				dest   += completed_length;
-				cyg_mutex_unlock(&channel->read_queue.mutex);
+
 
 				if(channel->connection_status != Connected)
 				{
@@ -275,12 +269,13 @@ Cyg_ErrNo cyg_bt_read(cyg_io_handle_t handle, void *buf, cyg_uint32 *len)
 					// queue flush overflow
 					diag_printf("queue full\n");
 					queue_int(&channel->read_queue);
-					ret = ENOTCONN;
+					ret = EOVERFLOW;
 					*len = *len -length;//completed_length;
 					break;
 				}
 
 			}while(length);
+			cyg_mutex_unlock(&channel->read_queue.mutex);
 			//cyg_mutex_unlock(&channel->ch_mutex);
 		}
 		else
@@ -290,7 +285,7 @@ Cyg_ErrNo cyg_bt_read(cyg_io_handle_t handle, void *buf, cyg_uint32 *len)
 			ret = ENOTCONN;
 		}
 	}
-	return ret;
+	return -ret;
 }
 
 Cyg_ErrNo cyg_bt_set_config(cyg_io_handle_t handle, cyg_uint32 key, const void *buf, cyg_uint32 *len)
@@ -298,7 +293,7 @@ Cyg_ErrNo cyg_bt_set_config(cyg_io_handle_t handle, cyg_uint32 key, const void *
 	cyg_devtab_entry_t *dev_tab = (cyg_devtab_entry_t*)handle;
 	channel_state_t   *channel = (channel_state_t*)dev_tab->priv;
 
-	return btstack_command_handler(channel,key, (uint8_t*)buf, *len);
+	return -btstack_command_handler(channel,key, (uint8_t*)buf, *len);
 }
 
 Cyg_ErrNo cyg_bt_get_config(cyg_io_handle_t handle, cyg_uint32 key,void *buf, cyg_uint32 *len)
@@ -306,11 +301,11 @@ Cyg_ErrNo cyg_bt_get_config(cyg_io_handle_t handle, cyg_uint32 key,void *buf, cy
 	cyg_devtab_entry_t *dev_tab = (cyg_devtab_entry_t*)handle;
 	channel_state_t   *channel = (channel_state_t*)dev_tab->priv;
 
-	return btstack_command_handler(channel,key, (uint8_t*)buf, *len);
+	return -btstack_command_handler(channel,key, (uint8_t*)buf, *len);
 }
 
 // Queue used to buffer received data
-bool queue_int(io_queue_buf_t *queue)
+void queue_int(io_queue_buf_t *queue)
 {
 	queue->size = sizeof(queue->buffer);
 	queue->front = 0;
@@ -390,7 +385,7 @@ int queue_read(io_queue_buf_t* queue, uint8_t *data, int len)
 	{
 		data[i++] = queue->buffer[queue->front];
 
-		queue->front = queue->front == queue->size ? 0 : queue->front + 1;
+		queue->front = queue->front == (queue->size-1) ? 0 : queue->front + 1;
 		queue->count--;
 	}
 

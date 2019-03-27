@@ -8,25 +8,21 @@
 #ifndef SRC_DEAMON_FILEIO_CONNECTION_H_
 #define SRC_DEAMON_FILEIO_CONNECTION_H_
 
-#include "btlib/btstack_run_loop.h"
-
-#include <stdint.h>
 
 #if defined __cplusplus
 extern "C" {
 #endif
 
-#include <pkgconf/bluetooth_lib.h>
-
 #include "btlib/btstack.h"
-#include <cyg/io/io.h>
 #include <cyg/kernel/kapi.h>
 
+#include <btlib/deamon/deamon_cmds.h>
+
 // Configuration
-#define BLUETOOTH_DEAMON_USE_BUFFERED_READ_QUEUE			CYGOPT_BLUETOOTH_ECOS_DEAMON_USE_RAD_QUEUE
-#define BLUETOOTH_DEAMON_BUFFER_SIZE						CYGINT_BLUETOOTH_ECOS_DEAMON_RAD_QUEUE_SIZE
-#define BLUETOOTH_EAMON_CHANNELS_COUNT						CYGINT_BLUETOOTH_ECOS_DEAMON_CHANNELS_COUNT
-#define BLUETOOTH_DEAMON_LINK_KEY_MEMOORY					CYGINT_BLUETOOTH_ECOS_DEAMON_STORE_LINK_KEY_TO_MEMORY
+#define BLUETOOTH_DEAMON_USE_BUFFERED_READ_QUEUE			1
+#define BLUETOOTH_DEAMON_BUFFER_SIZE						512
+#define BLUETOOTH_EAMON_CHANNELS_COUNT						2
+#define BLUETOOTH_DEAMON_LINK_KEY_MEMOORY					1
 
 typedef enum bt_inquery_state_s
 {
@@ -74,24 +70,21 @@ typedef enum
 
 typedef struct io_queue_buf_s
 {
-	uint8_t buffer[BLUETOOTH_DEAMON_BUFFER_SIZE];
-	int     size;
-	int     front;
-	int     count;
-	int     status;
+	uint8_t 		buffer[BLUETOOTH_DEAMON_BUFFER_SIZE];
+	int     		size;
+	int     		front;
+	int     		count;
+	int     		status;
+	cyg_mutex_t     mutex;
+	cyg_cond_t      cond;
 }io_queue_buf_t;
 
 typedef struct io_queue_s
 {
-	io_queue_buf_t read_queue;
 	uint8_t 	   *data;
-	int      	   len;
-	int      		copleted_len;
-	cyg_mutex_t 	data_lock;
-	cyg_sem_t       ready_for_input_data;
-	cyg_sem_t       cmplet_sem;
-	cyg_mutex_t     cond_mutex;
-	cyg_cond_t      cond;
+	uint16_t   	   len;
+	int      	   copleted_len;
+	bool           complete;
 }io_queue_t;
 
 typedef struct {
@@ -116,12 +109,8 @@ typedef struct {
     // discoverable
     uint8_t        discoverable;
 
-
-
-   /* io_queue_t   q_write;
-    io_queue_t   q_read;*/
-
-    io_queue_t   queue_io;
+    io_queue_buf_t	read_queue;
+    io_queue_t   	write_queue;
 } channel_state_t;
 
 
@@ -129,28 +118,31 @@ typedef struct {
 typedef struct
 {
 	// power mode
-	cyg_bool        initialised;
-	HCI_POWER_MODE  power_mode;
-	uint32_t        num_channels;
-	channel_state_t *channels_list;
+	cyg_bool        	initialised;
+	cyg_bool			process_started;
+	HCI_POWER_MODE  	power_mode;
+	uint32_t        	num_channels;
+	channel_state_t 	*channels_list;
 
-	cyg_mutex_t 	global_mutex;
-	cyg_cond_t      global_cond;
-	cyg_uint32      global_ioctl_status;
+	cyg_mutex_t 		global_mutex;
+	cyg_cond_t      	global_cond;
+	cyg_uint32      	global_ioctl_status;
 
-	uint32_t        global_enable;
-	int             power_management_sleep;
-	bool            InqueryInProgress;
+	uint32_t        	global_enable;
+	int            	 	power_management_sleep;
+	bool            	InqueryInProgress;
 
-	uint8_t 		serviceSearchPattern[200];
-	uint8_t 		attributeIDList[50];
-	uint8_t   		attribute_value[1000];
-	int 			attribute_value_buffer_size;// = 1000;
+	uint8_t 			serviceSearchPattern[200];
+	uint8_t 			attributeIDList[50];
+	uint8_t   			attribute_value[1000];
+	int 				attribute_value_buffer_size;// = 1000;
 
 	uint8_t               devices_count;
 	btstack_linked_list_t remote_devices;
 	uint8_t               services_count;
 	btstack_linked_list_t remote_device_service;
+
+	cyg_handle_t		thread_handle;
 
 }client_state_t;
 
@@ -199,7 +191,7 @@ typedef struct ioctl_sdp_client_query_rfcomm_services_s
 	uint16_t  uuid;
 }ioctl_sdp_client_query_rfcomm_services_t;
 
-bool queue_int(io_queue_buf_t *queue);
+void queue_int(io_queue_buf_t *queue);
 bool queue_empty(io_queue_buf_t *queue);
 bool queue_full(io_queue_buf_t *queue);
 bool queue_add(io_queue_buf_t* queue, uint8_t data);

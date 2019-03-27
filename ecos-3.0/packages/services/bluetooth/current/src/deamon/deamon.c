@@ -4,55 +4,22 @@
  *  Created on: 15. 4. 2018
  *      Author: filip
  */
-#include "btlib/btstack.h"
-
-#include "btlib/bluetooth.h"
-#include "btlib/classic/btstack_link_key_db.h"
-#include "btlib/classic/rfcomm.h"
-#include "btlib/classic/sdp_server.h"
-#include "btlib/classic/sdp_client.h"
-#include "btlib/classic/sdp_client_rfcomm.h"
+//#include "btstack.h"
 #include "btlib/classic/btstack_link_key_db_memory_save.h"
-#include "btlib/hci.h"
-#include "btlib/hci_cmd.h"
-#include "btlib/hci_dump.h"
-#include "btlib/hci_transport.h"
-#include "btlib/l2cap.h"
-/*#include "rfcomm_service_db.h"
-#include "socket_connection.h"*/
-
-#ifdef ENABLE_BLE
-#include "btlib/ble/gatt_client.h"
-#include "btlib/ble/att_server.h"
-#include "btlib/ble/att_db.h"
-#include "btlib/ble/le_device_db.h"
-#include "btlib/ble/sm.h"
-#endif
 
 #include <cyg/io/io.h>
 #include <cyg/io/devtab.h>
 #include <cyg/io/ehci_serial.h>
-#include <cyg/kernel/kapi.h>
+//#include <cyg/kernel/kapi.h>
 #include <cyg/infra/cyg_ass.h>
 #include <cyg/infra/diag.h>
 
-#include "btlib/deamon/deamon_io.h"
+#include <btlib/deamon/deamon_io.h>
 
-#include "btlib/deamon/deamon_cmds.h"
 
 #include <errno.h>
-#include <fcntl.h>
-#include <signal.h>
-#include <stdint.h>
-#include <stdio.h>
 #include <string.h>
-#include <unistd.h>
-
-#include <sys/stat.h>
-
-#include "btlib/deamon/deamon_io.h"
-
-
+#include <stdio.h>
 
 channel_state_t l_channels[BLUETOOTH_EAMON_CHANNELS_COUNT] =
 {
@@ -274,7 +241,7 @@ static void clients_clear_power_request(client_state_t *client){
     }
 }
 
-static bt_device_t * clents_create_add_remote_device_to_list(void){
+static btstack_linked_list_bt_device_t * clents_create_add_remote_device_to_list(void){
 	btstack_linked_list_bt_device_t *new_device = NULL;
 	btstack_linked_list_iterator_t it;
     btstack_linked_list_iterator_init(&it, &client_state.remote_devices);
@@ -341,7 +308,7 @@ static int clents_remote_device_continue_name_requests(void)
         if(item->value.state == REMOTE_NAME_REQUEST)
         {
         	item->value.state = REMOTE_NAME_INQUIRED;
-        	diag_printf("REMOTE_NAME_INQUIRED\n");
+        	log_info("REMOTE_NAME_INQUIRED\n");
         	hci_send_cmd(&hci_remote_name_request, item->value.address,
         			item->value.pageScanRepetitionMode, 0, item->value.clockOffset | 0x8000);
         	return 1;
@@ -365,7 +332,7 @@ static int clents_remote_device_is_complet_name_requests(void)
 	return ret;
 }
 
-static bt_device_t * clents_create_add_remote_device_service_to_list(uint8_t ch_id, char *name){
+static btstack_linked_list_bt_service_t * clents_create_add_remote_device_service_to_list(uint8_t ch_id, char *name){
 	btstack_linked_list_bt_service_t *new_service = NULL;
 	btstack_linked_list_iterator_t it;
     btstack_linked_list_iterator_init(&it, &client_state.remote_device_service);
@@ -388,7 +355,7 @@ static bt_device_t * clents_create_add_remote_device_service_to_list(uint8_t ch_
 }
 
 static void clents_remove_and_free_remote_device_service_list(void){
-	btstack_linked_list_bt_service_t it;
+	btstack_linked_list_iterator_t it;
     btstack_linked_list_iterator_init(&it, &client_state.remote_device_service);
     while (btstack_linked_list_iterator_has_next(&it)){
     	btstack_linked_list_bt_service_t * item = (btstack_linked_list_bt_service_t*) btstack_linked_list_iterator_next(&it);
@@ -400,8 +367,8 @@ static void clents_remove_and_free_remote_device_service_list(void){
 }
 
 static void store_found_service(const char * name, uint8_t port){
-    diag_printf("APP: Service name: '%s', RFCOMM port %u\n", name, port);
-    clents_create_add_remote_device_service_to_list(port, name);
+	log_info("APP: Service name: '%s', RFCOMM port %u\n", name, port);
+    clents_create_add_remote_device_service_to_list(port, (char*)name);
 }
 
 ///////
@@ -656,10 +623,13 @@ static void rfcomm_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t
 		connection = connection_for_rfcomm_cid(channel);
 		if (!connection) return;
 
-		cyg_mutex_lock(&connection->read_queue.mutex);
-		queue_werite(&connection->read_queue,packet,size);
-		cyg_cond_signal(&connection->read_queue.cond);
-		cyg_mutex_unlock(&connection->read_queue.mutex);
+		if(size != 0)
+		{
+			cyg_mutex_lock(&connection->read_queue.mutex);
+			queue_werite(&connection->read_queue,packet,size);
+			cyg_cond_signal(&connection->read_queue.cond);
+			cyg_mutex_unlock(&connection->read_queue.mutex);
+		}
 		break;
 	}
 }
@@ -679,7 +649,7 @@ int btstack_command_handler(channel_state_t *channel, uint32_t key, uint8_t *pac
     bd_addr_t addr;
     uint16_t cid;
     uint16_t psm;
-    uint16_t service_channel;
+    //uint16_t service_channel;
     uint16_t mtu;
     uint16_t uuid;
     uint16_t inquiry_interval;
@@ -1006,7 +976,10 @@ int btstack_command_handler(channel_state_t *channel, uint32_t key, uint8_t *pac
 					channel->rfcomm_id = rfcomm_channel;
 					while(channel->connection_status == WaitingForConnection)
 						cyg_cond_wait(&channel->ch_cond);
-					ret = channel->io_status;
+					if(channel->io_status == -4)
+						ret = ENOTCONN;
+					else
+						ret = channel->io_status;
 					cyg_mutex_unlock(&channel->ch_mutex);
 
 					log_info("RFCOMM_CREATE_CHANNEL: Channel created %d\n",rfcomm_channel);
@@ -1320,12 +1293,12 @@ int btstack_command_handler(channel_state_t *channel, uint32_t key, uint8_t *pac
 }
 
 void daemon_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size){
-    uint16_t cid;
-    uint8_t  rfcomm_channel_nr;
+    //uint16_t cid;
+    //uint8_t  rfcomm_channel_nr;
     int i;
     uint8_t event;
     bd_addr_t addr;
-    channel_state_t *connection;
+    //channel_state_t *connection;
 
 
     switch (packet_type) {
@@ -1337,15 +1310,15 @@ void daemon_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
             {
             case HCI_EVENT_PIN_CODE_REQUEST:
 			   // pre-ssp: inform about pin code request
-			   diag_printf("Pin code request - using '0000'\n");
+               log_info("Pin code request - using '0000'\n");
 			   hci_event_pin_code_request_get_bd_addr(packet, addr);
 			   hci_send_cmd(&hci_pin_code_request_reply, &addr, 4, "0000");
 			   break;
 
             case HCI_EVENT_USER_CONFIRMATION_REQUEST:
 			   // ssp: inform about user confirmation request
-			   diag_printf("SSP User Confirmation Request with numeric value '%06d""'\n", little_endian_read_32(packet, 8));
-			   diag_printf("SSP User Confirmation Auto accept\n");
+               log_info("SSP User Confirmation Request with numeric value '%06d""'\n", little_endian_read_32(packet, 8));
+               log_info("SSP User Confirmation Auto accept\n");
 			   break;
 
 			case BTSTACK_EVENT_STATE:
@@ -1354,7 +1327,7 @@ void daemon_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
 				{
 					if(client_state.global_enable)
 					{
-						diag_printf("BTSTACK_EVENT_STATE: HCI_STATE_WORKING\n");
+						log_info("BTSTACK_EVENT_STATE: HCI_STATE_WORKING\n");
 						cyg_mutex_lock(&client_state.global_mutex);
 						client_state.global_ioctl_status = ENOERR;
 						cyg_cond_signal(&client_state.global_cond);
@@ -1365,7 +1338,7 @@ void daemon_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
 				{
 					if(!client_state.global_enable)
 					{
-						diag_printf("BTSTACK_EVENT_STATE: HCI_STATE_OFF\n");
+						log_info("BTSTACK_EVENT_STATE: HCI_STATE_OFF\n");
 						if(client_state.initialised)
 						{
 							cyg_mutex_lock(&client_state.global_mutex);
@@ -1390,8 +1363,9 @@ void daemon_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
 
 			case HCI_EVENT_REMOTE_NAME_REQUEST_COMPLETE:
 #if 1
-				diag_printf("HCI_EVENT_REMOTE_NAME_REQUEST_COMPLETE\n");;
+				log_info("HCI_EVENT_REMOTE_NAME_REQUEST_COMPLETE\n");;
 				reverse_bd_addr(&packet[3], addr);
+				// TODO: check
 				// fix for invalid remote names - terminate on 0xff
 			/*	for (i=0; i<248;i++)
 				{
@@ -1403,17 +1377,17 @@ void daemon_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
 				packet[9+248] = 0;*/
 				if (!packet[2])
 				{
-					clents_add_remote_device_name(addr, &packet[9], strlen(&packet[9]));
+					clents_add_remote_device_name(addr, (char*)&packet[9], strlen((char*)&packet[9]));
 				}
-				else
+				/*else
 				{
 					diag_printf("NOK\n");
-				}
+				}*/
 
 				if(clents_remote_device_continue_name_requests() == 0)
 				{
 					client_state.InqueryInProgress = false;
-					diag_printf("INIP HCI_EVENT_REMOTE_NAME_REQUEST_COMPLETE\n");
+					log_info("INIP HCI_EVENT_REMOTE_NAME_REQUEST_COMPLETE\n");
 				}
 #endif
 				break;
@@ -1477,17 +1451,17 @@ void daemon_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
 					}
 
 
-					diag_printf("Device found: %s with COD: 0x%06x, pageScan %d, clock offset 0x%04x", bd_addr_to_str(addr),
+					log_info("Device found: %s with COD: 0x%06x, pageScan %d, clock offset 0x%04x", bd_addr_to_str(addr),
 							(unsigned int) device->classOfDevice, device->pageScanRepetitionMode, device->clockOffset);
 					if (event >= HCI_EVENT_INQUIRY_RESULT_WITH_RSSI)
 					{
-						diag_printf(", rssi 0x%02x", device->rssi);
+						log_info(", rssi 0x%02x", device->rssi);
 					}
 					if (device->state == REMOTE_NAME_FETCHED)
 					{
-						diag_printf(", name '%s'", device->name);
+						log_info(", name '%s'", device->name);
 					}
-					diag_printf("\n");
+					log_info("\n");
 				}
 
 #endif
@@ -1495,11 +1469,11 @@ void daemon_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
 				break;
 				
 			case HCI_EVENT_INQUIRY_COMPLETE:
-				diag_printf("HCI_EVENT_INQUIRY_COMPLETE\n");
+				log_info("HCI_EVENT_INQUIRY_COMPLETE\n");
 				if(clents_remote_device_continue_name_requests() == 0)
 				{
 					client_state.InqueryInProgress = false;
-					diag_printf("INIP HCI_EVENT_INQUIRY_COMPLETE\n");
+					log_info("INIP HCI_EVENT_INQUIRY_COMPLETE\n");
 				}
 				break;
 			default:
@@ -1566,7 +1540,7 @@ btstack_control_t hardware_control =
 	hci_transport_config_uart_t config = {
 		HCI_TRANSPORT_CONFIG_UART,
 		115200,
-		0,  // main baudrate
+		1000000,  // main baudrate
 		1,        // flow control
 		"/dev/ser3",
 	};
@@ -1638,7 +1612,7 @@ btstack_control_t hardware_control =
 	sdp_init();
 
 	gap_ssp_set_io_capability(SSP_IO_CAPABILITY_NO_INPUT_NO_OUTPUT);
-	gap_set_local_name(CYGINT_BLUETOOTH_ECOS_DEAMON_LOCAL_NAME);
+	gap_set_local_name("KM-8");
 	gap_set_class_of_device(0xff);
 
 	hci_set_inquiry_mode(INQUIRY_MODE_RSSI_AND_EIR);

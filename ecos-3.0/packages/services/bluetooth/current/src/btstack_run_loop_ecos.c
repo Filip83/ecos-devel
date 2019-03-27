@@ -80,9 +80,9 @@ static btstack_linked_list_t timers = NULL;
 
 // structures to create timer counter
 static cyg_alarm		timer_alarm;
-static cyg_handle_t		timer_alarmH    = NULL;
-static cyg_handle_t		timer_counterH	= NULL;
-static cyg_handle_t		system_clockH	= NULL;
+static cyg_handle_t		timer_alarmH    = 0;
+static cyg_handle_t		timer_counterH	= 0;
+static cyg_handle_t		system_clockH	= 0;
 
 static int trigger_event_received      = 0;
 

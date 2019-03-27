@@ -20,7 +20,5 @@
 #define BTSTACK_MAJOR                       0
 #define BTSTACK_MINOR						1
 
-#define EFAIL								-1
-
 
 #endif /* SRC_DEAMON_DEAMON_CMDS_H_ */

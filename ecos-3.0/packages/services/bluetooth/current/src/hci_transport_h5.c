@@ -606,7 +606,7 @@ static void hci_transport_h5_read_next_byte(void){
     btstack_uart->receive_block(&hci_transport_link_read_byte, 1);    
 }
 
-static void hci_transport_h5_block_received(){
+static void hci_transport_h5_block_received(void){
     log_debug("slip: process 0x%02x", hci_transport_link_read_byte);
     btstack_slip_decoder_process(hci_transport_link_read_byte);
     uint16_t frame_size = btstack_slip_decoder_frame_size();

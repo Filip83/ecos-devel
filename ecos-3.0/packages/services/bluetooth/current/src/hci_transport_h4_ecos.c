@@ -159,7 +159,7 @@ static void h4_init_sm(void)
 }
 
 cyg_devtab_entry_t *t;
-cyg_io_handle_t *handle;
+cyg_io_handle_t handle;
 ehci_serial_channel *chan;
 
 static int h4_open(void)
@@ -341,7 +341,7 @@ static int h4_send_packet(uint8_t packet_type, uint8_t *packet, int size)
 static int h4_set_baudrate(uint32_t baudrate)
 {
     cyg_serial_info_t uart_cofig;
-    uint32_t          len = sizeof(cyg_serial_info_t);
+    cyg_uint32          len = sizeof(cyg_serial_info_t);
     log_info("h4_set_baudrate - set baud %lu", baudrate);
     uart_cofig.baud = baudrate;
     uart_cofig.stop = CYGNUM_SERIAL_STOP_1;
