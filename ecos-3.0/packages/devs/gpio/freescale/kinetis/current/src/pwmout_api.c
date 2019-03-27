@@ -23,6 +23,8 @@
 #include <cyg/io/gpio/pinmap.h>
 #include <cyg/io/gpio/PeripheralPins.h>
 
+#if DEVICE_PWMOUT
+
 static float pwm_clock = 0;
 externC cyg_uint32 hal_kinetis_busclk;
 
@@ -127,3 +129,5 @@ const PinMap *pwmout_pinmap(void)
 {
     return PinMap_PWM;
 }
+
+#endif

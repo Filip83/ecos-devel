@@ -19,6 +19,7 @@
 #include <cyg/hal/plf_io.h>
 #include <cyg/hal/var_io.h>
 
+#if DEVICE_PORTIN || DEVICE_PORTOUT
 
 PinName port_pin(PortName port, int pin_n) {
     return (PinName)((port << PORT_SHIFT) | (pin_n << 2));
@@ -74,3 +75,4 @@ int port_read(port_t *obj) {
     return (*obj->reg_in & obj->mask);
 }
 
+#endif

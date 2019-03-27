@@ -54,13 +54,13 @@ struct analogin_s {
     ADCName adc;
 };
 
-#if DEVICE_ANALOGOUT
+//#if DEVICE_ANALOGOUT
 struct dac_s {
     DACName dac;
     volatile uint8_t *DATH;
     volatile uint8_t *DATL;
 };
-#endif
+//#endif
 
 /*
 struct serial_s {

@@ -28,6 +28,8 @@
 
 #define MAX_FADC        6000000
 
+#if DEVICE_ANALOGIN
+
 void analogin_init(analogin_t *obj, PinName pin) {
     obj->adc = (ADCName)pinmap_peripheral(pin, PinMap_ADC);
      (obj->adc != (ADCName)NC);
@@ -102,3 +104,5 @@ const PinMap *analogin_pinmap()
 {
     return PinMap_ADC;
 }
+
+#endif
