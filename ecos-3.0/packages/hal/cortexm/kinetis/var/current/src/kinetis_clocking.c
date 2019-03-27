@@ -66,6 +66,9 @@
 
 #include <cyg/io/ser_freescale_uart.h>
 
+#ifndef CYGOPT_HAL_CORTEXM_KINETIS_MCG_OSC1
+#define CYGOPT_HAL_CORTEXM_KINETIS_MCG_OSC1 0
+#endif
 //===========================================================================
 // Forward declarations
 //===========================================================================

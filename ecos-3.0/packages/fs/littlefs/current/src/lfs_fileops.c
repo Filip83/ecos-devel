@@ -282,11 +282,14 @@ static int lfs_bd_sync(const struct lfs_config *c)
 // -------------------------------------------------------------------------
 // lfs_getinfo()
 // Count used blocks
+
+#if defined(CYGSEM_FILEIO_BLOCK_USAGE)
 static int lfs_statvfs_count(void *p, lfs_block_t b)
 {
     *(lfs_size_t *)p += 1;
     return 0;
 }
+#endif
 
 // Getinfo. Support for attrib
 
@@ -453,9 +456,9 @@ format(
 	lfs_size_t read_size, lfs_size_t prog_size,
 	lfs_size_t block_size, lfs_size_t lookahead)
 {
-	lfs_t _lfs;
+	//lfs_t _lfs;
 	int   err;
-	struct lfs_config _config;
+	//struct lfs_config _config;
 	cyg_flash_info_t info;
 
 	cyg_flash_get_info_addr(lfs_data._lfs_flash_base, &info)
@@ -581,7 +584,7 @@ _lfs_stat(cyg_mtab_entry *mte,
 // lfs_chdir()
 // Change directory support.
 
-static  char dir_path[PATH_MAX];
+//static  char dir_path[PATH_MAX];
 
 static int
 _lfs_chdir(cyg_mtab_entry *mte,
@@ -589,7 +592,7 @@ _lfs_chdir(cyg_mtab_entry *mte,
 	const char     *name,
 	cyg_dir        *dir_out)
 {
-	lfs_data_t  *_lfs_data = (lfs_data_t *)mte->data;
+	//lfs_data_t  *_lfs_data = (lfs_data_t *)mte->data;
 
     CYG_TRACE4(TFS, "chdir mte=%p dir=%p dir_out=%p name=%d",
                     mte, dir, dir_out, name);
@@ -656,12 +659,12 @@ _lfs_fo_read(struct CYG_FILE_TAG *fp, struct CYG_UIO_TAG *uio)
 {
 	lfs_data_t  *_lfs_data = (lfs_data_t *)fp->f_mte->data;
 	lfs_file_t *f = (lfs_file_t *)fp->f_data;
-	cyg_uint32     pos = fp->f_offset;
+	//cyg_uint32     pos = fp->f_offset;
 	ssize_t        resid = uio->uio_resid;
 	int            i;
 	lfs_ssize_t   res = 0;
 
-	CYG_TRACE3(TFO, "read fp=%p uio=%p pos=%d", fp, uio, pos);
+	CYG_TRACE3(TFO, "read fp=%p uio=%p pos=%d", fp, uio, fp->f_offset);
 
 	for (i = 0; i < uio->uio_iovcnt; i++)
 	{
@@ -694,12 +697,12 @@ _lfs_fo_write(struct CYG_FILE_TAG *fp, struct CYG_UIO_TAG *uio)
 {
 	lfs_data_t  *_lfs_data = (lfs_data_t *)fp->f_mte->data;
 	lfs_file_t *f = (lfs_file_t *)fp->f_data;
-	cyg_uint32     pos = fp->f_offset;
+	//cyg_uint32     pos = fp->f_offset;
 	ssize_t        resid = uio->uio_resid;
 	lfs_ssize_t    res = 0;
 	int            i;
 
-	CYG_TRACE3(TFO, "write fp=%p uio=%p pos=%d", fp, uio, pos);
+	CYG_TRACE3(TFO, "write fp=%p uio=%p pos=%d", fp, uio, fp->f_offset);
 
 	for (i = 0; i < uio->uio_iovcnt; i++)
 	{
@@ -775,7 +778,7 @@ _lfs_fo_lseek(struct CYG_FILE_TAG *fp, off_t *apos, int whence)
 static int
 _lfs_fo_fstat(struct CYG_FILE_TAG *fp, struct stat *buf)
 {
-	lfs_data_t  *_lfs_data = (lfs_data_t *)fp->f_mte->data;
+	//lfs_data_t  *_lfs_data = (lfs_data_t *)fp->f_mte->data;
 	lfs_file_t *f = (lfs_file_t *)fp->f_data;
 
 	CYG_TRACE2(TFO, "fstat fp=%p buf=%p", fp, buf);
@@ -955,7 +958,7 @@ _lfs_fo_dirlseek(struct CYG_FILE_TAG *fp, off_t *pos, int whence)
 {
 	lfs_data_t  *_lfs_data = (lfs_data_t *)fp->f_mte->data;
 	lfs_dir_t *d = (lfs_dir_t *)fp->f_data;
-	int            err;
+	//int            err;
 
 	CYG_TRACE2(TFO, "dirlseek fp=%p whence=%d", fp, whence);
 

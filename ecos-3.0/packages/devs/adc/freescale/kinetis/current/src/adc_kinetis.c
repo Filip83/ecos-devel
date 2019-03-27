@@ -72,7 +72,16 @@
 #define CYGHWR_DEVS_ADC_KINETIS
 #if defined(CYGHWR_DEVS_ADC_KINETIS)
 
-#include "adc_hdr.h"
+#ifndef CYGNUM_DEVS_ADC_KINETIS_ENABLE_LONG_SAMPLE_TIME
+#define CYGNUM_DEVS_ADC_KINETIS_ENABLE_LONG_SAMPLE_TIME 0
+#endif
+
+#ifndef CYGNUM_DEVS_ADC_KINETIS_ENABLE_LOW_POWER
+#define CYGNUM_DEVS_ADC_KINETIS_ENABLE_LOW_POWER 0
+#endif
+
+
+//#include "adc_hdr.h"
 
 #if CYGPKG_DEVS_ADC_KINETIS_DEBUG_LEVEL > 0
    #define adc_printf(args...) diag_printf(args)
@@ -107,7 +116,7 @@
 //==========================================================================
 typedef struct kinetis_adc_info
 {
-    volatile cyghwer_io_kinetis_adc_t *adc_base;         // base address of ADC peripheral
+    volatile cyghwr_hal_kinteis_adc_t *adc_base;         // base address of ADC peripheral
     cyg_vector_t            adc_vector;        // interrupt vector number
     int                     adc_intprio;       // interrupt priority of ADC interrupt
     cyg_uint32              timer_cnt;         // Timer value
@@ -153,7 +162,7 @@ CYG_ADC_FUNCTIONS(kinetis_adc_funs,
 
 static void kinetis_adc_calibration(kinetis_adc_info *info)
 {
-    volatile cyghwer_io_kinetis_adc_t *base = info->adc_base;
+    volatile cyghwr_hal_kinteis_adc_t *base = info->adc_base;
     
     volatile cyg_uint32 tmp32; /* 'volatile' here is for the dummy read of ADCx_R[0] register. */
 
@@ -202,7 +211,7 @@ static bool kinetis_adc_init(struct cyg_devtab_entry *tab)
     cyg_adc_channel *chan   = (cyg_adc_channel *)tab->priv;
     cyg_adc_device *device  = chan->device;
     kinetis_adc_info *info    = device->dev_priv;
-    volatile cyghwer_io_kinetis_adc_t *adc_dev = info->adc_base;
+    volatile cyghwr_hal_kinteis_adc_t *adc_dev = info->adc_base;
     
 
     if (!info->int_handle)
@@ -309,7 +318,7 @@ static void kinetis_adc_enable(cyg_adc_channel *chan)
 
     kinetis_adc_info *info      = chan->device->dev_priv;
 
-    volatile cyghwer_io_kinetis_adc_t *base = info->adc_base;
+    volatile cyghwr_hal_kinteis_adc_t *base = info->adc_base;
 
     /* Enable chanell and sample */
     cyg_uint32 sc1 = ADC_SC1_ADCH(CYGDAT_DEVS_ADC_KINETIS_CHANNEL0_SOURCE); /* Set the channel number. */
@@ -330,7 +339,7 @@ static void kinetis_adc_disable(cyg_adc_channel *chan)
 #if 0
     kinetis_adc_info *info  = chan->device->dev_priv;
 
-    volatile cyghwer_io_kinetis_adc_t *base = info->adc_base;
+    volatile cyghwr_hal_kinteis_adc_t *base = info->adc_base;
 #endif
 }
 
@@ -348,7 +357,7 @@ static void kinetis_adc_set_rate( cyg_adc_channel *chan, cyg_uint32 rate)
 #if 0
     cyg_adc_device   *device = chan->device;
     kinetis_adc_info *info   = (kinetis_adc_info *)device->dev_priv;
-    volatile cyghwer_io_kinetis_adc_t *base = info->adc_base;
+    volatile cyghwr_hal_kinteis_adc_t *base = info->adc_base;
 #endif
 }
 
@@ -388,7 +397,7 @@ static cyg_uint32 kinetis_adc_isr(cyg_vector_t vector, cyg_addrword_t data)
 {
     cyg_adc_device   *device = (cyg_adc_device *) data;
     kinetis_adc_info *info   = (kinetis_adc_info *)device->dev_priv;
-    volatile cyghwer_io_kinetis_adc_t *base = info->adc_base;
+    volatile cyghwr_hal_kinteis_adc_t *base = info->adc_base;
     cyg_uint32        res = 0;
 
     cyg_uint32    result = base->R[0];

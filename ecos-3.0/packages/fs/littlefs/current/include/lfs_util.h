@@ -56,7 +56,7 @@ extern "C"
 #define MBED_LFS_INTRINSICS    true
 #endif
 
-#define PRIu32 "u"
+#define PRIu32 "lu"
 
 // Logging functions
 #if !defined(LFS_NO_INFO) && MBED_LFS_ENABLE_INFO

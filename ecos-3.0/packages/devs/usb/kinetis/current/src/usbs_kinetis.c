@@ -1050,7 +1050,7 @@ void usbs_kinetis_init (void)
 
     USB_DeviceInit(0,NULL,&handle);
 
-    kinetis_usb_device = (usb_device_khci_state_struct_t*)(handle);
+    kinetis_usb_device = (usb_device_struct_t*)(handle);
     kinetis_usb_device->controlEndpoint = &ep0;
 
     khciState = (usb_device_khci_state_struct_t *)(kinetis_usb_device->controllerHandle);
@@ -1063,7 +1063,7 @@ void usbs_kinetis_init (void)
     // TODO set interrupt priority properly
     cyg_drv_interrupt_create (CYGNUM_HAL_INTERRUPT_USB0,
                             0x00,
-							kinetis_usb_device,  // data
+							(cyg_addrword_t)kinetis_usb_device,  // data
                             &usbs_kinetis_isr,
                             &usbs_kinetis_dsr,
                             &kinetis_usb_device->usbs_kinetis_intr_handle,

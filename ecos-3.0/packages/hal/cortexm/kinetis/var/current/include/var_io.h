@@ -1172,6 +1172,11 @@ typedef volatile struct cyghwr_hal_kinetis_mpu_s {
 #define CYGHWR_HAL_KINETIS_MPU_P  (cyghwr_hal_kinetis_mpu_t *)0x4000d000
 
 //---------------------------------------------------------------------------
+// stdint
+#include <stdint.h>
+
+
+//---------------------------------------------------------------------------
 // FlexBus
 #ifdef CYGPKG_HAL_CORTEXM_KINETIS_FLEXBUS
 # include <cyg/hal/var_io_flexbus.h>

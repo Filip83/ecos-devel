@@ -71,8 +71,9 @@
 #include <cyg/hal/freescale_edma.h>
 #include <cyg/io/ser_freescale_uart.h>
 
-#define CYGPKG_DEVS_EHCI_SERIAL_FREESCALE
+//#define CYGPKG_DEVS_EHCI_SERIAL_FREESCALE
 #ifdef  CYGPKG_DEVS_EHCI_SERIAL_FREESCALE
+#define DEBUG_EHCI 0
 
 
 #define EHCI_DMA_CHAN_TX_I          0
@@ -556,7 +557,7 @@ freescale_ehci_serial_start_xmit(ehci_serial_channel *chan, const cyg_uint8 *buf
 
     // Set up the DMA channels.
     dma_chan_tx_i = dma_set_p->chan_p[EHCI_DMA_CHAN_TX_I].dma_chan_i;
-    edma_p->tcd[dma_chan_tx_i].saddr = buffer;
+    edma_p->tcd[dma_chan_tx_i].saddr = (cyg_uint8*)buffer;
     edma_p->tcd[dma_chan_tx_i].biter.elinkno = len;
     edma_p->tcd[dma_chan_tx_i].citer.elinkno = len;
     edma_p->tcd[dma_chan_tx_i].csr |= FREESCALE_EDMA_CSR_INTMAJOR_M |

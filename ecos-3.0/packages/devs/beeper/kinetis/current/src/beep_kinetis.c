@@ -84,16 +84,16 @@
 static cyg_beep_kinetis_t cyg_beep_kinetis =
 {
 #if CYGNUM_DEVS_BEEP_TIMER == 0
-    .timer_base             = CYGADDR_IO_FTM_FREESCALE_FTM0_BASE,
+    .timer_base             = (cyg_addrword_t*)CYGADDR_IO_FTM_FREESCALE_FTM0_BASE,
 #elif CYGNUM_DEVS_BEEP_TIMER == 1
-    .timer_base             = CYGADDR_IO_FTM_FREESCALE_FTM1_BASE,
+    .timer_base             = (cyg_addrword_t*)CYGADDR_IO_FTM_FREESCALE_FTM1_BASE,
 #else
-    .timer_base             = CYGADDR_IO_FTM_FREESCALE_FTM2_BASE,
+    .timer_base             = (cyg_addrword_t*)CYGADDR_IO_FTM_FREESCALE_FTM2_BASE,
 #endif
     .init		    = false,
     .beeping                = false,
-    .beep_interrupt         = NULL,
-    .beep_interrupt_handle  = NULL,
+    //.beep_interrupt         = NULL,
+    .beep_interrupt_handle  = 0,
     #if CYGNUM_DEVS_BEEP_TIMER == 0
     .interrupt_number       = CYGNUM_HAL_INTERRUPT_FTM0,
     #elif CYGNUM_DEVS_BEEP_TIMER == 1
@@ -116,7 +116,7 @@ kinetis_beep_DSR(cyg_vector_t vector, cyg_ucount32 count, cyg_addrword_t data);
 void cyg_beep_nb(int beep_interval_ms)
 {
 	cyg_beep_kinetis_t * priv = &cyg_beep_kinetis;
-	cyg_addrword_t base = priv->timer_base;
+	cyg_addrword_t base = (cyg_addrword_t)priv->timer_base;
 	cyg_uint32 regval;
 
 	if (beep_interval_ms <= 0)
@@ -210,11 +210,11 @@ int  cyg_beep_is_beeping()
 	return cyg_beep_kinetis.beeping;
 }
 
-void beeper_init()
+void beeper_init(void)
 {
     cyg_uint32 regval;
     cyg_beep_kinetis_t *beep_dev = &cyg_beep_kinetis;
-    cyg_addrword_t base = beep_dev->timer_base;
+    cyg_addrword_t base = (cyg_addrword_t)beep_dev->timer_base;
     // Init beepr timer interrupt 
     cyg_drv_interrupt_create(beep_dev->interrupt_number,
                              beep_dev->interrupt_prio,   // Priority
@@ -267,8 +267,6 @@ void beeper_init()
             CYGNUM_DEVS_BEEP_CHANNEL, regval);
     
     beep_dev->init = true;
-        
-    return true;
 }
 
 cyg_uint32 kinetis_beep_ISR(cyg_vector_t vector, cyg_addrword_t data)
@@ -276,7 +274,7 @@ cyg_uint32 kinetis_beep_ISR(cyg_vector_t vector, cyg_addrword_t data)
 	cyg_uint32 ret = CYG_ISR_HANDLED;
     cyg_uint32 regval;
     cyg_beep_kinetis_t * priv = (cyg_beep_kinetis_t*)data;
-    cyg_addrword_t base = priv->timer_base;
+    cyg_addrword_t base = (cyg_addrword_t)priv->timer_base;
     
     HAL_READ_UINT32(base + CYGHWR_DEV_FREESCALE_FTM_C0SC, regval);
     
@@ -323,6 +321,5 @@ void kinetis_beep_DSR(cyg_vector_t vector, cyg_ucount32 count, cyg_addrword_t da
 	cyg_drv_mutex_lock(&priv->lock);
 	cyg_drv_cond_signal(&priv->wait);
 	cyg_drv_mutex_unlock(&priv->lock);
-
 }
 

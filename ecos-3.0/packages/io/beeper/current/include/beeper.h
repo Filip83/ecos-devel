@@ -65,8 +65,8 @@ extern "C" {
 extern void cyg_beep( int beep_interval_ms );
 extern void cyg_beep_nb(int beep_interval_ms);
 //extern void cyg_beep_f(unsigned int freq_hz, int beep_interval_ms);
-extern int  cyg_beep_is_beeping();
-extern int  cyg_beep_wait();
+extern int  cyg_beep_is_beeping(void);
+extern int  cyg_beep_wait(void);
 
 
 //==========================================================================
