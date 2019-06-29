@@ -8238,8 +8238,6 @@ target satisgeo_km_8_k22f512 {
                    CYGPKG_IO_FILEIO
                    CYGPKG_IO_FRAMEBUF
                    CYGPKG_DEVS_FRAMEBUF_ST7565
-                   CYGPKG_IO_ADC
-                   CYGPKG_DEVS_ADC_KINETIS_ADC
                    CYGPKG_IO_KBD
                    CYGPKG_DEVS_KBD_BUTTON_KINETIS
                    CYGPKG_DEVS_BEEP_KINETIS
@@ -8248,6 +8246,8 @@ target satisgeo_km_8_k22f512 {
                    CYGPKG_IO_USB_SLAVE_WINUSB 
                    CYGPKG_IO_USB
                    CYGPKG_IO_USB_SLAVE
+				   CYGPKG_DEVS_GPIO_KINETIS
+				   CYGPKG_IO_GPIO
                  }
 
         description "
