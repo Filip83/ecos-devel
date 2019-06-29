@@ -62,7 +62,7 @@
 #include <cyg/io/ser_freescale_uart.h>
 
 // Only build this driver for if Freescale UART is needed.
-//#ifdef CYGPKG_IO_SERIAL_FREESCALE_UART
+#ifdef CYGPKG_IO_SERIAL_FREESCALE_UART
 
 typedef struct uart_pins_s {
     cyg_uint32 rx;
@@ -306,7 +306,7 @@ uart_serial_set_config(serial_channel * chan, cyg_uint32 key,
 //-------------------------------------
 // Enable the transmitter on the device
 //-------------------------------------
-static void uart_serial_start_xmit(serial_channeCYGDAT_DEVS_KBD_BUTTON_DEBUG_OUTPUTl * chan)
+static void uart_serial_start_xmit(serial_channel * chan)
 {
     uart_serial_info * uart_chan = (uart_serial_info *)chan->dev_priv;
     cyg_addrword_t uart_base = uart_chan->uart_base;
