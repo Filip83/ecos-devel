@@ -977,7 +977,7 @@ typedef struct cyghwr_hal_kinteis_ftm_s{
 /** Peripheral FTM2 base pointer */
 #define FTM2                                     ((cyghwr_hal_kinteis_ftm_t *)FTM2_BASE)
 /** Peripheral FTM3 base address */
-#define FTM3_BASE                                (0x40026000u)
+#define FTM3_BASE                                (0x400B9000u)
 /** Peripheral FTM3 base pointer */
 #define FTM3                                     ((cyghwr_hal_kinteis_ftm_t *)FTM3_BASE)
 /** Array initializer of FTM peripheral base addresses */
