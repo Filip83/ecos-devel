@@ -1831,7 +1831,7 @@ package CYGPKG_DEVS_USB_KINETIS {
         hardware
         directory       devs/usb/kinetis
         script          usbs_kinetis.cdl
-        description     "A device driver for the ATMEL AVR32UC3C on-chip USB device"
+        description     "A device driver for the NXP Kinetis on-chip USB device"
 }
 
 package CYGPKG_DEVS_USB_D12 {
@@ -7040,6 +7040,85 @@ target AVR32UC3CEK {
 	   hardware environments that conform to the AVR32 Reference
 	   Platform System-on-Chip."
 }
+
+# --------------------------------------------------------------------------
+package CYGPKG_HAL_AVR32_UC3C_MINISP  {
+	alias		{ "AVR32_UC3C0512 Platform " hal_avr32 avr32_hal }
+	directory	hal/avr32/uc3c_mini_spectrometer
+	script		hal_avr32_uc3c_minisp.cdl
+	hardware
+	description "
+	   The SatisGeto MiniGama spectrometr board. Je potøeba pøedìlat
+	   kompletnì target a pozmìnit nìkteré nastavení. Udìlat až to bude fakt nutné."
+}
+
+target GSP512 {
+	alias 		{ "GS-512 board" gs512 }
+	packages { 
+            CYGPKG_HAL_AVR32
+		    CYGPKG_HAL_AVR32_UC3C_MINISP 
+            CYGPKG_IO_SERIAL_AVR32_UC3C
+            CYGPKG_IO_FLASH
+            CYGPKG_DEVICES_WALLCLOCK_AVR32_AST
+            CYGPKG_IO_I2C
+            CYGPKG_CRC
+            CYGPKG_DEVS_I2C_AVR32_UC3C
+            CYGPKG_DEVS_FLASH_SPI_N25QXX
+            CYGPKG_DEVS_FLASH_SPI_FM25WXX
+            CYGPKG_DEVS_FLASH_AVR32_UC3C
+            CYGPKG_IO_SPI
+            CYGPKG_DEVS_SPI_ISR_AVR32_UC3C
+            CYGPKG_DEVS_USART_SPI_AVR32_UC3C
+            CYGPKG_DEVS_USART2_SPI_AVR32_UC3C
+            CYGPKG_IO
+            CYGPKG_IO_FILEIO
+            CYGPKG_IO_ADC
+            CYGPKG_DEVS_ADC_AVR32_UC3C
+
+            CYGPKG_IO_USB_SLAVE_WINUSB
+            CYGPKG_IO_USB
+            CYGPKG_IO_USB_SLAVE
+            CYGPKG_DEVS_USB_UC3C
+
+			CYGPKG_IO_FRAMEBUF
+            CYGPKG_DEVS_FRAMEBUF_ST7565
+
+			CYGPKG_IO_BEEPER
+			CYGPKG_DEVS_BEEP_AVR32
+
+			CYGPKG_IO_KBD
+            CYGPKG_DEVS_KBD_MATRIX_AVR32
+	}
+	description "
+	   None."
+}
+
+target GSP512_BL {
+	alias 		{ "GS-512 board bot loader" bl_gs512 }
+	packages { 
+		    CYGPKG_HAL_AVR32
+		    CYGPKG_HAL_AVR32_UC3C_MINISP   
+            CYGPKG_IO_FLASH
+            CYGPKG_DEVS_FLASH_ATMEL_DATAFLASH
+            CYGPKG_DEVS_FLASH_AVR32_UC3C
+            CYGPKG_IO_SPI
+            CYGPKG_DEVS_SPI_ISR_AVR32_UC3C
+            CYGPKG_IO
+            CYGPKG_IO_USB_SLAVE_WINUSB
+            CYGPKG_IO_USB
+            CYGPKG_IO_USB_SLAVE
+            CYGPKG_DEVS_USB_UC3C
+
+            CYGPKG_IO_FRAMEBUF
+            CYGPKG_DEVS_FRAMEBUF_ST7565
+
+			CYGPKG_IO_BEEP
+			CYGPKG_DEVS_BEEP_AVR32
+	}
+	description "
+	   None."
+}
+
 
 # --------------------------------------------------------------------------
 
