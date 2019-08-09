@@ -298,13 +298,26 @@ hal_start_main_clock(void)
 #endif
 
 #ifdef CYGOPT_HAL_CORTEXM_KINETIS_MCG_MCGOUTCLK_EXT_REFCLK
-	sim_p->clk_div1 = 0x55550000U;
 	mcg_p->c5 = 12;
 
+#ifdef CYGOPT_HAL_CORTEXM_KINETIS_MCG_OSC0_IS_OSC
 	mcg_p->c2 = CYGHWR_HAL_KINETIS_MCG_C2_RANGE(2)/* | CYGHWR_HAL_KINETIS_MCG_C2_HGO_M*/;
+#endif
 
 	// Wait for oscillator start up
+#ifdef CYGOPT_HAL_CORTEXM_KINETIS_MCG_OSC0_IS_XTAL
+#if CYGHWR_HAL_CORTEXM_KINETIS_MCG_OSC0_FREQ < 40000
+	mcg_p->c2 = CYGHWR_HAL_KINETIS_MCG_C2_RANGE(0) | CYGHWR_HAL_KINETIS_MCG_C2_HGO_M | CYGHWR_HAL_KINETIS_MCG_C2_EREFS_M;
+#elif CYGHWR_HAL_CORTEXM_KINETIS_MCG_OSC0_FREQ < 8000000
+	mcg_p->c2 = CYGHWR_HAL_KINETIS_MCG_C2_RANGE(1) | CYGHWR_HAL_KINETIS_MCG_C2_HGO_M | CYGHWR_HAL_KINETIS_MCG_C2_EREFS_M;
+#elif CYGHWR_HAL_CORTEXM_KINETIS_MCG_OSC0_FREQ < 32000000
+	mcg_p->c2 = CYGHWR_HAL_KINETIS_MCG_C2_RANGE(2) | CYGHWR_HAL_KINETIS_MCG_C2_HGO_M | CYGHWR_HAL_KINETIS_MCG_C2_EREFS_M;
+#else
+#error "Cystall OSC0 invalid freq"
+#endif
+	// TODO check if it is all right for crystal oscillaor
 	MCG_WAIT_WHILE(!(mcg_p->status & CYGHWR_HAL_KINETIS_MCG_S_OSCINIT_M));
+#endif
 
 	mcg_p->c1 = 0;
 	mcg_p->c7 = 0;
@@ -316,8 +329,6 @@ hal_start_main_clock(void)
 	}
 
 	mcg_p->c1 = CYGHWR_HAL_KINETIS_MCG_C1_CLKS(2);
-
-	
 
 	// Wait for reference clock to switch to external reference
 	MCG_WAIT_WHILE(mcg_p->status & CYGHWR_HAL_KINETIS_MCG_S_IREFST_M);
