@@ -69,9 +69,9 @@
 // Enable polled SPI operation for non-kernel builds.
 
 #ifdef CYGPKG_KERNEL
-# define N25QXX_POLLED false
+# define MT25QL_POLLED false
 #else
-# define N25QXX_POLLED true
+# define MT25QL_POLLED true
 #endif
 
 //-----------------------------------------------------------------------------
@@ -79,69 +79,79 @@
 // build assumes that the API calls are made in the thread context.
 
 #ifdef CYGPKG_KERNEL
-#define N25QXX_DELAY_MS(_msdelay_) hal_delay_us(10)
+#define MT25QL_DELAY_MS(_msdelay_) hal_delay_us(10)
 #else
-#define N25QXX_DELAY_MS(_msdelay_) CYGACC_CALL_IF_DELAY_US (_msdelay_ * 1000)
+#define MT25QL_DELAY_MS(_msdelay_) CYGACC_CALL_IF_DELAY_US (_msdelay_ * 1000)
 #endif
 
 // Byte / word programming takes 15 us max
-#define N25QXX_WAIT_CHIP_READY( dev )                   \
+#define MT25QL_WAIT_CHIP_READY( dev )                   \
 {                                                       \
     cyg_uint8 dev_status;                               \
     do {                                                \
         HAL_DELAY_US (15);                              \
         dev_status = mt25ql_spi_rdsr ( dev );           \
-    } while ( dev_status & N25QXX_STATUS_BSY );         \
+    } while ( dev_status & MT25QL_STATUS_BSY );         \
 }
 
 //-----------------------------------------------------------------------------
 // Maintenance and debug macros.
 
-#define ASSERT_N25QXX(_test_, _msg_) CYG_ASSERT(_test_, "FAIL (N25QXX) : " _msg_)
-#define TRACE_N25QXX(_msg_, _args_...) if (dev->pf) dev->pf ("N25QXX : " _msg_, ##_args_)
+#define ASSERT_MT25QL(_test_, _msg_) CYG_ASSERT(_test_, "FAIL (MT25QL) : " _msg_)
+#define TRACE_MT25QL(_msg_, _args_...) if (dev->pf) dev->pf ("MT25QL : " _msg_, ##_args_)
 
 //=============================================================================
 // Define SST25VFxxx SPI protocol.
 //=============================================================================
 
 typedef enum mt25ql_cmd {
-    N25QXX_CMD_WREN     = 0x06,     // Write enable.
-    N25QXX_CMD_WDRI     = 0x04,     // Write disable.
-    N25QXX_CMD_RDJID    = 0x9F,     // Read JEDEC identification.
-    N25QXX_CMD_RDSR     = 0x05,     // Read status register.
-    N25QXX_CMD_WRSR     = 0x01,     // Write status register.
-	N25QXX_CMD_RDFSR    = 0x70,     // Read status flag register.
-	N25QXX_CMD_WREAR    = 0xC5,     // Write extended address register.
-    N25QXX_CMD_READ     = 0x03,     // Read data
-    N25QXX_CMD_FREAD    = 0x0B,     // Read data (fast).
-    N25QXX_CMD_PP       = 0x02,     // Page program.
-    N25QXX_CMD_SE_4K    = 0x20,     // 4K sector erase.
-    N25QXX_CMD_SE_32K   = 0x52,     // 32K sector erase.
-	N25QXX_CMD_SE_64K   = 0xD8,     // 64K sector erase.
-    N25QXX_CMD_DE       = 0xC4,     // Die erase.
-	N25QXX_CMD_4BEN     = 0xB7,	    // Enable 4B addressing mode.
-	N25QXX_CMD_4BDIS    = 0xE9,	    // Disable 4B addressing mode.
-	N25QXX_CMD_4B_READ  = 0x13,     // 4B Read data
-	N25QXX_CMD_4B_FREAD = 0x0C,     // 4B Read data (fast).
-	N25QXX_CMD_4B_PP    = 0x12,     // 4B Page program.
-	N25QXX_CMD_4B_SE_4K = 0x21,     // 4B 4K sector erase.
-	N25QXX_CMD_4B_SE_32K = 0x5C,    // 4B 32K sector erase.
-	N25QXX_CMD_4B_SE_64K = 0xDC,    // 4B 64K sector erase.
-
+    MT25QL_CMD_WREN     = 0x06,     // Write enable.
+    MT25QL_CMD_WDRI     = 0x04,     // Write disable.
+    MT25QL_CMD_RDJID    = 0x9F,     // Read JEDEC identification.
+    MT25QL_CMD_RDSR     = 0x05,     // Read status register.
+    MT25QL_CMD_WRSR     = 0x01,     // Write status register.
+	MT25QL_CMD_RDFSR    = 0x70,     // Read status flag register.
+	MT25QL_CMD_WREAR    = 0xC5,     // Write extended address register.
+    MT25QL_CMD_READ     = 0x03,     // Read data
+    MT25QL_CMD_FREAD    = 0x0B,     // Read data (fast).
+    MT25QL_CMD_PP       = 0x02,     // Page program.
+    MT25QL_CMD_SE_4K    = 0x20,     // 4K sector erase.
+    MT25QL_CMD_SE_32K   = 0x52,     // 32K sector erase.
+	MT25QL_CMD_SE_64K   = 0xD8,     // 64K sector erase.
+    MT25QL_CMD_DE       = 0xC4,     // Die erase.
+	MT25QL_CMD_4BEN     = 0xB7,	    // Enable 4B addressing mode.
+	MT25QL_CMD_4BDIS    = 0xE9,	    // Disable 4B addressing mode.
+	MT25QL_CMD_4B_READ  = 0x13,     // 4B Read data
+	MT25QL_CMD_4B_FREAD = 0x0C,     // 4B Read data (fast).
+	MT25QL_CMD_4B_PP    = 0x12,     // 4B Page program.
+	MT25QL_CMD_4B_SE_4K = 0x21,     // 4B 4K sector erase.
+	MT25QL_CMD_4B_SE_32K = 0x5C,    // 4B 32K sector erase.
+	MT25QL_CMD_4B_SE_64K = 0xDC,    // 4B 64K sector erase.
+	MT25QL_CMD_CLR_STATUS_FLAG = 0x50,    // Clear status falag rgisters errors
 } mt25ql_cmd;
 
 // Status register bitfields.
-#define N25QXX_STATUS_BSY  0x01   /* Operation in progress. */
-#define N25QXX_STATUS_WEL  0x02   /* Write enable latch. */
-#define N25QXX_STATUS_BP0  0x04   /* Block Write Protect 0. */
-#define N25QXX_STATUS_BP1  0x08   /* Block Write Protect 1. */
-#define N25QXX_STATUS_BP2  0x10   /* Block Write Protect 2. */
-#define N25QXX_STATUS_BP3  0x20   /* Block Write Protect 3. */
-#define N25QXX_STATUS_TB   0x40   /* Protected memery are from top or bottom */
-#define N25QXX_STATUS_SRWE 0x80   /* Status register write enable */
+#define MT25QL_STATUS_BSY  0x01   /* Operation in progress. */
+#define MT25QL_STATUS_WEL  0x02   /* Write enable latch. */
+#define MT25QL_STATUS_BP0  0x04   /* Block Write Protect 0. */
+#define MT25QL_STATUS_BP1  0x08   /* Block Write Protect 1. */
+#define MT25QL_STATUS_BP2  0x10   /* Block Write Protect 2. */
+#define MT25QL_STATUS_BP3  0x20   /* Block Write Protect 3. */
+#define MT25QL_STATUS_TB   0x40   /* Protected memery are from top or bottom */
+#define MT25QL_STATUS_SRWE 0x80   /* Status register write enable */
 
-#define N25QXX_LOCK_BITS   ( N25QXX_STATUS_BP0 | N25QXX_STATUS_BP1 | \
-                             N25QXX_STATUS_BP2 | N25QXX_STATUS_BP3 )
+// Status flag register bitfields.
+#define MT25QL_FLAG_STATUS_ADDR_MODE	0x01   /* Indicate 3-byte / 4-byter addressing. */
+#define MT25QL_FLAG_STATUS_PROT			0x02   /* Attempted ERASE o PROGRAM of protected or OTP space. */
+#define MT25QL_FLAG_STATUS_PROG_SUSP	0x04   /* Program OP supended. */
+#define MT25QL_FLAG_STATUS_RSWD			0x08   /* Reserved. */
+#define MT25QL_FLAG_STATUS_PROG			0x10   /* Program or CRC succeed. */
+#define MT25QL_FLAG_STATUS_ERASE		0x20   /* Erase succeed. */
+#define MT25QL_FLAG_STATUS_ERASE_SUSP   0x40   /* Erase OP supended. */
+#define MT25QL_FLAG_STATUS_BSY			0x80   /* Operation in progress. */
+
+#define MT25QL_LOCK_BITS   ( MT25QL_STATUS_BP0 | MT25QL_STATUS_BP1 | \
+                             MT25QL_STATUS_BP2 | MT25QL_STATUS_BP3 )
 
 
 // A few helper constants
@@ -156,21 +166,31 @@ typedef enum mt25ql_cmd {
 #endif
 
 // Select read OPCODE
-# define N25QXX_CMD_READ_LEN    4
-# define N25QXX_CMD_READ_OPCODE N25QXX_CMD_READ
+# define MT25QL_CMD_READ_LEN    4
+# define MT25QL_CMD_READ_OPCODE MT25QL_CMD_READ
 
 // Select sector size
-#if CYGPKG_DEVS_FLASH_SPI_N25QXX_BLOCK_SIZE == SZ_64K
-# define N25QXX_CMD_SE N25QXX_CMD_SE_64K
-#elif CYGPKG_DEVS_FLASH_SPI_N25QXX_BLOCK_SIZE == SZ_32K
-# define N25QXX_CMD_SE N25QXX_CMD_SE_32K
-#elif CYGPKG_DEVS_FLASH_SPI_N25QXX_BLOCK_SIZE == SZ_4K
-# define N25QXX_CMD_SE N25QXX_CMD_SE_4K
+#if CYGPKG_DEVS_FLASH_SPI_MT25QL_BLOCK_SIZE == SZ_64K
+# define MT25QL_CMD_SE MT25QL_CMD_SE_64K
+#elif CYGPKG_DEVS_FLASH_SPI_MT25QL_BLOCK_SIZE == SZ_32K
+# define MT25QL_CMD_SE MT25QL_CMD_SE_32K
+#elif CYGPKG_DEVS_FLASH_SPI_MT25QL_BLOCK_SIZE == SZ_4K
+# define MT25QL_CMD_SE MT25QL_CMD_SE_4K
 #endif
 
 // Device page size
-#define N25QXXX_PAGE_SIZE 256
+#define MT25QLX_PAGE_SIZE 256
 
+//=============================================================================
+// Array containing a list of device control information
+//=============================================================================
+
+typedef struct mt25ql_data_s
+{
+	cyg_uint8 highAddress;
+}mt25ql_data_t;
+
+mt25ql_data_t mt25ql_data;
 //=============================================================================
 // Array containing a list of supported devices.  This allows the device
 // parameters to be dynamically detected on initialization.
@@ -288,12 +308,12 @@ static inline cyg_uint32
 mt25ql_spi_rdid(struct cyg_flash_dev *dev)
 {
     cyg_spi_device *spi_device = (cyg_spi_device *) dev->priv;
-    const cyg_uint8 tx_buf[4] = { N25QXX_CMD_RDJID, 0x0, 0x0, 0x0 };
+    const cyg_uint8 tx_buf[4] = { MT25QL_CMD_RDJID, 0x0, 0x0, 0x0 };
     cyg_uint8       rx_buf[4];
     cyg_uint32      retval = 0;
 
     // Carry out SPI transfer.
-    cyg_spi_transfer(spi_device, N25QXX_POLLED , 4, tx_buf, rx_buf);
+    cyg_spi_transfer(spi_device, MT25QL_POLLED , 4, tx_buf, rx_buf);
 
     // Convert 3-byte ID to 32-bit integer.
     retval |= ((cyg_uint32)rx_buf[1]) << 16;
@@ -310,8 +330,8 @@ static inline void
 mt25ql_spi_wren(struct cyg_flash_dev *dev)
 {
     cyg_spi_device *spi_device = (cyg_spi_device *) dev->priv;
-    const cyg_uint8 tx_buf[1] = { N25QXX_CMD_WREN };
-    cyg_spi_transfer(spi_device, N25QXX_POLLED , 1, tx_buf, NULL);
+    const cyg_uint8 tx_buf[1] = { MT25QL_CMD_WREN };
+    cyg_spi_transfer(spi_device, MT25QL_POLLED , 1, tx_buf, NULL);
 }
 
 //-----------------------------------------------------------------------------
@@ -321,8 +341,8 @@ static  void
 mt25ql_spi_wrdis(struct cyg_flash_dev *dev)
 {
     cyg_spi_device *spi_device = (cyg_spi_device *) dev->priv;
-    const cyg_uint8 tx_buf[1] = { N25QXX_CMD_WDRI };
-    cyg_spi_transfer(spi_device, N25QXX_POLLED , 1, tx_buf, NULL);
+    const cyg_uint8 tx_buf[1] = { MT25QL_CMD_WDRI };
+    cyg_spi_transfer(spi_device, MT25QL_POLLED , 1, tx_buf, NULL);
 }
 
 //-----------------------------------------------------------------------------
@@ -335,12 +355,12 @@ mt25ql_spi_se(struct cyg_flash_dev *dev, cyg_flashaddr_t addr)
     cyg_spi_device *spi_device = (cyg_spi_device *) dev->priv;
     cyg_uint8       tx_buf[4] = 
     { 
-        N25QXX_CMD_SE,
+        MT25QL_CMD_SE,
         (cyg_uint8)(addr >> 16), 
         (cyg_uint8)(addr >> 8), 
         (cyg_uint8)(addr)
     };
-    cyg_spi_transfer(spi_device, N25QXX_POLLED , 4, tx_buf, NULL);
+    cyg_spi_transfer(spi_device, MT25QL_POLLED , 4, tx_buf, NULL);
 }
 
 //-----------------------------------------------------------------------------
@@ -350,13 +370,28 @@ static cyg_uint8
 mt25ql_spi_rdsr(struct cyg_flash_dev *dev)
 {
     cyg_spi_device *spi_device = (cyg_spi_device *) dev->priv;
-    const cyg_uint8 tx_buf[2] = { N25QXX_CMD_RDSR, 0 };
+    const cyg_uint8 tx_buf[2] = { MT25QL_CMD_RDSR, 0 };
     cyg_uint8       rx_buf[2];
 
     // Carry out SPI transfer and return the status byte.
-    cyg_spi_transfer(spi_device, N25QXX_POLLED , 2, tx_buf, rx_buf);
+    cyg_spi_transfer(spi_device, MT25QL_POLLED , 2, tx_buf, rx_buf);
 
     return rx_buf[1];
+}
+
+//-----------------------------------------------------------------------------
+// Write the 8-bit device status register.
+
+static void
+mt25ql_spi_wrsr(struct cyg_flash_dev* dev, cyg_uint8 status)
+{
+	cyg_spi_device* spi_device = (cyg_spi_device*)dev->priv;
+	const cyg_uint8 tx_buf[2] = { MT25QL_CMD_WRSR, status };
+	cyg_uint8       rx_buf[2];
+
+	// Carry out SPI transfer and return the status byte.
+	cyg_spi_transfer(spi_device, MT25QL_POLLED, 2, tx_buf, rx_buf);
+
 }
 
 //-----------------------------------------------------------------------------
@@ -366,13 +401,74 @@ static cyg_uint8
 mt25ql_spi_rdfsr(struct cyg_flash_dev* dev)
 {
 	cyg_spi_device* spi_device = (cyg_spi_device*)dev->priv;
-	const cyg_uint8 tx_buf[2] = { N25QXX_CMD_RDFSR, 0 };
+	const cyg_uint8 tx_buf[2] = { MT25QL_CMD_RDFSR, 0 };
 	cyg_uint8       rx_buf[2];
 
 	// Carry out SPI transfer and return the status byte.
-	cyg_spi_transfer(spi_device, N25QXX_POLLED, 2, tx_buf, rx_buf);
+	cyg_spi_transfer(spi_device, MT25QL_POLLED, 2, tx_buf, rx_buf);
 
 	return rx_buf[1];
+}
+
+//-----------------------------------------------------------------------------
+// Write the 8-bit extended address register.
+
+static void
+mt25ql_spi_wrear(struct cyg_flash_dev* dev, cyg_uint8 extaddr)
+{
+	cyg_spi_device* spi_device = (cyg_spi_device*)dev->priv;
+	const cyg_uint8 tx_buf[2] = { MT25QL_CMD_WREAR, extaddr &0x07 };
+	cyg_uint8       rx_buf[2];
+
+	mt25ql_data.highAddress = extaddr & 0x07;
+	// Carry out SPI transfer and return the status byte.
+	cyg_spi_transfer(spi_device, MT25QL_POLLED, 2, tx_buf, rx_buf);
+
+}
+
+//-----------------------------------------------------------------------------
+// Enable 4B addressing mode.
+
+static void
+mt25ql_spi_en4baddr(struct cyg_flash_dev* dev)
+{
+	cyg_spi_device* spi_device = (cyg_spi_device*)dev->priv;
+	const cyg_uint8 tx_buf[1] = { MT25QL_CMD_4BEN};
+	cyg_uint8       rx_buf[1];
+
+	// Carry out SPI transfer and return the status byte.
+	cyg_spi_transfer(spi_device, MT25QL_POLLED, 1, tx_buf, rx_buf);
+
+}
+
+//-----------------------------------------------------------------------------
+// Disable 4B addressing mode.
+
+static void
+mt25ql_spi_dis4baddr(struct cyg_flash_dev* dev)
+{
+	cyg_spi_device* spi_device = (cyg_spi_device*)dev->priv;
+	const cyg_uint8 tx_buf[1] = { MT25QL_CMD_4BDIS };
+	cyg_uint8       rx_buf[1];
+
+	// Carry out SPI transfer and return the status byte.
+	cyg_spi_transfer(spi_device, MT25QL_POLLED, 1, tx_buf, rx_buf);
+
+}
+
+//-----------------------------------------------------------------------------
+// Clear status flag register.
+
+static void
+mt25ql_spi_clr_status_flag(struct cyg_flash_dev* dev)
+{
+	cyg_spi_device* spi_device = (cyg_spi_device*)dev->priv;
+	const cyg_uint8 tx_buf[1] = { MT25QL_CMD_CLR_STATUS_FLAG };
+	cyg_uint8       rx_buf[1];
+
+	// Carry out SPI transfer and return the status byte.
+	cyg_spi_transfer(spi_device, MT25QL_POLLED, 1, tx_buf, rx_buf);
+
 }
 //-----------------------------------------------------------------------------
 // Program a single byte.
@@ -382,19 +478,22 @@ mt25ql_spi_pp
 (struct cyg_flash_dev *dev, cyg_flashaddr_t addr, cyg_uint8* wbuf, cyg_uint32 wbuf_len)
 {
     cyg_spi_device *spi_device = (cyg_spi_device *) dev->priv;
+	cyg_uint8 addrMSB = (cyg_uint8)(addr >> 24)&0x07;
     const cyg_uint8 tx_buf[4] =
     { 
-        N25QXX_CMD_PP,
+        MT25QL_CMD_PP,
         (cyg_uint8)(addr >> 16), 
         (cyg_uint8)(addr >> 8), 
         (cyg_uint8)(addr)
     };
 
+	if (mt25ql_data.highAddress != addrMSB)
+		mt25ql_spi_wrear(dev, addrMSB);
     // Implement the program operation as a multistage SPI transaction.
     cyg_spi_transaction_begin(spi_device);
-    cyg_spi_transaction_transfer(spi_device, N25QXX_POLLED , 4, tx_buf, NULL,
+    cyg_spi_transaction_transfer(spi_device, MT25QL_POLLED , 4, tx_buf, NULL,
                                  false);
-    cyg_spi_transaction_transfer(spi_device, N25QXX_POLLED , wbuf_len, wbuf, NULL,
+    cyg_spi_transaction_transfer(spi_device, MT25QL_POLLED , wbuf_len, wbuf, NULL,
                                  true);
     cyg_spi_transaction_end(spi_device);
 }
@@ -407,20 +506,23 @@ mt25ql_spi_read(struct cyg_flash_dev *dev, cyg_flashaddr_t addr,
                  cyg_uint8 *rbuf, cyg_uint32 rbuf_len)
 {
     cyg_spi_device *spi_device = (cyg_spi_device *) dev->priv;
+	cyg_uint8 addrMSB = (cyg_uint8)(addr >> 24) & 0x07;
     const cyg_uint8 tx_buf[5] = 
     { 
-        N25QXX_CMD_READ_OPCODE,
+        MT25QL_CMD_READ_OPCODE,
         (cyg_uint8)(addr >> 16),
         (cyg_uint8)(addr >> 8), 
         (cyg_uint8)(addr), 
         0
     };
 
+	if (mt25ql_data.highAddress != addrMSB)
+		mt25ql_spi_wrear(dev, addrMSB);
     // Implement the read operation as a multistage SPI transaction.
     cyg_spi_transaction_begin(spi_device);
-    cyg_spi_transaction_transfer(spi_device, N25QXX_POLLED ,
-                                 N25QXX_CMD_READ_LEN, tx_buf, NULL, false);
-    cyg_spi_transaction_transfer(spi_device, N25QXX_POLLED , rbuf_len, NULL,
+    cyg_spi_transaction_transfer(spi_device, MT25QL_POLLED ,
+                                 MT25QL_CMD_READ_LEN, tx_buf, NULL, false);
+    cyg_spi_transaction_transfer(spi_device, MT25QL_POLLED , rbuf_len, NULL,
                                  rbuf, true);
     cyg_spi_transaction_end(spi_device);
 }
@@ -451,34 +553,34 @@ mt25ql_init(struct cyg_flash_dev *dev)
         dev_params++;
     }
 
-    // Found supported device - update device parameters.  N25QXX devices have
+    // Found supported device - update device parameters.  MT25QL devices have
     // a uniform sector distribution, so only 1 block info record is required.
     if (dev_params->jedec_id != 0) 
     {
         // Find out is the wanted sector size is supported by the device
         while ((dev_params->sector_size[i] !=
-                CYGPKG_DEVS_FLASH_SPI_N25QXX_BLOCK_SIZE)
+                CYGPKG_DEVS_FLASH_SPI_MT25QL_BLOCK_SIZE)
                && (dev_params->sector_size[i] != 0))
             i++;
 
         if (dev_params->sector_size[i] !=
-            CYGPKG_DEVS_FLASH_SPI_N25QXX_BLOCK_SIZE) 
+            CYGPKG_DEVS_FLASH_SPI_MT25QL_BLOCK_SIZE) 
         {
-            TRACE_N25QXX("Init device with JEDEC ID 0x%06X\n",
+            TRACE_MT25QL("Init device with JEDEC ID 0x%06X\n",
                           dev_params->jedec_id);
-            TRACE_N25QXX("SPI Flash Error, not supporting %dK sector size\n",
-                          CYGPKG_DEVS_FLASH_SPI_N25QXX_BLOCK_SIZE);
+            TRACE_MT25QL("SPI Flash Error, not supporting %dK sector size\n",
+                          CYGPKG_DEVS_FLASH_SPI_MT25QL_BLOCK_SIZE);
             return retval;
         }
 
-        ASSERT_N25QXX(dev->num_block_infos == 1,
+        ASSERT_MT25QL(dev->num_block_infos == 1,
                        "Only 1 block info record required.");
-        ASSERT_N25QXX(dev->block_info != NULL,
+        ASSERT_MT25QL(dev->block_info != NULL,
                        "Null pointer to block info record.");
 
         if ((dev->num_block_infos == 1) && (dev->block_info != NULL))
         {
-            TRACE_N25QXX("Init device with JEDEC ID 0x%06X.\n", device_id);
+            TRACE_MT25QL("Init device with JEDEC ID 0x%06X.\n", device_id);
             dev->end =
                 dev->start +
                 ((cyg_flashaddr_t) dev_params->sector_size[i] *
@@ -492,6 +594,9 @@ mt25ql_init(struct cyg_flash_dev *dev)
             ((cyg_flash_block_info_t *) dev->block_info)->blocks =
                 (cyg_uint32)(dev_params->sector_count[i]);
 
+
+			mt25ql_data.highAddress = 0;
+			
             retval = FLASH_ERR_OK;
         }
     }
@@ -518,9 +623,9 @@ mt25ql_erase_block(struct cyg_flash_dev *dev, cyg_flashaddr_t block_base)
         // 25 ms
         do
         {
-            N25QXX_DELAY_MS(10);
+            MT25QL_DELAY_MS(10);
             dev_status = mt25ql_spi_rdsr(dev);
-        } while (dev_status & N25QXX_STATUS_BSY);
+        } while (dev_status & MT25QL_STATUS_BSY);
 
         retval = FLASH_ERR_OK;
     }
@@ -576,8 +681,8 @@ mt25ql_program(struct cyg_flash_dev *dev, cyg_flashaddr_t base,
     // The start of the transaction may not be page aligned, so we need to work
     // out how many bytes to transmit before we hit the first page boundary.
     tx_bytes =
-        N25QXXX_PAGE_SIZE -
-        (((cyg_uint32)local_base) & (N25QXXX_PAGE_SIZE - 1));
+        MT25QLX_PAGE_SIZE -
+        (((cyg_uint32)local_base) & (MT25QLX_PAGE_SIZE - 1));
     if (tx_bytes > tx_bytes_left)
         tx_bytes = tx_bytes_left;
 
@@ -592,9 +697,9 @@ mt25ql_program(struct cyg_flash_dev *dev, cyg_flashaddr_t base,
         // RTC tick granularity.
         do 
         {
-            N25QXX_DELAY_MS(1);
+            MT25QL_DELAY_MS(1);
             dev_status = mt25ql_spi_rdsr(dev);
-        } while (dev_status & N25QXX_STATUS_BSY);
+        } while (dev_status & MT25QL_STATUS_BSY);
 
         // Update counters and data pointers for the next page.
         tx_bytes_left -= tx_bytes;
@@ -602,7 +707,7 @@ mt25ql_program(struct cyg_flash_dev *dev, cyg_flashaddr_t base,
         local_base    += tx_bytes;
         tx_bytes       =
             (tx_bytes_left >
-             N25QXXX_PAGE_SIZE) ? N25QXXX_PAGE_SIZE : tx_bytes_left;
+             MT25QLX_PAGE_SIZE) ? MT25QLX_PAGE_SIZE : tx_bytes_left;
     }
 
     retval = mt25ql_verifi(dev,vlocal_base ,data, len);
@@ -625,8 +730,8 @@ mt25ql_read(struct cyg_flash_dev *dev, const cyg_flashaddr_t base,
 
     // Determine the maximum transfer size to use.
     cyg_uint32      rx_block_size =
-        (CYGNUM_DEVS_FLASH_SPI_N25QXX_READ_BLOCK_SIZE ==
-         0) ? 0xFFFFFFFF : CYGNUM_DEVS_FLASH_SPI_N25QXX_READ_BLOCK_SIZE;
+        (CYGNUM_DEVS_FLASH_SPI_MT25QL_READ_BLOCK_SIZE ==
+         0) ? 0xFFFFFFFF : CYGNUM_DEVS_FLASH_SPI_MT25QL_READ_BLOCK_SIZE;
 
     // Fix up the block address and fill the read buffer.
     if (mt25ql_to_local_addr(dev, &local_base)) 
@@ -657,12 +762,12 @@ mt25ql_lock(struct cyg_flash_dev *dev, cyg_flashaddr_t base)
     cyg_spi_device *spi_device = (cyg_spi_device *) dev->priv;
     cyg_flashaddr_t local_base = base;
     int             retval = FLASH_ERR_INVALID;
-    const cyg_uint8 tx_buf[2] = { N25QXX_CMD_WRSR, N25QXX_LOCK_BITS };
+    const cyg_uint8 tx_buf[2] = { MT25QL_CMD_WRSR, MT25QL_LOCK_BITS };
 
     if (mt25ql_to_local_addr(dev, &local_base)) 
     {
         mt25ql_spi_wren(dev);
-        cyg_spi_transfer(spi_device, N25QXX_POLLED, 2, tx_buf, NULL);
+        cyg_spi_transfer(spi_device, MT25QL_POLLED, 2, tx_buf, NULL);
         retval = FLASH_ERR_OK;
     }
     return retval;
@@ -677,12 +782,12 @@ mt25ql_unlock(struct cyg_flash_dev *dev, cyg_flashaddr_t base)
     cyg_spi_device *spi_device = (cyg_spi_device *) dev->priv;
     cyg_flashaddr_t local_base = base;
     int             retval = FLASH_ERR_INVALID;
-    const cyg_uint8 tx_buf[2] = { N25QXX_CMD_WRSR, 0x0 };
+    const cyg_uint8 tx_buf[2] = { MT25QL_CMD_WRSR, 0x0 };
 
     if (mt25ql_to_local_addr(dev, &local_base)) 
     {
         mt25ql_spi_wren(dev);
-        cyg_spi_transfer(spi_device, N25QXX_POLLED, 2, tx_buf, NULL);
+        cyg_spi_transfer(spi_device, MT25QL_POLLED, 2, tx_buf, NULL);
         retval = FLASH_ERR_OK;
     }
     return retval;
