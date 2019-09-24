@@ -302,6 +302,15 @@ package CYGPKG_DEVS_FLASH_SPI_N25QXX {
         Support for N25Qxx SPI flash devices from Micron."
 }
 
+package CYGPKG_DEVS_FLASH_SPI_MT25QL {
+        alias           { "MT25QL SPI Flash" flash_spi_mt25ql }
+        directory       devs/flash/spi/mt25ql
+        script          flash_mt25ql.cdl
+        hardware
+        description "
+        Support for MT25QL SPI flash devices from Micron."
+}
+
 package CYGPKG_DEVS_FLASH_SPI_FM25VXX {
         alias           { "FM25vxx SPI Fram" flash_spi_fm25vxx }
         directory       devs/flash/spi/fm25vxx
@@ -1049,6 +1058,16 @@ package CYGPKG_DEVS_KBD_MATRIX_AVR32  {
         description "
            This package contains hardware support for matrix keyboar
            ont AVR32 CPU."
+}
+
+package CYGPKG_DEVS_KBD_MATRIX_KINETIS  {
+	alias 		{ "Matrix keyboar support for Kinetis" kbd_matrix }
+	directory	devs/kbd/kinetis/matrix
+	script		kbd_matrix.cdl
+	hardware
+        description "
+           This package contains hardware support for matrix keyboar
+           ont Kinetis CPU."
 }
 
 package CYGPKG_DEVS_KBD_BUTTON_AVR32  {
@@ -7759,6 +7778,17 @@ package CYGPKG_DEVS_FRAMEBUF_ST7565 {
         ST7565 target."
 }
 
+package CYGPKG_DEVS_FRAMEBUF_UC1610 {
+    alias		{ "UC1610 target framebuffer device driver" devs_framebuf_uc1610 uc1610_framebuf_driver }
+    hardware
+    directory		devs/framebuf/uc1610
+    script		fb_uc1610.cdl
+    
+    description "
+        This package provides a framebuffer device driver for the
+        UC1610 target."
+}
+
 # --------------------------------------------------------------------------
 
 package CYGPKG_NET_LWIP {
@@ -8182,6 +8212,16 @@ package CYGPKG_HAL_CORTEXM_KINETIS_FRDM_K64F1024 {
         eCos on the NXP development system."
 }
 
+package CYGPKG_HAL_CORTEXM_KINETIS_SG_PMG3 {
+	alias		{ "SatisGeo PMG-3 HAL" hal_cortexm_pmg3 }
+	directory	hal/cortexm/kinetis/satisgeo_pmg3
+	script		hal_cortexm_kinetis_sg_pmg3.cdl
+	hardware
+        description "
+        The PMG-3 HAL package provides the support needed to run
+        eCos on the SatisGeo system."
+}
+
 target freescale_twr_k60n512 {
         alias { "Freescale Kinetis TWR-K60N512" twr_k60n512 }
         packages { CYGPKG_HAL_CORTEXM
@@ -8275,46 +8315,6 @@ target satisgeo_km_8_k22f512 {
                    CYGPKG_IO_FLASH
                    CYGPKG_DEVS_FLASH_SPI_FM25VXX
                    CYGPKG_IO_FILEIO
-				   CYGPKG_FS_LITTE
-                   CYGPKG_IO_FRAMEBUF
-                   CYGPKG_DEVS_FRAMEBUF_ST7565
-                   CYGPKG_IO_ADC
-                   CYGPKG_DEVS_ADC_KINETIS_ADC
-                   CYGPKG_IO_KBD
-                   CYGPKG_DEVS_KBD_BUTTON_KINETIS
-				   CYGPKG_IO_BEEPER
-                   CYGPKG_DEVS_BEEP_KINETIS
-                   CYGPKG_IO_EHCI
-                   CYGPKG_DEVS_EHCI_SERIAL_FREESCALE
-                   CYGPKG_BLUETOOTH_LIB
-                   CYGPKG_DEVS_USB_KINETIS
-                   CYGPKG_IO_USB_SLAVE_WINUSB 
-                   CYGPKG_IO_USB
-                   CYGPKG_IO_USB_SLAVE
-                 }
-
-        description "
-            The satisgeo_km_8_k22f512 target provides the packages needed
-            to run eCos on the Satisgeo KM-8 board."
-}
-
-target satisgeo_km_8_k22f512 {
-        alias { "Satisgeo km-8" km_8 }
-        packages { 
-                   CYGPKG_HAL_CORTEXM
-                   CYGPKG_HAL_CORTEXM_KINETIS
-                   CYGPKG_HAL_CORTEXM_KINETIS_KM_8_K22F512
-                   CYGPKG_HAL_FREESCALE_EDMA
-                   CYGPKG_IO_SERIAL_FREESCALE_UART_HDR
-                   CYGPKG_IO_SERIAL_FREESCALE_UART
-                   CYGPKG_DEVICES_WALLCLOCK_NXP_PCF2129A
-                   CYGPKG_IO_SPI
-                   CYGPKG_DEVS_SPI_FREESCALE_DSPI_GPIO
-                   CYGPKG_DEVS_FLASH_KINETIS
-                   CYGPKG_CRC
-                   CYGPKG_IO_FLASH
-                   CYGPKG_DEVS_FLASH_SPI_FM25VXX
-                   CYGPKG_IO_FILEIO
                    CYGPKG_IO_FRAMEBUF
                    CYGPKG_DEVS_FRAMEBUF_ST7565
                    CYGPKG_IO_KBD
@@ -8333,6 +8333,49 @@ target satisgeo_km_8_k22f512 {
             The satisgeo_km_8_k22f512 target provides the packages needed
             to run eCos on the Satisgeo KM-8 board."
 }
+
+target satisgeo_pmg3 {
+        alias { "SatisGeo PMG-3 Platform" sg_pmg3 }
+        packages { CYGPKG_HAL_CORTEXM
+                   CYGPKG_HAL_CORTEXM_KINETIS
+                   CYGPKG_HAL_CORTEXM_KINETIS_SG_PMG3
+                   CYGPKG_HAL_FREESCALE_EDMA
+                   CYGPKG_IO_SERIAL_FREESCALE_UART_HDR
+                   CYGPKG_IO_SERIAL_FREESCALE_UART
+                   CYGPKG_IO_SPI
+                   CYGPKG_DEVS_SPI_FREESCALE_DSPI
+                   CYGPKG_IO_I2C
+                   CYGPKG_DEVS_I2C_FREESCALE_I2C
+				   CYGPKG_DEVS_GPIO_KINETIS
+				   CYGPKG_IO_GPIO
+				   CYGPKG_DEVICES_WALLCLOCK_NXP_PCF2129A
+				   CYGPKG_CRC
+                   CYGPKG_IO_FLASH
+				   CYGPKG_DEVS_FLASH_KINETIS
+				   CYGPKG_DEVS_FLASH_SPI_FM25VXX
+                   CYGPKG_DEVS_FLASH_SPI_MT25QL
+				   CYGPKG_IO_FILEIO
+				   CYGPKG_FS_LITTE
+                   CYGPKG_IO_FRAMEBUF
+				   CYGPKG_DEVS_FRAMEBUF_UC1610
+                   CYGPKG_IO_ADC
+                   CYGPKG_DEVS_ADC_KINETIS_ADC
+                   CYGPKG_IO_KBD
+                   CYGPKG_DEVS_KBD_MATRIX_KINETIS
+				   CYGPKG_IO_BEEPER
+                   CYGPKG_DEVS_BEEP_KINETIS
+                   CYGPKG_IO_EHCI
+                   CYGPKG_DEVS_EHCI_SERIAL_FREESCALE
+                   CYGPKG_BLUETOOTH_LIB
+                   CYGPKG_DEVS_USB_KINETIS
+                   CYGPKG_IO_USB_SLAVE_WINUSB 
+                   CYGPKG_IO_USB
+                   CYGPKG_IO_USB_SLAVE
+                 }
+        description "The sg_pmg3 target provides the packages needed
+        to run eCos on the Freescale PMG-3 system."
+}
+
 
 target nxp_frdm_k64f1m0 {
         alias { "nxp Kinetis FRDM-K64F Platform" frdm_k64f1m0 }
