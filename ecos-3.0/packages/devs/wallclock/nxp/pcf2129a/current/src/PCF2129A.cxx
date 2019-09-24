@@ -137,7 +137,7 @@ pcf_write_registers(cyg_uint8 register_offset, cyg_uint8 cnt, cyg_uint8* regs)
     tx_data[0] = register_offset;
     cyg_i2c_transaction_begin(&cyg_i2c_wallclock_pcf2129a);
     cyg_i2c_transaction_tx(&cyg_i2c_wallclock_pcf2129a, true, tx_data, cnt + 1, true);
-    cyg_i2c_transaction_end(&cyg_i2c_wallclock_pcf2129a)
+	cyg_i2c_transaction_end(&cyg_i2c_wallclock_pcf2129a);
 #else
     tx_data[0] = PCF_SPI_WRITE | (register_offset&0x1f);
     cyg_spi_transaction_begin(&cyg_spi_wallclock_pcf2129a);
