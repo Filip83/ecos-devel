@@ -47,6 +47,21 @@
 #include <cyg/fs/lfs.h>
 #include <cyg/fs/lfs_util.h>
 
+//==========================================================================
+// Tracing support defines 
+
+#ifdef LFS_TRACE_FS_OP
+# define TFS 1
+#else
+# define TFS 0
+#endif
+
+#ifdef LFS_TRACE_FILE_OP
+# define TFO 1
+#else
+# define TFO 0
+#endif
+
 typedef struct lfs_data_s
 {
 	lfs_t _lfs; // _the actual filesystem
