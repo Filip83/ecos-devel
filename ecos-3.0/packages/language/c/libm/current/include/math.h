@@ -152,7 +152,9 @@ externC inline float _fun##f(float, int *);
 // Useful constants.
 
 #define MAXFLOAT    3.40282347e+38F
-
+#ifndef _M_LN2
+#define _M_LN2        0.693147180559945309417
+#endif
 #define M_E         2.7182818284590452354
 #define M_LOG2E     1.4426950408889634074
 #define M_LOG10E    0.43429448190325182765
@@ -413,9 +415,16 @@ CYGDCL_LIBM_IEEE_API_INLINE_FF(fmod)
 // Other standard functions
 
 #ifndef CYGSYM_LIBM_NO_XOPEN_SVID_NAMESPACE_POLLUTION
+
+#ifdef __cplusplus
+externC int matherr(struct __exception* e);
+#else
+externC int matherr(struct exception* e);
+#endif
+/*
 externC int
 matherr( struct exception * );    // User-overridable error handling - see
-                                  // <pkgconf/libm.h> for a discussion
+                                  // <pkgconf/libm.h> for a discussion*/
 externC int
 matherrf( struct exceptionf * );
 #endif
