@@ -21,6 +21,8 @@
 #include <string.h>
 #include <stdio.h>
 
+#ifdef CYGOPT_BLUETOOTH_ECOS_DEAMON_ENABLE
+
 channel_state_t l_channels[BLUETOOTH_EAMON_CHANNELS_COUNT] =
 {
 #if BLUETOOTH_EAMON_CHANNELS_COUNT > 0
@@ -1655,6 +1657,6 @@ btstack_control_t hardware_control =
 		cyg_cond_wait(&client_state.global_cond);
 	cyg_mutex_unlock(&client_state.global_mutex);
  }
-
+#endif
 
 

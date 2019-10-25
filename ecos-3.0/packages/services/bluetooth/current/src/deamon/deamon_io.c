@@ -22,6 +22,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#ifdef CYGOPT_BLUETOOTH_ECOS_DEAMON_ENABLE
 
 #define MAX_PENDING_CONNECTIONS 10
 
@@ -391,5 +392,6 @@ int queue_read(io_queue_buf_t* queue, uint8_t *data, int len)
 
 	return i;
 }
+#endif
 ////////////////////////////////////////////////////////////////////////////////
 
