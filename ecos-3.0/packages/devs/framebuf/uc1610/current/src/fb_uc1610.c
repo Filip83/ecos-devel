@@ -286,8 +286,11 @@ cyg_fb_colour cyg_uc1610_fb_read_pixel_fn(cyg_fb* fb, cyg_ucount16 x,
 void cyg_uc1610_fb_write_hline_fn(cyg_fb* fb, cyg_ucount16 x, cyg_ucount16 y, 
         cyg_ucount16 len, cyg_fb_colour colour)
 {
-    cyg_fb_linear_write_hline_2LE_inl(fb->fb_base, fb->fb_width,
-            x, y, len, colour);
+	for (; x < (x + len); x++)
+	{
+		cyg_fb_linear_write_pixel_2LE_inl(fb->fb_base, fb->fb_width,
+			x, y, colour);
+	}
 }
 
 void cyg_uc1610_fb_write_vline_fn(cyg_fb* fb, cyg_ucount16 x, cyg_ucount16 y, 
@@ -339,7 +342,7 @@ void  cyg_uc1610_fb_read_block_fn(cyg_fb* fb, cyg_ucount16 x, cyg_ucount16 y,
         {    
             cyg_fb_colour colour = cyg_fb_linear_read_pixel_2LE_inl
                     (fb->fb_base, fb->fb_width, x + bx, y + by);
-            cyg_fb_linear_write_2LE_inl(dest, stride, bx, by, colour);
+			cyg_fb_linear_write_pixel_2LE_inl(dest, stride, bx, by, colour);
         }
     }
 }
