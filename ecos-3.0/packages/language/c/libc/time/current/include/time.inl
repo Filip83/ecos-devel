@@ -541,12 +541,15 @@ mktime( struct tm *__timeptr )
     
     cyg_libc_time_normalize_structtm(__timeptr);
 
+    // the time is naw 64bit value
+#if 0
     // check if a time_t can hold the year. FIXME: we assume it is
     // 32 bits which gives the year range 1902 - 2038
     if ( (__timeptr->tm_year <= 2) || (__timeptr->tm_year >= 138) ) {
         CYG_REPORT_RETVAL(-1);
         return (time_t)-1;
     }
+#endif
 
     // fill in the rest of the struct tm i.e. tm_wday and tm_yday
     
@@ -588,7 +591,7 @@ mktime( struct tm *__timeptr )
     // now finally work out return value
 
     _ret = __timeptr->tm_sec + 60*__timeptr->tm_min + 60*60*__timeptr->tm_hour;
-    _ret += _daycount*24*60*60;
+    _ret += (time_t)_daycount*24ull*60ull*60ull;
     
     CYG_REPORT_RETVAL(_ret);
 
