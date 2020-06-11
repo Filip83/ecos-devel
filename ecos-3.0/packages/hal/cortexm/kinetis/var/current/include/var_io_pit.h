@@ -55,7 +55,7 @@ extern "C" {
 #endif
 
 /** PIT - Register Layout Typedef */
-typedef struct cyghwr_hal_kinteis_pit_s{
+typedef volatile struct cyghwr_hal_kinteis_pit_s{
   cyg_uint32 MCR;                               /**< PIT Module Control Register, offset: 0x0 */
   cyg_uint8 RESERVED_0[252];
   struct {                                         /* offset: 0x100, array step: 0x10 */

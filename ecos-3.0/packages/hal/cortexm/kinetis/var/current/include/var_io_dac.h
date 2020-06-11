@@ -68,7 +68,7 @@
 #define DAC_IRQS     
 
 /** DAC - Register Layout Typedef */
-typedef struct cyghwr_hal_kinteis_dac_s {
+typedef volatile struct cyghwr_hal_kinteis_dac_s {
 	struct {                                         /* offset: 0x0, array step: 0x2 */
 		cyg_uint8 DATL;                               /**< DAC Data Low Register, array offset: 0x0, array step: 0x2 */
 		cyg_uint8 DATH;                               /**< DAC Data High Register, array offset: 0x1, array step: 0x2 */

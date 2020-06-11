@@ -142,7 +142,7 @@
 	*/
 
 	/** PDB - Register Layout Typedef */
-typedef struct cyghwr_hal_kinteis_pdb_s{
+typedef volatile struct cyghwr_hal_kinteis_pdb_s{
 	cyg_uint32 SC;                                /**< Status and Control register, offset: 0x0 */
 	cyg_uint32 MOD;                               /**< Modulus register, offset: 0x4 */
 	cyg_uint32 CNT;                               /**< Counter register, offset: 0x8 */

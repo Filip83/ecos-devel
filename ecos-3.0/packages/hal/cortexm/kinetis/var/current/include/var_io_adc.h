@@ -69,7 +69,7 @@
 
 
 /** ADC - Register Layout Typedef */
-typedef struct cyghwr_hal_kinteis_adc_s {
+typedef volatile struct cyghwr_hal_kinteis_adc_s {
 	cyg_uint32 SC1[2];                            /**< ADC Status and Control Registers 1, array offset: 0x0, array step: 0x4 */
 	cyg_uint32 CFG1;                              /**< ADC Configuration Register 1, offset: 0x8 */
 	cyg_uint32 CFG2;                              /**< ADC Configuration Register 2, offset: 0xC */

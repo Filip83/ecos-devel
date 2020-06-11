@@ -18,7 +18,7 @@
 extern "C" {
 #endif
 /** SMC - Register Layout Typedef */
-typedef struct {
+typedef volatile struct {
   volatile cyg_uint8 PMPROT;                             /**< Power Mode Protection register, offset: 0x0 */
   volatile cyg_uint8 PMCTRL;                             /**< Power Mode Control register, offset: 0x1 */
   volatile cyg_uint8 STOPCTRL;                           /**< Stop Control Register, offset: 0x2 */

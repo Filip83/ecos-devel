@@ -1220,6 +1220,10 @@ typedef volatile struct cyghwr_hal_kinetis_mpu_s {
 // DAC
 #include <cyg/hal/var_io_dac.h>
 
+//---------------------------------------------------------------------------
+// SCB System block 
+#include <cyg/hal/var_io_scb_cm4.h>
+
 //=============================================================================
 // DEVS:
 // Following macros may also be, and usually are borrwed by some device drivers.

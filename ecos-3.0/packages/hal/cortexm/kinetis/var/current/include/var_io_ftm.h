@@ -316,7 +316,7 @@
  */
 
 /** FTM - Register Layout Typedef */
-typedef struct cyghwr_hal_kinteis_ftm_s{
+typedef volatile struct cyghwr_hal_kinteis_ftm_s{
   cyg_uint32 SC;                                /**< Status And Control, offset: 0x0 */
   cyg_uint32 CNT;                               /**< Counter, offset: 0x4 */
   cyg_uint32 MOD;                               /**< Modulo, offset: 0x8 */
