@@ -1295,24 +1295,6 @@ package CYGPKG_IO_SERIAL_AVR32_UC3C {
     description       "Atmel AVR32UC3C on-chip serial device driver."
 }
 
-package CYGPKG_IO_EHCI_SERIAL_AVR32_UC3C {
-    alias 	      { "Atmel AVR32UC3C ehci serial device driver"
-                        devs_ehci_avr32_uc3c avr32_ehci_driver }
-    hardware
-    directory	      devs/ehci/avr32/uc3c
-    script	      avr32_ehci_serial.cdl	
-    description       "Atmel AVR32UC3C on-chip serial device driver."
-}
-
-package CYGPKG_DEVS_EHCI_SERIAL_FREESCALE {
-    alias 	      { "Frescale Kinetis ehci serial device driver"
-                        devs_ehci_kinetis frescale_ehci_driver }
-    hardware
-    directory	      devs/ehci/freescale/uart
-    script	      uart_ehci_serial.cdl	
-    description       "Frescale Kinetis ehci on-chip serial device driver."
-}
-
 package CYGPKG_IO_SERIAL_ARM_LPC2XXX {
     alias             { "ARM LPC2XXX serial device drivers"
                         devs_serial_arm_lpc2xxx lpc2xxx_serial_driver }
@@ -2931,15 +2913,6 @@ package CYGPKG_IO_DAC {
            dac devices."
 }
 
-package CYGPKG_IO_EHCI {
-	alias 		{ "Generic EHCI support" ehci io_ehci }
-	directory	io/ehci
-	script		io_ehci.cdl
-        description "
-           This package contains drivers for basic I/O services on
-           ehci devices."
-}
-
 package CYGPKG_DEVS_AVR32_SPECTROMETER_FPGA {
     alias           { "Spectrometer FPGA driver for AVR32UC3C" }
     hardware
@@ -3284,12 +3257,6 @@ package CYGPKG_HAL_SH_SH7750_DREAMCAST {
            eCos on SEGA Dreamcast."
 }
 
-package CYGPKG_BLUETOOTH_LIB {
-	alias 		{ "Bluetooth" bt }
-	directory	services/bluetooth
-	script		bluetooth.cdl
-    description     "Bluetooth stack and deamon."
-}
 
 # --------------------------------------------------------------------------
 # ARM packages
@@ -7233,7 +7200,6 @@ target KM_8_BL {
 	packages { 
             CYGPKG_HAL_AVR32
             CYGPKG_HAL_AVR32_KM_8 
-            CYGPKG_IO_EHCI_SERIAL_AVR32_UC3C
             CYGPKG_IO_FLASH
             CYGPKG_DEVICES_WALLCLOCK_AVR32_AST
 
@@ -8321,7 +8287,6 @@ target satisgeo_km_8_k22f512 {
                    CYGPKG_DEVS_KBD_BUTTON_KINETIS
                    CYGPKG_IO_BEEPER
                    CYGPKG_DEVS_BEEP_KINETIS
-                   CYGPKG_DEVS_EHCI_SERIAL_FREESCALE
                    CYGPKG_DEVS_USB_KINETIS
                    CYGPKG_IO_USB_SLAVE_WINUSB 
                    CYGPKG_IO_USB
@@ -8365,9 +8330,6 @@ target satisgeo_pmg3 {
                    CYGPKG_DEVS_KBD_MATRIX_KINETIS
 				   CYGPKG_IO_BEEPER
                    CYGPKG_DEVS_BEEP_KINETIS
-                   CYGPKG_IO_EHCI
-                   CYGPKG_DEVS_EHCI_SERIAL_FREESCALE
-                   CYGPKG_BLUETOOTH_LIB
                    CYGPKG_DEVS_USB_KINETIS
                    CYGPKG_IO_USB_SLAVE_WINUSB 
                    CYGPKG_IO_USB
