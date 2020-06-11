@@ -619,7 +619,7 @@ CYG_FB_LINEAR_INLINE_FN(void,
     cyg_uint8*  _ptr8_  = ((cyg_uint8*)_fbaddr_) + (_stride_ * (_y_ >> 2)) + _x_;
     cyg_uint8   _shift_ = (_y_ & 0x03) << 1;
 
-    *_ptr8_ = (*_ptr8_ & ~(0x03 << _shift_)) | (_colour_ << _shift_);
+    *_ptr8_ = (*_ptr8_ & ~(0x03 << _shift_)) | ((_colour_&0x03) << _shift_);
 }
 
 CYG_FB_LINEAR_INLINE_FN(void,
@@ -629,7 +629,7 @@ CYG_FB_LINEAR_INLINE_FN(void,
     cyg_uint8*  _ptr8_  = ((cyg_uint8*)_fbaddr_) + (_stride_ * (_y_ >> 2)) + _x_;
     cyg_uint8   _shift_ = 6 - ((_y_ & 0x03) << 1);
 
-    *_ptr8_ = (*_ptr8_ & ~(0x03 << _shift_)) | (_colour_ << _shift_);
+    *_ptr8_ = (*_ptr8_ & ~(0x03 << _shift_)) | ((_colour_ & 0x03) << _shift_);
 }
 
 CYG_FB_LINEAR_INLINE_FN(cyg_fb_colour,
@@ -659,7 +659,7 @@ CYG_FB_LINEAR_INLINE_FN(void,
     cyg_uint8*  _ptr8_  = ((cyg_uint8*)_fbaddr_) + (_stride_ * (_y_ >> 2)) + _x_;
     cyg_uint8   _shift_ = (_y_ & 0x03) << 1;
     cyg_uint8   _mask_  = ~(0x03 << _shift_);
-    _colour_    <<= _shift_;
+    _colour_    = (_colour_ & 0x03) << _shift_;
 
     for ( ; _len_; _len_--) {
         *_ptr8_  = (*_ptr8_ & _mask_) | _colour_;
@@ -674,7 +674,7 @@ CYG_FB_LINEAR_INLINE_FN(void,
     cyg_uint8*  _ptr8_  = ((cyg_uint8*)_fbaddr_) + (_stride_ * (_y_ >> 2)) + _x_;
     cyg_uint8   _shift_ = 6 - ((_y_ & 0x03) << 1);
     cyg_uint8   _mask_  = ~(0x03 << _shift_);
-    _colour_    <<= _shift_;
+    _colour_    = (_colour_ & 0x03) << _shift_;
 
     for ( ; _len_; _len_--) {
         *_ptr8_  = (*_ptr8_ & _mask_) | _colour_;
