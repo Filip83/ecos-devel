@@ -27,6 +27,8 @@
 #include <cyg/io/gpio/PeripheralPins.h>
 
 #define MAX_FADC        6000000
+// TODO Add as ecos configuration option
+#define ADC_MUXSEL_OPTION 0
 
 #if DEVICE_ANALOGIN
 
@@ -72,7 +74,7 @@ void analogin_init(analogin_t *obj, PinName pin) {
                | ADC_CFG1_MODE(3)       // (16)bits Resolution
                | ADC_CFG1_ADICLK(clkdiv >> 2);    // Input Clock
 
-    ADC->CFG2 = ADC_CFG2_MUXSEL_MASK   // ADxxb or ADxxa channels
+    ADC->CFG2 = ADC_CFG2_MUXSEL(ADC_MUXSEL_OPTION)   // ADxxb or ADxxa channels
                | ADC_CFG2_ADHSC_MASK    // High-Speed Configuration
                | ADC_CFG2_ADLSTS(0);    // Long Sample Time Select
 
