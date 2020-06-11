@@ -358,11 +358,11 @@ hal_start_main_clock(void)
     MCG_WAIT_WHILE((mcg_p->status & CYGHWR_HAL_KINETIS_MCG_S_CLKST_M) !=
             CYGHWR_HAL_KINETIS_MCG_S_CLKST_INT);
 #endif
-#if 0
+#if 1
     
     sim_p->clk_div2 = 0;
     sim_p->sopt2 |=  
-                    CYGHWR_HAL_KINETIS_SIM_SOPT2_USBSRC_M  | (7 << 5);         
+                    CYGHWR_HAL_KINETIS_SIM_SOPT2_USBSRC_M  | (3l << 16);         
 #endif   
 }
 
