@@ -29,7 +29,7 @@
  * timeout.
  * \todo In future it will be nice to have usb io with timeouts.
  */
-#define CYGOPT_IO_USB_WINUSB_SLAVE_FILE_IO 1
+//#define CYGOPT_IO_USB_WINUSB_SLAVE_FILE_IO 1
 #if CYGOPT_IO_USB_WINUSB_SLAVE_FILE_IO == 1
 Cyg_ErrNo cyg_usbs_write(cyg_io_handle_t handle, const void *buf, cyg_uint32 *len);
 Cyg_ErrNo cyg_usbs_read(cyg_io_handle_t handle, void *buf, cyg_uint32 *len);
