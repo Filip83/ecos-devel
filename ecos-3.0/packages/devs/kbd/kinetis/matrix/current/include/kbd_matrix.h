@@ -94,10 +94,11 @@ typedef cyg_uint8 cyg_kbd_key_t;
 */
 typedef struct cyg_kbd_kinetis_s
 {
+    cyg_uint32        scan_interval;    /**< Interval in which keys are scaned. */
     cyg_uint32        repeat_interval;	/**< Interval between keyboard scans. */ 
     cyg_uint32	      push_cnt;		/**< Interval counter to count start of scan interval. */ 
-    cyg_uint16        last_scan_code;	/**< Latest scan code. */ 
-    cyg_uint8         scan_line;	/**< Current scanned line/column. */ 
+    cyg_uint32        last_scan_code;	/**< Latest scan code. */ 
+    cyg_uint32         scan_line;	/**< Current scanned line/column. */ 
     cyg_uint32	      scan_code;	/**< Current scan code. */ 
     cyg_bool          is_open;		/**< True if matrix keyboard is initialized. */
     cyg_bool          enabled;          /**< Enable/Disable key messages. */
@@ -107,7 +108,7 @@ typedef struct cyg_kbd_kinetis_s
     cyg_uint32        interrupt_prio;	    /**< Keyboard interrupts priority. */
     cyg_pins_isr_t    kb_pins_isr[CYGNUM_DEVS_KBD_MATRIX_ISR_PINS]; /**< Keyboard input port GPIO interrupt */
     kbd_call_back_t   kbd_call_back;
-#ifdef CYGNUM_DEVS_KBD_MATRIX_CALLBACK_MODE
+#ifndef CYGNUM_DEVS_KBD_MATRIX_CALLBACK_MODE
     cyg_kbd_key_t     key_buffer[CYGNUM_DEVS_KBD_MATRIX_EVENT_BUFFER_SIZE];
     cyg_uint16        num_events;
     cyg_uint16        event_put;
@@ -115,7 +116,7 @@ typedef struct cyg_kbd_kinetis_s
     cyg_bool          kbd_select_active;
 #endif
     cyg_selinfo       kbd_select_info; 
-	cyghwr_hal_kinteis_pit_t* ptimer;
+	volatile cyghwr_hal_kinteis_pit_t* ptimer;
 }cyg_kbd_kinetis_t;
 
 
