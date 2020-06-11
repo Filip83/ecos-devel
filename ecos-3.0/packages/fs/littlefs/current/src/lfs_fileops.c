@@ -298,7 +298,7 @@ static int lfs_bd_sync(const struct lfs_config *c)
 // lfs_getinfo()
 // Count used blocks
 
-#if defined(CYGSEM_FILEIO_BLOCK_USAGE)
+#if defined(CYGSEM_FILEIO_INFO_DISK_USAGE)
 static int lfs_statvfs_count(void *p, lfs_block_t b)
 {
     *(lfs_size_t *)p += 1;
@@ -323,10 +323,10 @@ _lfs_getinfo(cyg_mtab_entry *mte,
 
     switch( key )
     {
-#if defined(CYGSEM_FILEIO_BLOCK_USAGE)
-      case FS_INFO_BLOCK_USAGE: {
-      lfs_size_t in_use = 0
-	  struct cyg_fs_block_usage *usage = (struct cyg_fs_block_usage *) buf;
+#if defined(CYGSEM_FILEIO_INFO_DISK_USAGE)
+      case FS_INFO_DISK_USAGE: {
+      lfs_size_t in_use = 0;
+	  struct cyg_fs_disk_usage*usage = (struct cyg_fs_block_usage *) buf;
       lfs_data_t  *_lfs_data = (lfs_data_t *)mte->data;
 
 	  err = lfs_traverse(&_lfs_data->_lfs, lfs_statvfs_count, &in_use);
@@ -400,27 +400,50 @@ _lfs_mount(cyg_fstab_entry *fste, cyg_mtab_entry *mte)
 	cyg_flash_info_t info;
 	int err;
 	
-	cyg_flash_get_info_addr(lfs_data._lfs_flash_base, &info);
-
-	memset(&lfs_data._config, 0, sizeof(lfs_data._config));
-	lfs_data._config.context = &lfs_data._lfs_flash_base;
-	lfs_data._config.read = lfs_bd_read;
-	lfs_data._config.prog = lfs_bd_prog;
-	lfs_data._config.erase = lfs_bd_erase;
-	lfs_data._config.sync = lfs_bd_sync;
-
-	lfs_data._config.read_size = lfs_data._read_size;
-	lfs_data._config.prog_size = lfs_data._prog_size;
-
-	if(lfs_data._block_size == 0)
+	if (mte->devname == NULL)
 	{
-		lfs_data._config.block_size = info.block_info[0].block_size;
-		lfs_data._config.block_count = info.block_info[0].blocks;
+		cyg_flash_get_info_addr(lfs_data._lfs_flash_base, &info);
+
+		memset(&lfs_data._config, 0, sizeof(lfs_data._config));
+		lfs_data._config.context = &lfs_data._lfs_flash_base;
+		lfs_data._config.read = lfs_bd_read;
+		lfs_data._config.prog = lfs_bd_prog;
+		lfs_data._config.erase = lfs_bd_erase;
+		lfs_data._config.sync = lfs_bd_sync;
+
+		lfs_data._config.read_size = lfs_data._read_size;
+		lfs_data._config.prog_size = lfs_data._prog_size;
+
+		if (lfs_data._block_size == 0)
+		{
+			lfs_data._config.block_size = info.block_info[0].block_size;
+			lfs_data._config.block_count = info.block_info[0].blocks;
+		}
+		else
+		{
+			lfs_data._config.block_size = lfs_data._block_size;
+			lfs_data._config.block_count = lfs_data._block_count;
+		}
 	}
 	else
 	{
-		lfs_data._config.block_size =  lfs_data._block_size;
-		lfs_data._config.block_count = lfs_data._block_count;
+		lfs_data._lfs_flash_base = strtol(mte->name, NULL, 16);
+
+		cyg_flash_get_info_addr(lfs_data._lfs_flash_base, &info);
+
+		memset(&lfs_data._config, 0, sizeof(lfs_data._config));
+		lfs_data._config.context = &lfs_data._lfs_flash_base;
+		lfs_data._config.read = lfs_bd_read;
+		lfs_data._config.prog = lfs_bd_prog;
+		lfs_data._config.erase = lfs_bd_erase;
+		lfs_data._config.sync = lfs_bd_sync;
+
+		lfs_data._config.read_size = lfs_data._read_size;
+		lfs_data._config.prog_size = lfs_data._prog_size;
+
+		lfs_data._config.block_size = info.block_info[0].block_size;
+		lfs_data._config.block_count = info.block_info[0].blocks;
+
 	}
 
 	if(lfs_data._lookahead == 0)
