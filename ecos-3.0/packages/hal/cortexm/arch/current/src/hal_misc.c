@@ -122,6 +122,18 @@ volatile CYG_ADDRWORD  hal_interrupt_data    [CYGNUM_HAL_ISR_COUNT];
 volatile CYG_ADDRESS   hal_interrupt_objects [CYGNUM_HAL_ISR_COUNT];
 
 //==========================================================================
+// Boot loader swith to application function
+
+static void hal_switch_program(void)
+{
+    int* program_phrase = 0x10000;
+    int* main_app_address = 0x11004;
+    void (*fun_ptr)(void) = *main_app_address;
+    if (*program_phrase == 0xa5a55a5a)
+        (*fun_ptr)();
+}
+
+//==========================================================================
 // Main entry point
 //
 // Enter here from reset via slot 1 of VSR table. The stack pointer is
@@ -136,7 +148,9 @@ void hal_reset_vsr( void )
     // usually supplied by the platform HAL. Calls to
     // hal_variant_init() and hal_platform_init() later will perform
     // the main initialization.
-
+#ifdef BOOT_LOADER
+    hal_switch_program();
+#endif
     hal_system_init();
 #if defined CYGHWR_HAL_CORTEXM_FPU
     // Floating Point Unit is disabled after reset.
