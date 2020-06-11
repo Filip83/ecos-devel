@@ -69,6 +69,12 @@
 
 //#include <cyg/io/spi_freescale_dspi.h>
 
+#define CYG_FB_FLAGS1_FILL_COPY     0
+#define CYG_FB_FLAGS1_FILL_OR       1
+#define CYG_FB_FLAGS1_FILL_XOR      2
+#define CYG_FB_FLAGS1_FILL_AND      3
+#define CYG_FB_FLAGS1_FILL_COPY_NEG 4
+
 
 externC cyg_spi_device lcd_spi_device;
 
@@ -79,8 +85,14 @@ cyg_uc1610_fb_driver_t cyg_uc1610_fb_driver =
     .contrast    = 0x5f, // BIAS POT
 };
 
+#ifndef CYGPKG_KERNEL
+# define UC1610_POLLED false
+#else
+# define UC1610_POLLED true
+#endif
+
 // A default area of memory for the framebuffer.
-static cyg_uint8 cyg_uc1610_fb_default_base[160 *124*2];
+static cyg_uint8 cyg_uc1610_fb_default_base[160 *124*2/8];
 
 // Switch on a framebuffer device. This may get called multiple
 // times, e.g. when switching between different screen modes.
@@ -94,28 +106,22 @@ cyg_uc1610_fb_on(struct cyg_fb* fb)
     
 	tx_data[0] = LCD_SET_COM_END;
 	tx_data[1] = 0x67;
-	tx_data[2] = LCD_SET_MAPPING_CONTROL | 0x4;
+    tx_data[2] = LCD_SET_MAPPING_CONTROL;
 	tx_data[3] = LCD_SET_SCROLL_LINE_LSB;
 	tx_data[4] = LCD_SET_SCROLL_LINE_MSB;
 	tx_data[5] = LCD_SET_PANEL_LOADING | LCD_PANEL_LOADING_28_39nF;
 	tx_data[6] = LCD_SET_BIAS_RATIO | LCD_BIAS_RATIO_12;
 	tx_data[7] = LCD_SET_BIAS_POT;
 	tx_data[8] = 0x5f;
-	tx_data[9] = LCD_SET_RAM_ADDR_CONTROL | 0x03;
-	tx_data[10] = LCD_SET_START_PAGE_ADDR;
-	tx_data[11] = 0x00;
-	tx_data[12] = LCD_SET_ENDING_PAGE_ADDR;
-	tx_data[13] = 0x19;
-	tx_data[14] = LCD_ENABLE_WND_PROGRAM | 0x01;
-	tx_data[15] = LCD_SET_DISPLAY_ENABLE | 0x01;
-	tx_data[16] = LCD_SET_COL_ADDR_LSB;
-	tx_data[17] = LCD_SET_COL_ADDR_MSB;
-	tx_data[18] = LCD_SET_PAGE_ADDR;
-   
+	tx_data[9] = LCD_SET_RAM_ADDR_CONTROL | 0x01;
+	tx_data[10] = LCD_SET_DISPLAY_ENABLE | 0x01;
+    tx_data[11] = LCD_SET_INVERS_DISPLAY | 0x01;
+
+    CYGNUM_DEVS_FRAMEBUF_RESETPIN_HIGH;
     CYGNUM_DEVS_FRAMEBUF_ST7565_A0_PIN_LOW;
-    
+    cyg_thread_delay(10);
     cyg_spi_transaction_begin((cyg_spi_device*)&lcd_spi_device);
-    cyg_spi_transaction_transfer((cyg_spi_device*)&lcd_spi_device, true, 19, tx_data, NULL, true);
+    cyg_spi_transaction_transfer((cyg_spi_device*)&lcd_spi_device, UC1610_POLLED, 12, tx_data, NULL, true);
     cyg_spi_transaction_end((cyg_spi_device*)&lcd_spi_device);
     return 0;
 }
@@ -235,7 +241,7 @@ cyg_uc1610_fb_ioctl(struct cyg_fb* fb, cyg_ucount16 key, void* data, size_t* len
 
             cyg_spi_transaction_begin((cyg_spi_device*)&lcd_spi_device);
             cyg_spi_transaction_transfer((cyg_spi_device*)&lcd_spi_device, 
-                    true, 2, tx_data, NULL, true);
+                UC1610_POLLED, 2, tx_data, NULL, true);
             cyg_spi_transaction_end((cyg_spi_device*)&lcd_spi_device);
             result = 0;
         }
@@ -251,15 +257,24 @@ cyg_uc1610_fb_ioctl(struct cyg_fb* fb, cyg_ucount16 key, void* data, size_t* len
 void
 cyg_uc1610_fb_synch(struct cyg_fb* fb, cyg_ucount16 when)
 {
+    cyg_uint8 tx_data[20];
 #if defined(LCD_DIAG_LEVEL) && LCD_DIAG_LEVEL > 0
     diag_printf("fb UC1610 draw\n");
 #endif
-    
+    cyg_spi_transaction_begin((cyg_spi_device*)&lcd_spi_device);
+    CYGNUM_DEVS_FRAMEBUF_ST7565_A0_PIN_LOW;
+
+    tx_data[0] = LCD_SET_COL_ADDR_LSB;
+    tx_data[1] = LCD_SET_COL_ADDR_MSB;
+    tx_data[2] = LCD_SET_PAGE_ADDR;
+
+    cyg_spi_transaction_transfer((cyg_spi_device*)&lcd_spi_device, UC1610_POLLED,
+        3,tx_data, NULL, true);
+
 	CYGNUM_DEVS_FRAMEBUF_ST7565_A0_PIN_HIGH;
 	// Write data to display
-    cyg_spi_transaction_begin((cyg_spi_device*)&lcd_spi_device);
-
-	cyg_spi_transaction_transfer((cyg_spi_device*)& lcd_spi_device, true,
+    
+	cyg_spi_transaction_transfer((cyg_spi_device*)& lcd_spi_device, UC1610_POLLED,
 		sizeof(cyg_uc1610_fb_default_base),
 		((cyg_uint8*)fb->fb_base), NULL, true);
 
@@ -272,7 +287,7 @@ void cyg_uc1610_fb_write_pixel_fn(cyg_fb* fb, cyg_ucount16 x, cyg_ucount16 y,
 {
     if(x < fb->fb_width && y < fb->fb_height)
     {
-	cyg_fb_linear_write_pixel_2LE_inl(fb->fb_base, fb->fb_width, 
+        cyg_fb_linear_write_pixel_paged_2LE_inl(fb->fb_base, fb->fb_stride,
                 x, y, colour);
     }
 }
@@ -280,24 +295,26 @@ void cyg_uc1610_fb_write_pixel_fn(cyg_fb* fb, cyg_ucount16 x, cyg_ucount16 y,
 cyg_fb_colour cyg_uc1610_fb_read_pixel_fn(cyg_fb* fb, cyg_ucount16 x,
         cyg_ucount16 y)
 {
-    return cyg_fb_linear_read_pixel_2LE_inl(fb->fb_base, fb->fb_width, x, y);
+    return cyg_fb_linear_read_pixel_paged_2LE_inl(fb->fb_base, fb->fb_stride, x, y);
 }
 
 void cyg_uc1610_fb_write_hline_fn(cyg_fb* fb, cyg_ucount16 x, cyg_ucount16 y, 
         cyg_ucount16 len, cyg_fb_colour colour)
 {
-	for (; x < (x + len); x++)
-	{
-		cyg_fb_linear_write_pixel_2LE_inl(fb->fb_base, fb->fb_width,
-			x, y, colour);
-	}
+    cyg_fb_linear_write_hline_paged_2LE_inl(fb->fb_base, fb->fb_stride,
+        x, y, len, colour);
+	
 }
 
 void cyg_uc1610_fb_write_vline_fn(cyg_fb* fb, cyg_ucount16 x, cyg_ucount16 y, 
         cyg_ucount16 len, cyg_fb_colour colour)
 {   
-	cyg_fb_linear_write_vline_2LE_inl(fb->fb_base, fb->fb_width,
-		x, y, len, colour);
+    cyg_ucount16 _y = y;
+    for (; _y < (y + len); _y++)
+    {
+        cyg_fb_linear_write_pixel_paged_2LE_inl(fb->fb_base, fb->fb_stride,
+            x, _y, colour);
+    }
 }
 
 void cyg_uc1610_fb_fill_block_fn(cyg_fb* fb, cyg_ucount16 x, cyg_ucount16 y, 
@@ -305,12 +322,65 @@ void cyg_uc1610_fb_fill_block_fn(cyg_fb* fb, cyg_ucount16 x, cyg_ucount16 y,
 {
     int h,_y;
 
-    for(; width && x < fb->fb_width; x++, width--) 
+    if (fb->fb_flags1 == CYG_FB_FLAGS1_FILL_COPY)
     {
-        for(h = height, _y = y; h && y < fb->fb_height; _y++, h--)
+        for (; width && x < fb->fb_width; x++, width--)
         {
-			cyg_fb_linear_write_pixel_2LE_inl(fb->fb_base, fb->fb_width,
-				x, _y, colour);
+            for (h = height, _y = y; h && y < fb->fb_height; _y++, h--)
+            {
+                cyg_fb_linear_write_pixel_paged_2LE_inl(fb->fb_base, fb->fb_stride,
+                    x, _y, colour);
+            }
+        }
+    }
+    else if (fb->fb_flags1 == CYG_FB_FLAGS1_FILL_COPY_NEG)
+    {
+        for (; width && x < fb->fb_width; x++, width--)
+        {
+            for (h = height, _y = y; h && y < fb->fb_height; _y++, h--)
+            {
+                cyg_fb_linear_write_pixel_paged_2LE_inl(fb->fb_base, fb->fb_stride,
+                    x, _y, ~colour);
+            }
+        }
+    }
+    else if (fb->fb_flags1 == CYG_FB_FLAGS1_FILL_OR)
+    {
+        for (; width && x < fb->fb_width; x++, width--)
+        {
+            for (h = height, _y = y; h && y < fb->fb_height; _y++, h--)
+            {
+                cyg_fb_colour cur_pixel = cyg_fb_linear_read_pixel_paged_2BE_inl
+                    (fb->fb_base, fb->fb_stride, x, _y);
+                cyg_fb_linear_write_pixel_paged_2LE_inl(fb->fb_base, fb->fb_stride,
+                    x, _y, cur_pixel | colour);
+            }
+        }
+    }
+    else if (fb->fb_flags1 == CYG_FB_FLAGS1_FILL_XOR)
+    {
+        for (; width && x < fb->fb_width; x++, width--)
+        {
+            for (h = height, _y = y; h && y < fb->fb_height; _y++, h--)
+            {
+                cyg_fb_colour cur_pixel = cyg_fb_linear_read_pixel_paged_2LE_inl
+                (fb->fb_base, fb->fb_stride, x, _y);
+                cyg_fb_linear_write_pixel_paged_2LE_inl(fb->fb_base, fb->fb_stride,
+                    x, _y, cur_pixel ^ colour);
+            }
+        }
+    }
+    else
+    {
+        for (; width && x < fb->fb_width; x++, width--)
+        {
+            for (h = height, _y = y; h && y < fb->fb_height; _y++, h--)
+            {
+                cyg_fb_colour cur_pixel = cyg_fb_linear_read_pixel_paged_2BE_inl
+                (fb->fb_base, fb->fb_stride, x, _y);
+                cyg_fb_linear_write_pixel_paged_2LE_inl(fb->fb_base, fb->fb_stride,
+                    x, _y, cur_pixel & colour);
+            }
         }
     }
 }
@@ -325,7 +395,7 @@ void cyg_uc1610_fb_write_block_fn(cyg_fb* fb, cyg_ucount16 x, cyg_ucount16 y,
         for(by = 0, h = height; h && (y + by) < fb->fb_height; by++, h--)
         {    
             cyg_fb_colour colour = cyg_fb_linear_read_pixel_1BE_inl((void*)source,stride,bx,by);
-            cyg_fb_linear_write_pixel_2LE_inl(fb->fb_base, fb->fb_width, 
+            cyg_fb_linear_write_pixel_paged_2LE_inl(fb->fb_base, fb->fb_stride,
                     x + bx, y + by, colour | colour << 1);
         }
     }
@@ -340,9 +410,9 @@ void  cyg_uc1610_fb_read_block_fn(cyg_fb* fb, cyg_ucount16 x, cyg_ucount16 y,
     {
         for(by = 0, h = height; h && (y + by) < fb->fb_height; by++, h--)
         {    
-            cyg_fb_colour colour = cyg_fb_linear_read_pixel_2LE_inl
-                    (fb->fb_base, fb->fb_width, x + bx, y + by);
-			cyg_fb_linear_write_pixel_2LE_inl(dest, stride, bx, by, colour);
+            cyg_fb_colour colour = cyg_fb_linear_read_pixel_paged_2BE_inl
+                    (fb->fb_base, fb->fb_stride, x + bx, y + by);
+            cyg_fb_linear_write_pixel_paged_2LE_inl(dest, stride, bx, by, colour);
         }
     }
 }
@@ -356,10 +426,10 @@ void cyg_uc1610_fb_move_block_fn(cyg_fb* fb, cyg_ucount16 x, cyg_ucount16 y,
     {
         for(h = height; h && new_y < fb->fb_height; y++, new_y++, h--)
         {    
-            cyg_fb_colour colour = cyg_fb_linear_read_pixel_2LE_inl
-                    (fb->fb_base, fb->fb_width, x, y);
-            cyg_fb_linear_write_pixel_2LE_inl
-                    (fb->fb_base, fb->fb_width, new_x, new_y, colour);
+            cyg_fb_colour colour = cyg_fb_linear_read_pixel_paged_2BE_inl
+                    (fb->fb_base, fb->fb_stride, x, y);
+            cyg_fb_linear_write_pixel_paged_2LE_inl
+                    (fb->fb_base, fb->fb_stride, new_x, new_y, colour);
         }
     }
 }
@@ -377,7 +447,7 @@ CYG_FB_FRAMEBUFFER(cyg_fb_fb0,
                    0,
                    0,
                    cyg_uc1610_fb_default_base,
-                   CYGNUM_DEVS_FRAMEBUF_UC1610_FB_STRIDE,
+                   CYGNUM_DEVS_FRAMEBUF_UC1610_FB_WIDTH,
                    CYG_FB_FLAGS0_LE | CYG_FB_FLAGS0_DOUBLE_BUFFER | CYG_FB_FLAGS0_BACKLIGHT,
                    0,
                    0,
