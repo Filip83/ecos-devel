@@ -124,6 +124,7 @@ static int kinetis_flash_erase_sector (struct cyg_flash_dev* dev,
                                 cyg_flashaddr_t block_base)
 {
     cyg_uint32 cachestate;
+    cyg_uint32 isrstate;
     cyghwr_hal_kinetis_flash_t* flashRegister = CYGHWR_HAL_KINETIS_FLASH_P;
     int returnValue = CYG_FLASH_ERR_OK;
 
@@ -143,7 +144,9 @@ static int kinetis_flash_erase_sector (struct cyg_flash_dev* dev,
     flashRegister->fccob1 = (cyg_uint8)(block_base >> 16);
     flashRegister->fccob2 = (cyg_uint8)((block_base >> 8) & 0xFF);
     flashRegister->fccob3 = (cyg_uint8)(block_base & 0xFF);
+    HAL_DISABLE_INTERRUPTS(isrstate);
     returnValue = flash_command_sequence();
+    HAL_RESTORE_INTERRUPTS(isrstate);
 
     cache_on(&cachestate);
 
@@ -164,6 +167,7 @@ static int kinetis_flash_program (struct cyg_flash_dev* dev,
     cyg_uint32 currentData;
     cyg_uint8 fccob0;
     cyg_uint32 cachestate;
+    cyg_uint32 isrstate;
 
     endAddress = base + len;
 
@@ -201,7 +205,9 @@ static int kinetis_flash_program (struct cyg_flash_dev* dev,
             flashRegister->fccobB = (cyg_uint8)((currentData) & 0xFF);
         }
 
+        HAL_DISABLE_INTERRUPTS(isrstate);
         returnValue = flash_command_sequence();
+        HAL_RESTORE_INTERRUPTS(isrstate);
         if(returnValue != CYG_FLASH_ERR_OK)
         {
             break;
@@ -378,7 +384,7 @@ const CYG_FLASH_FUNS (
 // Add the flash driver to the HAL TABLE cyg_flashdev
 
 cyg_kinetis_flash_dev hal_kinetis_flash_priv;
-#if 0
+#if 1
 static /*const*/ cyg_flash_block_info_t cyg_flash_kinetis_block_info[1] = {{
     CYGNUM_DEVS_KINETIS_FLASH_BLOCK_SIZE,
     (CYGMEM_REGION_flash_SIZE) / CYGNUM_DEVS_KINETIS_FLASH_BLOCK_SIZE }};
@@ -394,13 +400,13 @@ CYG_FLASH_DRIVER(hal_kinetis_flash,
 #else
 static /*const*/ cyg_flash_block_info_t cyg_flash_kinetis_block_info[1] = {{
     CYGNUM_DEVS_KINETIS_FLASH_BLOCK_SIZE,
-    (0x10000) / CYGNUM_DEVS_KINETIS_FLASH_BLOCK_SIZE }};
+    (0xa0000) / CYGNUM_DEVS_KINETIS_FLASH_BLOCK_SIZE }};
 
 CYG_FLASH_DRIVER(hal_kinetis_flash,
                  &cyg_kinetis_flash_funs,
                  0,
-                 0x70000,
-                 (0x80000 - 1),
+                 0x60000,
+                 (0x000FFFFF),
                  1,                             //number of block info
                  cyg_flash_kinetis_block_info,
                  &hal_kinetis_flash_priv);
