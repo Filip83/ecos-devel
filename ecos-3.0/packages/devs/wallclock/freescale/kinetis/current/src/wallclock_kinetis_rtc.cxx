@@ -57,6 +57,7 @@
 #include <cyg/infra/cyg_type.h>
 
 #include <cyg/io/wallclock.hxx>
+#include <cyg/io/wallclock/wallclock.inl>
 
 void
 Cyg_WallClock::init_hw_seconds(void)
@@ -80,9 +81,12 @@ Cyg_WallClock::init_hw_seconds(void)
 cyg_uint64
 Cyg_WallClock::get_hw_seconds(void)
 {
+    cyg_uint64 naw;
     volatile cyghwr_hal_kinetis_rtc_t *rtc_p = CYGHWR_HAL_KINETIS_RTC_P;
 
-    return rtc_p->tsr;
+    naw = rtc_p->tsr;
+    naw += 1262304000;
+    return naw;
 }
 
 #ifdef CYGSEM_WALLCLOCK_SET_GET_MODE
@@ -95,7 +99,7 @@ Cyg_WallClock::set_hw_seconds(cyg_uint64 secs)
     rtc_p->sr &= ~CYGHWR_HAL_KINETIS_RTC_SR_TCE;
     // set time
     rtc_p->tpr = 0;
-    rtc_p->tsr = secs;
+    rtc_p->tsr = (cyg_uint32)(secs - 1262304000);
     // restart clock
     rtc_p->sr |= CYGHWR_HAL_KINETIS_RTC_SR_TCE;
 }
