@@ -205,7 +205,7 @@ hal_thread_load_context:
         .thumb_func
         .type   hal_thread_switch_context, %function
 hal_thread_switch_context:
-
+        cpsid   i
         push    {r0-r12,lr}             // Push all savable register
         mov     r2,#2                   // Set state type == thread
         mrs     r3,basepri              // Get priority base register
@@ -213,6 +213,7 @@ hal_thread_switch_context:
         push    {r2-r4}                 // Push them
 
         str     sp,[r1]                 // Save SP
+        cpsie   i
 
         // Fall through
 
@@ -228,10 +229,13 @@ hal_thread_switch_context:
         .type   hal_thread_load_context, %function
 hal_thread_load_context:
 
+        cpsid   i
         ldr     sp,[r0]                 // Load SP
         pop     {r2-r4}                 // Pop type, basepri and SP (discarded)
-        msr     basepri,r3              // Set BASEPRI
+        msr     basepri,r3              // Set BASEPR
+        cpsie   i
         pop     {r0-r12,pc}             // Pop all register and return
+
 
 #endif
 
