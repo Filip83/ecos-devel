@@ -265,6 +265,10 @@ void beeper_init(void)
     // Set comparre value to toggle output
     HAL_WRITE_UINT16(base + CYGHWR_DEV_FREESCALE_FTM_COV +
             CYGNUM_DEVS_BEEP_CHANNEL, regval);
+
+    // disable clock
+    regval = 0;
+    HAL_WRITE_UINT32(base + CYGHWR_DEV_FREESCALE_FTM_SC, regval);
     
     beep_dev->init = true;
 }
