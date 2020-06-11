@@ -8319,6 +8319,7 @@ target satisgeo_km_8_k22f512 {
                    CYGPKG_DEVS_FRAMEBUF_ST7565
                    CYGPKG_IO_KBD
                    CYGPKG_DEVS_KBD_BUTTON_KINETIS
+                   CYGPKG_IO_BEEPER
                    CYGPKG_DEVS_BEEP_KINETIS
                    CYGPKG_DEVS_EHCI_SERIAL_FREESCALE
                    CYGPKG_DEVS_USB_KINETIS
@@ -8348,7 +8349,7 @@ target satisgeo_pmg3 {
                    CYGPKG_DEVS_I2C_FREESCALE_I2C
 				   CYGPKG_DEVS_GPIO_KINETIS
 				   CYGPKG_IO_GPIO
-				   CYGPKG_DEVICES_WALLCLOCK_NXP_PCF2129A
+				   CYGPKG_DEVICES_WALLCLOCK_KINETIS_RTC
 				   CYGPKG_CRC
                    CYGPKG_IO_FLASH
 				   CYGPKG_DEVS_FLASH_KINETIS
@@ -8367,6 +8368,36 @@ target satisgeo_pmg3 {
                    CYGPKG_IO_EHCI
                    CYGPKG_DEVS_EHCI_SERIAL_FREESCALE
                    CYGPKG_BLUETOOTH_LIB
+                   CYGPKG_DEVS_USB_KINETIS
+                   CYGPKG_IO_USB_SLAVE_WINUSB 
+                   CYGPKG_IO_USB
+                   CYGPKG_IO_USB_SLAVE
+                 }
+        description "The sg_pmg3 target provides the packages needed
+        to run eCos on the Freescale PMG-3 system."
+}
+
+target satisgeo_pmg3_bl {
+        alias { "SatisGeo PMG-3 bootloader Platform" sg_pmg3 }
+        packages { CYGPKG_HAL_CORTEXM
+                   CYGPKG_HAL_CORTEXM_KINETIS
+                   CYGPKG_HAL_CORTEXM_KINETIS_SG_PMG3
+                   CYGPKG_HAL_FREESCALE_EDMA
+                   CYGPKG_IO_SERIAL_FREESCALE_UART_HDR
+                   CYGPKG_IO_SERIAL_FREESCALE_UART
+                   CYGPKG_IO_SPI
+                   CYGPKG_DEVS_SPI_FREESCALE_DSPI
+                   CYGPKG_IO_I2C
+                   CYGPKG_DEVS_I2C_FREESCALE_I2C
+				   CYGPKG_DEVS_GPIO_KINETIS
+				   CYGPKG_IO_GPIO
+				   CYGPKG_DEVICES_WALLCLOCK_KINETIS_RTC
+                   CYGPKG_IO_FLASH
+				   CYGPKG_DEVS_FLASH_KINETIS
+                   CYGPKG_IO_FRAMEBUF
+				   CYGPKG_DEVS_FRAMEBUF_UC1610
+				   CYGPKG_IO_BEEPER
+                   CYGPKG_DEVS_BEEP_KINETIS
                    CYGPKG_DEVS_USB_KINETIS
                    CYGPKG_IO_USB_SLAVE_WINUSB 
                    CYGPKG_IO_USB
