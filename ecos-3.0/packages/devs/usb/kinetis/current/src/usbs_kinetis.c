@@ -438,6 +438,7 @@ void usbs_ep_alloc(void)
 
         initStr.endpointAddress = usb_endpoints[epn].endpoint;
         initStr.transferType    = usb_endpoints[epn].attributes;
+        initStr.zlt             = 0U;
 
         USB_DeviceInitEndpoint(kinetis_usb_device, &initStr, NULL);
     }
