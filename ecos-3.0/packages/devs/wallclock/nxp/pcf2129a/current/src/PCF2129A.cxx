@@ -188,7 +188,7 @@ DS_GET(cyg_uint8* regs)
     {
         // The device has not responded.
         ok = false;
-	SET_HW_ERRROR(HW_ERROR_RTC_NO_RESPONSE);
+	    SET_HW_ERRROR(HW_ERROR_RTC_NO_RESPONSE);
         DEBUG("Cannto conntect to PCF2129A\n");
     } 
     else 
