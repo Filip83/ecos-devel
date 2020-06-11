@@ -69,8 +69,8 @@
 #include <cyg/hal/hal_endian.h>
 
 #include <pkgconf/devs_adc_kinetis_adc.h>
-#define CYGHWR_DEVS_ADC_KINETIS
-#if defined(CYGHWR_DEVS_ADC_KINETIS)
+//#define CYGHWR_DEVS_ADC_KINETIS
+#if defined(CYGHWR_DEVS_ADC_KINETIS) && CYGPKG_IO_ADC_DEVICES == 1
 
 #ifndef CYGNUM_DEVS_ADC_KINETIS_ENABLE_LONG_SAMPLE_TIME
 #define CYGNUM_DEVS_ADC_KINETIS_ENABLE_LONG_SAMPLE_TIME 0
