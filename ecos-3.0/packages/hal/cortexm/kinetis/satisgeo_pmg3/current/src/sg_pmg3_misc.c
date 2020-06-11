@@ -123,6 +123,10 @@ hal_misc_init(void)
 	CYGHWR_IO_DIR_LCD_A0;
 	CYGNUM_DEVS_FRAMEBUF_ST7565_A0_PIN_LOW;
 
+	hal_set_pin_function(CYGHWR_IO_FREESCALE_LCD_RESET);
+	CYGHWR_IO_DIR_LCD_RESET;
+	CYGNUM_DEVS_FRAMEBUF_RESET_PIN_LOW;
+
 	hal_set_pin_function(CYGHWR_IO_FRESCALE_PIN_NSHUTD);
 	CYGHWR_IO_DIR_PIN_NSHUTD;
 	CYGHWR_IO_CLEAR_PIN_NSHUTD;
@@ -130,6 +134,14 @@ hal_misc_init(void)
 	hal_set_pin_function(CYGHWR_IO_FRESCALE_PIN_LCD_BL);
 	CYGHWR_IO_DIR_PIN_LCD_BL;
 	CYGHWR_IO_CLEAR_PIN_LCD_BL;
+
+	hal_set_pin_function(CYGHWR_IO_FRESCALE_PIN_PWOFF);
+	CYGHWR_IO_DIR_PIN_PWOFF;
+	CYGHWR_IO_SET_PIN_PWOFF;
+
+	hal_set_pin_function(CYGHWR_IO_FRESCALE_ANL_POWER);
+	CYGHWR_IO_DIR_PIN_ANL_POWER;
+	CYGHWR_IO_CLEAR_PIN_ANL_POWER;
 }
 
 //==========================================================================
@@ -156,6 +168,7 @@ CYG_DEVS_SPI_FREESCALE_DSPI_DEVICE(
 	LCD_SPI_DBR_DEV1                        // Use double baud rate
 );
 
+#ifndef BOOT_LOADER
 CYG_DEVS_SPI_FREESCALE_DSPI_DEVICE(
 	fm25vxx_spi_dev0,                       // Device name
 	0,                                      // SPI bus
@@ -171,6 +184,7 @@ CYG_DEVS_SPI_FREESCALE_DSPI_DEVICE(
 	FM25VXX_SPI_DBR_DEV2                    // Use double baud rate
 );
 
+
 CYG_DEVS_SPI_FREESCALE_DSPI_DEVICE(
 	mt25ql_spi_dev1,                         // Device name
 	0,                                      // SPI bus
@@ -179,16 +193,18 @@ CYG_DEVS_SPI_FREESCALE_DSPI_DEVICE(
 	MT25QL_SPI_CLOCK_POL,                   // Clock pol
 	MT25QL_SPI_CLOCK_PHASE,                 // Clock phase
 	CYGHWR_DEVS_FLASH_MT25QL_DEV2_SPEED,      // Clock speed (Hz)
-	CYGHWR_DEVS_FLASH_MT25QL_DEV2_CS_DLY,     // CS assert delay
-	CYGHWR_DEVS_FLASH_MT25QL_DEV2_CS_DLY,     // CS negate delay
-	CYGHWR_DEVS_FLASH_MT25QL_DEV2_CS_DLY,     // Delay between transfers
+	1,     // CS assert delay
+	1,     // CS negate delay
+	0,     // Delay between transfers
 	CYGHWR_DEVS_FLASH_MT25QL_DEV2_CS_DLY_UN,  // Delay unit (100 or 1000 ns)
 	MT25QL_SPI_DBR_DEV2                     // Use double baud rate
 );
 
-#include <cyg/io/i2c.h>
+
+#include <cyg/io/i2c_freescale.h>
+extern cyg_i2c_bus cyg_i2c1_bus;
 // Declaration of I2C slave wallclock device
-CYG_I2C_DEVICE(cyg_i2c_wallclock_pcf2129a, 1, 0x51, 0, 0);
+CYG_I2C_DEVICE(cyg_i2c_wallclock_pcf2129a, &cyg_i2c1_bus, 0x51, 0, 0);
 
 #include <cyg/io/fm25vxx.h>
 /**
@@ -200,7 +216,7 @@ CYG_DEVS_FLASH_SPI_FM25VXX_DRIVER(fm25wxx_spi_fram, FRAM_FM25WXX_BASE_ADDRESS, &
 
 CYG_DEVS_FLASH_SPI_MT25QL_DRIVER(mt25ql_spi_flash, FRAM_MT25QL_BASE_ADDRESS, &mt25ql_spi_dev1);
 
-
+#endif
 //==========================================================================
 
 #ifdef CYGDBG_HAL_DEBUG_GDB_INCLUDE_STUBS

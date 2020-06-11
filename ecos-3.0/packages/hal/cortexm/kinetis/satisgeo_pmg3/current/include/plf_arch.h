@@ -55,6 +55,11 @@
 #include <pkgconf/hal.h>
 #include <pkgconf/hal_cortexm_kinetis_sg_pmg3.h>
 
+#if 0
+externC void hal_idle_thread_action(cyg_uint32);
+
+# define HAL_IDLE_THREAD_ACTION(_count_) hal_idle_thread_action(_count_)
+#endif
 
 //=============================================================================
 
