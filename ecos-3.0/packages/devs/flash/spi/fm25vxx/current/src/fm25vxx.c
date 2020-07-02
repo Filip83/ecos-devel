@@ -423,23 +423,37 @@ static int
 fm25vxx_program(struct cyg_flash_dev *dev, cyg_flashaddr_t base,
                 const void *data, size_t len)
 {
-    cyg_uint8      *tx_ptr = (cyg_uint8 *)data;
     cyg_flashaddr_t local_base = base;
+    int             retval = FLASH_ERR_INVALID;
+    cyg_uint8* tx_ptr = (cyg_uint8*)data;
+    cyg_uint32      tx_bytes_left = (cyg_uint32)len;
+    cyg_uint32      tx_bytes;
 
-    int             retval = FLASH_ERR_OK;
+    // Determine the maximum transfer size to use.
+    cyg_uint32      tx_block_size =
+        (CYGNUM_DEVS_FLASH_SPI_FM25VXX_READ_BLOCK_SIZE ==
+            0) ? 0xFFFFFFFF : CYGNUM_DEVS_FLASH_SPI_FM25VXX_READ_BLOCK_SIZE;
 
     // Fix up the block address.
-    if (!fm25vxx_to_local_addr(dev, &local_base))
+    if (fm25vxx_to_local_addr(dev, &local_base))
     {
-        retval = FLASH_ERR_INVALID;
-        goto out;
-    }
+        while (tx_bytes_left)
+        {
+            fm25vxx_spi_wren(dev);
 
-    fm25vxx_spi_wren(dev);
-    fm25vxx_spi_pp(dev,local_base,tx_ptr,len);
-    
-    retval = fm25vxx_verifi(dev,local_base,tx_ptr,len);
-out:
+            tx_bytes =
+                (tx_bytes_left <
+                    tx_block_size) ? tx_bytes_left : tx_block_size;
+
+            fm25vxx_spi_pp(dev, local_base, tx_ptr, tx_bytes);
+
+            // Update counters and data pointers for next read block.
+            tx_bytes_left -= tx_bytes;
+            tx_ptr += tx_bytes;
+            local_base += tx_bytes;
+        }
+        retval = fm25vxx_verifi(dev, base, data, len);
+    }
     return retval;
 }
 
@@ -452,14 +466,30 @@ fm25vxx_read(struct cyg_flash_dev *dev, const cyg_flashaddr_t base,
 {
     cyg_flashaddr_t local_base = base;
     int             retval = FLASH_ERR_INVALID;
-    cyg_uint8      *rx_ptr = (cyg_uint8 *)data;
+    cyg_uint8* rx_ptr = (cyg_uint8*)data;
     cyg_uint32      rx_bytes_left = (cyg_uint32)len;
+    cyg_uint32      rx_bytes;
+
+    // Determine the maximum transfer size to use.
+    cyg_uint32      rx_block_size =
+        (CYGNUM_DEVS_FLASH_SPI_FM25VXX_READ_BLOCK_SIZE ==
+            0) ? 0xFFFFFFFF : CYGNUM_DEVS_FLASH_SPI_FM25VXX_READ_BLOCK_SIZE;
 
     // Fix up the block address and fill the read buffer.
-    if (fm25vxx_to_local_addr(dev, &local_base)) 
+    if (fm25vxx_to_local_addr(dev, &local_base))
     {
-        fm25vxx_spi_read(dev, local_base, rx_ptr, rx_bytes_left);
+        while (rx_bytes_left)
+        {
+            rx_bytes =
+                (rx_bytes_left <
+                    rx_block_size) ? rx_bytes_left : rx_block_size;
+            fm25vxx_spi_read(dev, local_base, rx_ptr, rx_bytes_left);
 
+            // Update counters and data pointers for next read block.
+            rx_bytes_left -= rx_bytes;
+            rx_ptr += rx_bytes;
+            local_base += rx_bytes;
+        }
         retval = FLASH_ERR_OK;
     }
     return retval;
